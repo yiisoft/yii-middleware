@@ -1,19 +1,21 @@
 {
-    "name": "yiisoft/replace-with-package-name",
+    "name": "yiisoft/yii-middleware",
     "type": "library",
-    "description": "_____",
+    "description": "Yii middleware",
     "keywords": [
-        "_____"
+        "yii",
+        "framework",
+        "middleware"
     ],
     "homepage": "https://www.yiiframework.com/",
     "license": "BSD-3-Clause",
     "support": {
-        "issues": "https://github.com/yiisoft/_____/issues?state=open",
+        "issues": "https://github.com/yiisoft/yii-middleware/issues?state=open",
         "forum": "https://www.yiiframework.com/forum/",
         "wiki": "https://www.yiiframework.com/wiki/",
         "irc": "irc://irc.freenode.net/yii",
         "chat": "https://t.me/yii3en",
-        "source": "https://github.com/yiisoft/_____"
+        "source": "https://github.com/yiisoft/yii-middleware"
     },
     "funding": [
         {
@@ -28,22 +30,34 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {
-        "php": "^7.4|^8.0"
+        "php": "^8.0",
+        "psr/http-factory": "^1.0",
+        "psr/http-message": "^1.0",
+        "psr/http-server-handler": "^1.0",
+        "psr/http-server-middleware": "^1.0",
+        "yiisoft/aliases": "^2.0",
+        "yiisoft/friendly-exception": "^1.0",
+        "yiisoft/http": "^1.2",
+        "yiisoft/network-utilities": "^1.0",
+        "yiisoft/router": "^3.0@dev",
+        "yiisoft/validator": "^3.0@dev"
     },
     "require-dev": {
+        "httpsoft/http-message": "^1.0",
         "phpunit/phpunit": "^9.5",
-        "roave/infection-static-analysis-plugin": "^1.9",
+        "roave/infection-static-analysis-plugin": "^1.10",
         "spatie/phpunit-watcher": "^1.23",
-        "vimeo/psalm": "^4.9"
+        "vimeo/psalm": "^4.12",
+        "yiisoft/router-fastroute": "^3.0@dev"
     },
     "autoload": {
         "psr-4": {
-            "Yiisoft\\_____\\": "src"
+            "Yiisoft\\Yii\\Middleware\\": "src"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Yiisoft\\_____\\Tests\\": "tests"
+            "Yiisoft\\Yii\\Middleware\\Tests\\": "tests"
         }
     },
     "config": {
