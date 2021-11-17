@@ -4,21 +4,26 @@ declare(strict_types=1);
 
 namespace Yiisoft\Yii\Web\Tests\Middleware;
 
-use InvalidArgumentException;
 use HttpSoft\Message\ResponseFactory;
 use HttpSoft\Message\ServerRequestFactory;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use RuntimeException;
 use Yiisoft\Http\Method;
+use Yiisoft\Http\Status;
 use Yiisoft\Router\UrlGeneratorInterface;
 use Yiisoft\Yii\Middleware\Redirect;
+
+use function http_build_query;
 
 final class RedirectTest extends TestCase
 {
     public function testInvalidArguments(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Either `toUrl()` or `toRoute()` method should be used.');
+
         $this->createRedirectMiddleware()->process($this->createRequest(), $this->createRequestHandler());
     }
 
@@ -35,37 +40,40 @@ final class RedirectTest extends TestCase
         $this->assertSame($header[0], 'test/route?param1=1&param2=2');
     }
 
-    public function testTemporaryReturnCode303(): void
+    public function testTemporaryReturnCode302(): void
     {
         $middleware = $this->createRedirectMiddleware()
             ->toRoute('test/route')
-            ->temporary();
+            ->temporary()
+        ;
 
         $response = $middleware->process($this->createRequest(), $this->createRequestHandler());
 
-        $this->assertSame($response->getStatusCode(), 303);
+        $this->assertSame($response->getStatusCode(), Status::FOUND);
     }
 
     public function testPermanentReturnCode301(): void
     {
         $middleware = $this->createRedirectMiddleware()
             ->toRoute('test/route')
-            ->permanent();
+            ->permanent()
+        ;
 
         $response = $middleware->process($this->createRequest(), $this->createRequestHandler());
 
-        $this->assertSame($response->getStatusCode(), 301);
+        $this->assertSame($response->getStatusCode(), Status::MOVED_PERMANENTLY);
     }
 
     public function testStatusReturnCode400(): void
     {
         $middleware = $this->createRedirectMiddleware()
             ->toRoute('test/route')
-            ->withStatus(400);
+            ->withStatus(Status::BAD_REQUEST)
+        ;
 
         $response = $middleware->process($this->createRequest(), $this->createRequestHandler());
 
-        $this->assertSame($response->getStatusCode(), 400);
+        $this->assertSame($response->getStatusCode(), Status::BAD_REQUEST);
     }
 
     public function testSetUri(): void
@@ -77,6 +85,17 @@ final class RedirectTest extends TestCase
         $header = $response->getHeader('Location');
 
         $this->assertSame($header[0], 'test/custom/route');
+    }
+
+    public function testImmutability(): void
+    {
+        $middleware = $this->createRedirectMiddleware();
+
+        $this->assertNotSame($middleware, $middleware->toUrl('/'));
+        $this->assertNotSame($middleware, $middleware->toRoute('test/custom/route', ['id' => 42]));
+        $this->assertNotSame($middleware, $middleware->withStatus(Status::MOVED_PERMANENTLY));
+        $this->assertNotSame($middleware, $middleware->permanent());
+        $this->assertNotSame($middleware, $middleware->temporary());
     }
 
     private function createRequestHandler(): RequestHandlerInterface

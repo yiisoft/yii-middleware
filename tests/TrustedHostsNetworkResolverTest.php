@@ -8,6 +8,7 @@ use InvalidArgumentException;
 use HttpSoft\Message\ServerRequest;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
+use Yiisoft\Validator\Rule\Ip;
 use Yiisoft\Yii\Middleware\TrustedHostsNetworkResolver;
 use Yiisoft\Yii\Middleware\Tests\TestAsset\MockRequestHandler;
 
@@ -216,8 +217,8 @@ final class TrustedHostsNetworkResolverTest extends TestCase
     {
         $request = $this->createRequestWithSchemaAndHeaders('http', $headers, $serverParams);
         $requestHandler = new MockRequestHandler();
-
         $middleware = new TrustedHostsNetworkResolver();
+
         foreach ($trustedHosts as $data) {
             $middleware = $middleware->withAddedTrustedHosts(
                 $data['hosts'],
@@ -226,7 +227,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 [],
                 [],
                 [],
-                $data['trustedHeaders'] ?? []
+                $data['trustedHeaders'] ?? [],
             );
         }
         $middleware->process($request, $requestHandler);
@@ -268,6 +269,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
     public function testAddedTrustedHostsInvalidParameter(array $data): void
     {
         $this->expectException(InvalidArgumentException::class);
+
         (new TrustedHostsNetworkResolver())
             ->withAddedTrustedHosts(
                 $data['hosts'] ?? [],
@@ -278,6 +280,17 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 $data['portHeaders'] ?? [],
                 $data['trustedHeaders'] ?? null
             );
+    }
+
+    public function testImmutability(): void
+    {
+        $middleware = new TrustedHostsNetworkResolver();
+
+        $this->assertNotSame($middleware, $middleware->withAddedTrustedHosts(['8.8.8.8']));
+        $this->assertNotSame($middleware, $middleware->withoutTrustedHosts());
+        $this->assertNotSame($middleware, $middleware->withAttributeIps('test'));
+        $this->assertNotSame($middleware, $middleware->withAttributeIps(null));
+        $this->assertNotSame($middleware, $middleware->withIpValidator(Ip::rule()));
     }
 
     private function createRequestWithSchemaAndHeaders(
