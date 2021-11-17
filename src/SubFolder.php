@@ -12,6 +12,7 @@ use Yiisoft\Aliases\Aliases;
 use Yiisoft\Router\UrlGeneratorInterface;
 use Yiisoft\Yii\Middleware\Exception\BadUriPrefixException;
 
+use function is_string;
 use function strlen;
 use function strpos;
 use function substr;
@@ -56,20 +57,25 @@ final class SubFolder implements MiddlewareInterface
         $path = $uri->getPath();
         $prefix = $this->prefix;
         $auto = $prefix === null;
+        /** @var string $prefix */
         $length = $auto ? 0 : strlen($prefix);
 
         if ($auto) {
             // automatically checks that the project is in a subfolder
             // and URI contains a prefix
             $scriptName = $request->getServerParams()['SCRIPT_NAME'];
-            if (strpos($scriptName, '/', 1) !== false) {
-                $tmpPrefix = substr($scriptName, 0, strrpos($scriptName, '/'));
+
+            if (is_string($scriptName) && strpos($scriptName, '/', 1) !== false) {
+                $position = strrpos($scriptName, '/');
+                $tmpPrefix = substr($scriptName, 0, $position === false ? null : $position);
+
                 if (strpos($path, $tmpPrefix) === 0) {
                     $prefix = $tmpPrefix;
                     $length = strlen($prefix);
                 }
             }
         } elseif ($length > 0) {
+            /** @var string $prefix */
             if ($prefix[-1] === '/') {
                 throw new BadUriPrefixException('Wrong URI prefix value.');
             }
@@ -81,6 +87,7 @@ final class SubFolder implements MiddlewareInterface
 
         if ($length > 0) {
             $newPath = substr($path, $length);
+
             if ($newPath === '') {
                 $newPath = '/';
             }
@@ -91,6 +98,7 @@ final class SubFolder implements MiddlewareInterface
                 }
             } else {
                 $request = $request->withUri($uri->withPath($newPath));
+                /** @var string $prefix */
                 $this->uriGenerator->setUriPrefix($prefix);
 
                 if ($this->alias !== null) {

@@ -116,6 +116,7 @@ final class Redirect implements MiddlewareInterface
             throw new RuntimeException('Either `toUrl()` or `toRoute()` method should be used.');
         }
 
+        /** @psalm-suppress PossiblyNullArgument */
         $uri = $this->uri ?? $this->urlGenerator->generate($this->route, $this->parameters);
 
         return $this->responseFactory

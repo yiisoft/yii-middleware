@@ -260,6 +260,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             }
         }
 
+        /** @psalm-suppress PossiblyNullArgument, PossiblyNullArrayAccess */
         $untrustedHeaders = array_diff($trustedHeaders, $trustedHostData[self::DATA_KEY_TRUSTED_HEADERS] ?? []);
         $request = $this->removeHeaders($request, $untrustedHeaders);
 
@@ -392,12 +393,12 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             $port = $request->getHeaderLine($portHeader);
 
             if ($this->checkPort($port)) {
-                $uri = $uri->withPort((int)$port);
+                $uri = $uri->withPort((int) $port);
                 break;
             }
         }
 
-        return $handler->handle($request->withUri($uri)->withAttribute('requestClientIp', $hostData['ip']));
+        return $handler->handle($request->withUri($uri)->withAttribute('requestClientIp', $hostData['ip'] ?? null));
     }
 
     /**

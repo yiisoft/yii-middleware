@@ -31,7 +31,7 @@ final class BasicNetworkResolver implements MiddlewareInterface
     ];
 
     /**
-     * @psalm-var array<string, array|callable|null>
+     * @psalm-var array<string, array|callable>
      */
     private array $protocolHeaders = [];
 
@@ -187,6 +187,7 @@ final class BasicNetworkResolver implements MiddlewareInterface
                 if (!in_array($headerValue, $acceptedValues, true)) {
                     continue;
                 }
+
                 $newScheme = $protocol;
                 break 2;
             }
@@ -195,7 +196,7 @@ final class BasicNetworkResolver implements MiddlewareInterface
         $uri = $request->getUri();
 
         if ($newScheme !== null && $newScheme !== $uri->getScheme()) {
-            $request = $request->withUri($uri->withScheme($newScheme));
+            $request = $request->withUri($uri->withScheme((string) $newScheme));
         }
 
         return $handler->handle($request);
