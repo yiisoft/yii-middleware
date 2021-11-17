@@ -147,6 +147,11 @@ final class BasicNetworkResolver implements MiddlewareInterface
         return $new;
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @throws RuntimeException If wrong URI scheme protocol.
+     */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $newScheme = null;

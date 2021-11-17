@@ -105,6 +105,11 @@ final class Redirect implements MiddlewareInterface
         return $new;
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @throws RuntimeException If the data for redirection was not set earlier.
+     */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         if ($this->route === null && $this->uri === null) {
