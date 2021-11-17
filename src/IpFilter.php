@@ -12,6 +12,9 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Yiisoft\Http\Status;
 use Yiisoft\Validator\Rule\Ip;
 
+/**
+ * IpFilter validates the IP received in the request.
+ */
 final class IpFilter implements MiddlewareInterface
 {
     private Ip $ipValidator;
@@ -19,10 +22,12 @@ final class IpFilter implements MiddlewareInterface
     private ?string $clientIpAttribute;
 
     /**
-     * @param Ip $ipValidator Client IP validator. The properties of the validator can be modified up to the moment of processing.
-     * @param ResponseFactoryInterface $responseFactory
-     * @param string|null $clientIpAttribute Attribute name of client IP. If NULL, then 'REMOTE_ADDR' value of the server parameters is processed.
-     * If the value is not null, then the attribute specified must have a value, otherwise the request will closed with forbidden.
+     * @param Ip $ipValidator Client IP validator. The properties of the validator
+     * can be modified up to the moment of processing.
+     * @param ResponseFactoryInterface $responseFactory The response factory instance.
+     * @param string|null $clientIpAttribute Attribute name of client IP. If `null`, then `REMOTE_ADDR` value
+     * of the server parameters is processed. If the value is not `null`, then the attribute specified
+     * must have a value, otherwise the request will closed with forbidden.
      */
     public function __construct(
         Ip $ipValidator,
@@ -34,6 +39,14 @@ final class IpFilter implements MiddlewareInterface
         $this->clientIpAttribute = $clientIpAttribute;
     }
 
+    /**
+     * Returns a new instance with the specified client IP validator.
+     *
+     * @param Ip $ipValidator Client IP validator. The properties of the validator
+     * can be modified up to the moment of processing.
+     *
+     * @return self
+     */
     public function withIpValidator(Ip $ipValidator): self
     {
         $new = clone $this;
@@ -41,22 +54,18 @@ final class IpFilter implements MiddlewareInterface
         return $new;
     }
 
-    /**
-     * Process an incoming server request.
-     *
-     * Processes an incoming server request in order to produce a response.
-     * If unable to produce the response itself, it may delegate to the provided
-     * request handler to do so.
-     */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $clientIp = $request->getServerParams()['REMOTE_ADDR'] ?? null;
-
         if ($this->clientIpAttribute !== null) {
-            $clientIp = $request->getAttribute($clientIp);
+            $clientIp = $request->getAttribute($this->clientIpAttribute);
         }
 
-        if ($clientIp === null || !$this->ipValidator->disallowNegation()->disallowSubnet()->validate($clientIp)->isValid()) {
+        $clientIp ??= $request->getServerParams()['REMOTE_ADDR'] ?? null;
+
+        if (
+            $clientIp === null
+            || !$this->ipValidator->disallowNegation()->disallowSubnet()->validate($clientIp)->isValid()
+        ) {
             $response = $this->responseFactory->createResponse(Status::FORBIDDEN);
             $response->getBody()->write(Status::TEXTS[Status::FORBIDDEN]);
             return $response;
