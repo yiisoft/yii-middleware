@@ -26,7 +26,8 @@ final class HttpCacheTest extends TestCase
         $time = time();
         $middleware = $this->createMiddlewareWithLastModified($time + 1);
         $response = $middleware->process($this->createServerRequest(Method::PATCH), $this->createRequestHandler());
-        $this->assertEquals(200, $response->getStatusCode());
+
+        $this->assertSame(Status::OK, $response->getStatusCode());
         $this->assertFalse($response->hasHeader('Last-Modified'));
     }
 
@@ -34,54 +35,102 @@ final class HttpCacheTest extends TestCase
     {
         $time = time();
         $middleware = $this->createMiddlewareWithLastModified($time + 1);
+
         $headers = [
             'If-Modified-Since' => gmdate('D, d M Y H:i:s', $time) . 'GMT',
         ];
-        $response = $middleware->process($this->createServerRequest(Method::GET, $headers), $this->createRequestHandler());
-        $this->assertEquals(200, $response->getStatusCode());
+
+        $response = $middleware->process(
+            $this->createServerRequest(Method::GET, $headers),
+            $this->createRequestHandler(),
+        );
+
+        $this->assertSame(Status::OK, $response->getStatusCode());
     }
 
     public function testModifiedResultWithEtag(): void
     {
         $etag = 'test-etag';
         $middleware = $this->createMiddlewareWithETag($etag);
+
         $headers = [
             'If-None-Match' => $etag,
         ];
-        $response = $middleware->process($this->createServerRequest(Method::GET, $headers), $this->createRequestHandler());
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals($response->getHeaderLine('Etag'), $this->generateEtag($etag));
+
+        $response = $middleware->process(
+            $this->createServerRequest(Method::GET, $headers),
+            $this->createRequestHandler(),
+        );
+
+        $this->assertSame(Status::OK, $response->getStatusCode());
+        $this->assertSame($response->getHeaderLine('Etag'), $this->generateEtag($etag));
     }
 
     public function testNotModifiedResultWithLastModified(): void
     {
         $time = time();
         $middleware = $this->createMiddlewareWithLastModified($time - 1);
+
         $headers = [
             'If-Modified-Since' => gmdate('D, d M Y H:i:s', $time) . ' GMT',
         ];
-        $response = $middleware->process($this->createServerRequest(Method::GET, $headers), $this->createRequestHandler());
-        $this->assertEquals(304, $response->getStatusCode());
-        $this->assertEmpty((string)$response->getBody());
-        $this->assertEquals(gmdate('D, d M Y H:i:s', $time - 1) . ' GMT', $response->getHeaderLine('Last-Modified'));
+
+        $response = $middleware->process(
+            $this->createServerRequest(Method::GET, $headers),
+            $this->createRequestHandler(),
+        );
+
+        $this->assertSame(Status::NOT_MODIFIED, $response->getStatusCode());
+        $this->assertEmpty((string) $response->getBody());
+        $this->assertSame(gmdate('D, d M Y H:i:s', $time - 1) . ' GMT', $response->getHeaderLine('Last-Modified'));
     }
 
     public function testNotModifiedResultWithEtag(): void
     {
         $etag = 'test-etag';
         $middleware = $this->createMiddlewareWithETag($etag);
+
         $headers = [
             'If-None-Match' => $this->generateEtag($etag),
         ];
-        $response = $middleware->process($this->createServerRequest(Method::GET, $headers), $this->createRequestHandler());
-        $this->assertEquals(304, $response->getStatusCode());
-        $this->assertEmpty((string)$response->getBody());
+
+        $response = $middleware->process(
+            $this->createServerRequest(Method::GET, $headers),
+            $this->createRequestHandler(),
+        );
+
+        $this->assertSame(Status::NOT_MODIFIED, $response->getStatusCode());
+        $this->assertEmpty((string) $response->getBody());
+    }
+
+    public function testEmptyIfNoneMatchAndIfModifiedSinceHeaders(): void
+    {
+        $middleware = (new HttpCache())
+            ->withEtagSeed(static fn () => 'test-etag')
+            ->withLastModified(static fn () => time() + 3600)
+        ;
+
+        $response = $middleware->process($this->createServerRequest(), $this->createRequestHandler());
+
+        $this->assertSame(Status::OK, $response->getStatusCode());
+        $this->assertEmpty((string) $response->getBody());
+    }
+
+    public function testImmutability(): void
+    {
+        $middleware = new HttpCache();
+
+        $this->assertNotSame($middleware, $middleware->withLastModified(static fn () => 3600));
+        $this->assertNotSame($middleware, $middleware->withEtagSeed(static fn () => 'test-etag'));
+        $this->assertNotSame($middleware, $middleware->withWeakTag());
+        $this->assertNotSame($middleware, $middleware->withParams(['key' => 'value']));
+        $this->assertNotSame($middleware, $middleware->withCacheControlHeader('public, max-age=3600'));
     }
 
     private function createMiddlewareWithLastModified(int $lastModified): HttpCache
     {
         $middleware = new HttpCache();
-        return $middleware->withLastModified(fn () => $lastModified);
+        return $middleware->withLastModified(static fn () => $lastModified);
     }
 
     private function createMiddlewareWithETag(string $etag): HttpCache

@@ -12,6 +12,7 @@ use Yiisoft\Aliases\Aliases;
 use Yiisoft\Router\UrlGeneratorInterface;
 use Yiisoft\Yii\Middleware\Exception\BadUriPrefixException;
 
+use function is_string;
 use function strlen;
 use function strpos;
 use function substr;
@@ -26,6 +27,13 @@ final class SubFolder implements MiddlewareInterface
     private ?string $prefix;
     private ?string $alias;
 
+    /**
+     * @param UrlGeneratorInterface $uriGenerator The URI generator instance.
+     * @param Aliases $aliases The aliases instance.
+     * @param string|null $prefix URI prefix the specified immediately after the domain part.
+     * The prefix value usually begins with a slash and must not end with a slash.
+     * @param string|null $alias The path alias {@see Aliases::get()}.
+     */
     public function __construct(
         UrlGeneratorInterface $uriGenerator,
         Aliases $aliases,
@@ -41,7 +49,7 @@ final class SubFolder implements MiddlewareInterface
     /**
      * {@inheritDoc}
      *
-     * @throws BadUriPrefixException
+     * @throws BadUriPrefixException If wrong URI prefix.
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
@@ -49,41 +57,48 @@ final class SubFolder implements MiddlewareInterface
         $path = $uri->getPath();
         $prefix = $this->prefix;
         $auto = $prefix === null;
+        /** @var string $prefix */
         $length = $auto ? 0 : strlen($prefix);
 
         if ($auto) {
             // automatically checks that the project is in a subfolder
             // and URI contains a prefix
             $scriptName = $request->getServerParams()['SCRIPT_NAME'];
-            if (strpos($scriptName, '/', 1) !== false) {
-                $tmpPrefix = substr($scriptName, 0, strrpos($scriptName, '/'));
+
+            if (is_string($scriptName) && strpos($scriptName, '/', 1) !== false) {
+                $position = strrpos($scriptName, '/');
+                $tmpPrefix = substr($scriptName, 0, $position === false ? null : $position);
+
                 if (strpos($path, $tmpPrefix) === 0) {
                     $prefix = $tmpPrefix;
                     $length = strlen($prefix);
                 }
             }
         } elseif ($length > 0) {
+            /** @var string $prefix */
             if ($prefix[-1] === '/') {
-                throw new BadUriPrefixException('Wrong URI prefix value');
+                throw new BadUriPrefixException('Wrong URI prefix value.');
             }
 
             if (strpos($path, $prefix) !== 0) {
-                throw new BadUriPrefixException('URI prefix does not match');
+                throw new BadUriPrefixException('URI prefix does not match.');
             }
         }
 
         if ($length > 0) {
             $newPath = substr($path, $length);
+
             if ($newPath === '') {
                 $newPath = '/';
             }
 
             if ($newPath[0] !== '/') {
                 if (!$auto) {
-                    throw new BadUriPrefixException('URI prefix does not match completely');
+                    throw new BadUriPrefixException('URI prefix does not match completely.');
                 }
             } else {
                 $request = $request->withUri($uri->withPath($newPath));
+                /** @var string $prefix */
                 $this->uriGenerator->setUriPrefix($prefix);
 
                 if ($this->alias !== null) {

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Yiisoft\Yii\Middleware\Tests;
 
-use HttpSoft\Message\Response;
 use HttpSoft\Message\ResponseFactory;
 use HttpSoft\Message\ServerRequestFactory;
 use PHPUnit\Framework\TestCase;
@@ -18,61 +17,14 @@ use Yiisoft\Yii\Middleware\ForceSecureConnection;
 
 final class ForceSecureConnectionTest extends TestCase
 {
-    // Immutability
-    public function testWithCSPImmutability(): void
-    {
-        $middleware = new ForceSecureConnection(new ResponseFactory());
-        $new = $middleware->withCSP();
-
-        $this->assertNotSame($middleware, $new);
-    }
-
-    public function testWithHSTSImmutability(): void
-    {
-        $middleware = new ForceSecureConnection(new ResponseFactory());
-        $new = $middleware->withHSTS();
-
-        $this->assertNotSame($middleware, $new);
-    }
-
-    public function testWithRedirectionImmutability(): void
-    {
-        $middleware = new ForceSecureConnection(new ResponseFactory());
-        $new = $middleware->withRedirection();
-
-        $this->assertNotSame($middleware, $new);
-    }
-
-    public function testWithoutCSPImmutability(): void
-    {
-        $middleware = new ForceSecureConnection(new ResponseFactory());
-        $new = $middleware->withoutCSP();
-
-        $this->assertNotSame($middleware, $new);
-    }
-
-    public function testWithoutHSTSImmutability(): void
-    {
-        $middleware = new ForceSecureConnection(new ResponseFactory());
-        $new = $middleware->withoutHSTS();
-
-        $this->assertNotSame($middleware, $new);
-    }
-
-    public function testWithoutRedirectionImmutability(): void
-    {
-        $middleware = new ForceSecureConnection(new ResponseFactory());
-        $new = $middleware->withoutRedirection();
-
-        $this->assertNotSame($middleware, $new);
-    }
-
     public function testRedirectionFromHttp(): void
     {
         $middleware = (new ForceSecureConnection(new ResponseFactory()))
             ->withoutCSP()
             ->withoutHSTS()
-            ->withRedirection(Status::SEE_OTHER);
+            ->withRedirection(Status::SEE_OTHER)
+        ;
+
         $request = $this->createServerRequest();
         $request = $request->withUri($request->getUri()->withScheme('http'));
         $handler = $this->createHandler();
@@ -90,7 +42,9 @@ final class ForceSecureConnectionTest extends TestCase
         $middleware = (new ForceSecureConnection(new ResponseFactory()))
             ->withoutRedirection()
             ->withoutCSP()
-            ->withHSTS(42, true);
+            ->withHSTS(42, true)
+        ;
+
         $request = $this->createServerRequest();
         $handler = $this->createHandler();
 
@@ -106,7 +60,9 @@ final class ForceSecureConnectionTest extends TestCase
         $middleware = (new ForceSecureConnection(new ResponseFactory()))
             ->withoutRedirection()
             ->withoutCSP()
-            ->withHSTS(1440, false);
+            ->withHSTS(1440, false)
+        ;
+
         $request = $this->createServerRequest();
         $handler = $this->createHandler();
 
@@ -122,7 +78,9 @@ final class ForceSecureConnectionTest extends TestCase
         $middleware = (new ForceSecureConnection(new ResponseFactory()))
             ->withoutRedirection()
             ->withoutHSTS()
-            ->withCSP();
+            ->withCSP()
+        ;
+
         $request = $this->createServerRequest();
         $handler = $this->createHandler();
 
@@ -137,7 +95,9 @@ final class ForceSecureConnectionTest extends TestCase
         $middleware = (new ForceSecureConnection(new ResponseFactory()))
             ->withoutRedirection()
             ->withoutHSTS()
-            ->withCSP('default-src https:; report-uri /csp-violation-report-endpoint/');
+            ->withCSP('default-src https:; report-uri /csp-violation-report-endpoint/')
+        ;
+
         $request = $this->createServerRequest();
         $handler = $this->createHandler();
 
@@ -147,7 +107,7 @@ final class ForceSecureConnectionTest extends TestCase
         $this->assertTrue($response->hasHeader(Header::CONTENT_SECURITY_POLICY));
         $this->assertSame(
             $response->getHeaderLine(Header::CONTENT_SECURITY_POLICY),
-            'default-src https:; report-uri /csp-violation-report-endpoint/'
+            'default-src https:; report-uri /csp-violation-report-endpoint/',
         );
     }
 
@@ -156,7 +116,9 @@ final class ForceSecureConnectionTest extends TestCase
         $middleware = (new ForceSecureConnection(new ResponseFactory()))
             ->withRedirection()
             ->withCSP()
-            ->withHSTS();
+            ->withHSTS()
+        ;
+
         $request = $this->createServerRequest();
         $request = $request->withUri($request->getUri()->withScheme('http'));
         $handler = $this->createHandler();
@@ -204,6 +166,18 @@ final class ForceSecureConnectionTest extends TestCase
         $this->assertFalse($response->hasHeader(Header::STRICT_TRANSPORT_SECURITY));
     }
 
+    public function testImmutability(): void
+    {
+        $middleware = new ForceSecureConnection(new ResponseFactory());
+
+        $this->assertNotSame($middleware, $middleware->withRedirection());
+        $this->assertNotSame($middleware, $middleware->withoutRedirection());
+        $this->assertNotSame($middleware, $middleware->withCSP());
+        $this->assertNotSame($middleware, $middleware->withoutCSP());
+        $this->assertNotSame($middleware, $middleware->withHSTS());
+        $this->assertNotSame($middleware, $middleware->withoutHSTS());
+    }
+
     private function createHandler(): RequestHandlerInterface
     {
         return new class () implements RequestHandlerInterface {
@@ -212,7 +186,7 @@ final class ForceSecureConnectionTest extends TestCase
             public function handle(ServerRequestInterface $request): ResponseInterface
             {
                 $this->isCalled = true;
-                return new Response();
+                return (new ResponseFactory())->createResponse();
             }
         };
     }

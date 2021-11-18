@@ -16,10 +16,6 @@ use Yiisoft\Yii\Middleware\IpFilter;
 
 final class IpFilterTest extends TestCase
 {
-    private const REQUEST_PARAMS = [
-        'REMOTE_ADDR' => '8.8.8.8',
-    ];
-
     private const ALLOWED_IP = '1.1.1.1';
 
     private MockObject|ResponseFactoryInterface $responseFactoryMock;
@@ -34,49 +30,92 @@ final class IpFilterTest extends TestCase
         $this->ipFilter = new IpFilter(Ip::rule()->ranges([self::ALLOWED_IP]), $this->responseFactoryMock);
     }
 
-    public function testProcessReturnsAccessDeniedResponseWhenIpIsNotAllowed(): void
+    public function ipNotAllowedDataProvider(): array
     {
-        $this->setUpResponseFactory();
+        return [
+            'not-allowed' => [['REMOTE_ADDR' => '8.8.8.8']],
+            'not-exists' => [[]],
+        ];
+    }
+
+    /**
+     * @dataProvider ipNotAllowedDataProvider
+     */
+    public function testProcessReturnsAccessDeniedResponseWhenIpIsNotAllowed(array $serverParams): void
+    {
         $requestMock = $this->createMock(ServerRequestInterface::class);
         $requestMock
             ->expects($this->once())
             ->method('getServerParams')
-            ->willReturn(self::REQUEST_PARAMS);
+            ->willReturn($serverParams)
+        ;
+
+        $this->responseFactoryMock
+            ->expects($this->once())
+            ->method('createResponse')
+            ->willReturn(new Response(Status::FORBIDDEN))
+        ;
 
         $this->requestHandlerMock
             ->expects($this->never())
             ->method('handle')
-            ->with($requestMock);
+            ->with($requestMock)
+        ;
 
         $response = $this->ipFilter->process($requestMock, $this->requestHandlerMock);
-        $this->assertEquals(403, $response->getStatusCode());
+
+        $this->assertSame(Status::FORBIDDEN, $response->getStatusCode());
     }
 
     public function testProcessCallsRequestHandlerWhenRemoteAddressIsAllowed(): void
     {
-        $requestParams = [
-            'REMOTE_ADDR' => self::ALLOWED_IP,
-        ];
         $requestMock = $this->createMock(ServerRequestInterface::class);
+
         $requestMock
             ->expects($this->once())
             ->method('getServerParams')
-            ->willReturn($requestParams);
+            ->willReturn(['REMOTE_ADDR' => self::ALLOWED_IP])
+        ;
 
         $this->requestHandlerMock
             ->expects($this->once())
             ->method('handle')
-            ->with($requestMock);
+            ->with($requestMock)
+            ->willReturn(new Response(Status::OK))
+        ;
 
-        $this->ipFilter->process($requestMock, $this->requestHandlerMock);
+        $response = $this->ipFilter->process($requestMock, $this->requestHandlerMock);
+
+        $this->assertSame(Status::OK, $response->getStatusCode());
     }
 
-    private function setUpResponseFactory(): void
+    public function testProcessCallsRequestHandlerWithSetClientIpAttribute(): void
     {
-        $response = new Response(Status::FORBIDDEN);
-        $this->responseFactoryMock
+        $requestMock = $this->createMock(ServerRequestInterface::class);
+        $attributeName = 'test';
+
+        $requestMock
             ->expects($this->once())
-            ->method('createResponse')
-            ->willReturn($response);
+            ->method('getAttribute')
+            ->with($attributeName)
+            ->willReturn(self::ALLOWED_IP)
+        ;
+
+        $this->requestHandlerMock
+            ->expects($this->once())
+            ->method('handle')
+            ->with($requestMock)
+            ->willReturn(new Response(Status::OK))
+        ;
+
+        $ipFilter = new IpFilter(Ip::rule()->ranges([self::ALLOWED_IP]), $this->responseFactoryMock, $attributeName);
+        $response = $ipFilter->process($requestMock, $this->requestHandlerMock);
+
+        $this->assertSame(Status::OK, $response->getStatusCode());
+    }
+
+    public function testImmutability(): void
+    {
+        $this->assertNotSame($this->ipFilter, $this->ipFilter->withIpValidator(Ip::rule()->ranges([self::ALLOWED_IP])));
     }
 }

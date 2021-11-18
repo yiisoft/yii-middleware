@@ -49,6 +49,99 @@ final class ForceSecureConnection implements MiddlewareInterface
         $this->responseFactory = $responseFactory;
     }
 
+    /**
+     * Returns a new instance and enables redirection from HTTP to HTTPS.
+     *
+     * @param int $statusCode The response status code of redirection.
+     * @param int|null $port The redirection port.
+     *
+     * @return self
+     */
+    public function withRedirection(int $statusCode = Status::MOVED_PERMANENTLY, int $port = null): self
+    {
+        $new = clone $this;
+        $new->redirect = true;
+        $new->port = $port;
+        $new->statusCode = $statusCode;
+        return $new;
+    }
+
+    /**
+     * Returns a new instance and disables redirection from HTTP to HTTPS.
+     *
+     * @see withRedirection()
+     *
+     * @return self
+     */
+    public function withoutRedirection(): self
+    {
+        $new = clone $this;
+        $new->redirect = false;
+        return $new;
+    }
+
+    /**
+     * Returns a new instance with added the `Content-Security-Policy` header to response.
+     *
+     * @param string $directives The directives {@see DEFAULT_CSP_DIRECTIVES}.
+     *
+     * @see Header::CONTENT_SECURITY_POLICY
+     *
+     * @return self
+     */
+    public function withCSP(string $directives = self::DEFAULT_CSP_DIRECTIVES): self
+    {
+        $new = clone $this;
+        $new->addCSP = true;
+        $new->cspDirectives = $directives;
+        return $new;
+    }
+
+    /**
+     * Returns a new instance without the `Content-Security-Policy` header in response.
+     *
+     * @see withCSP()
+     *
+     * @return self
+     */
+    public function withoutCSP(): self
+    {
+        $new = clone $this;
+        $new->addCSP = false;
+        return $new;
+    }
+
+    /**
+     * Returns a new instance with added the `Strict-Transport-Security` header to response.
+     *
+     * @param int $maxAge The max age {@see DEFAULT_HSTS_MAX_AGE}.
+     * @param bool $subDomains Whether to add the `includeSubDomains` option to the header value.
+     *
+     * @return self
+     */
+    public function withHSTS(int $maxAge = self::DEFAULT_HSTS_MAX_AGE, bool $subDomains = false): self
+    {
+        $new = clone $this;
+        $new->addHSTS = true;
+        $new->hstsMaxAge = $maxAge;
+        $new->hstsSubDomains = $subDomains;
+        return $new;
+    }
+
+    /**
+     * Returns a new instance without the `Strict-Transport-Security` header in response.
+     *
+     * @see withHSTS()
+     *
+     * @return self
+     */
+    public function withoutHSTS(): self
+    {
+        $new = clone $this;
+        $new->addHSTS = false;
+        return $new;
+    }
+
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         if ($this->redirect && strcasecmp($request->getUri()->getScheme(), 'http') === 0) {
@@ -62,80 +155,6 @@ final class ForceSecureConnection implements MiddlewareInterface
         }
 
         return $this->addHSTS($this->addCSP($handler->handle($request)));
-    }
-
-    /**
-     * Redirects from HTTP to HTTPS
-     *
-     * @param int $statusCode
-     * @param int|null $port
-     *
-     * @return self
-     */
-    public function withRedirection(int $statusCode = Status::MOVED_PERMANENTLY, int $port = null): self
-    {
-        $new = clone $this;
-        $new->redirect = true;
-        $new->port = $port;
-        $new->statusCode = $statusCode;
-        return $new;
-    }
-
-    public function withoutRedirection(): self
-    {
-        $new = clone $this;
-        $new->redirect = false;
-        return $new;
-    }
-
-    /**
-     * Add Content-Security-Policy header to response.
-     *
-     * @see Header::CONTENT_SECURITY_POLICY
-     *
-     * @param string $directives
-     *
-     * @return self
-     */
-    public function withCSP(string $directives = self::DEFAULT_CSP_DIRECTIVES): self
-    {
-        $new = clone $this;
-        $new->addCSP = true;
-        $new->cspDirectives = $directives;
-        return $new;
-    }
-
-    public function withoutCSP(): self
-    {
-        $new = clone $this;
-        $new->addCSP = false;
-        return $new;
-    }
-
-    /**
-     * Add Strict-Transport-Security header to each response.
-     *
-     * @see Header::STRICT_TRANSPORT_SECURITY
-     *
-     * @param int $maxAge
-     * @param bool $subDomains
-     *
-     * @return self
-     */
-    public function withHSTS(int $maxAge = self::DEFAULT_HSTS_MAX_AGE, bool $subDomains = false): self
-    {
-        $new = clone $this;
-        $new->addHSTS = true;
-        $new->hstsMaxAge = $maxAge;
-        $new->hstsSubDomains = $subDomains;
-        return $new;
-    }
-
-    public function withoutHSTS(): self
-    {
-        $new = clone $this;
-        $new->addHSTS = false;
-        return $new;
     }
 
     private function addCSP(ResponseInterface $response): ResponseInterface
