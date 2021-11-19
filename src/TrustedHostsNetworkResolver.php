@@ -127,21 +127,21 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             }
 
             if (!is_array($ipHeader)) {
-                throw new InvalidArgumentException('Type of ipHeader is not a string and not array.');
+                throw new InvalidArgumentException('Type of IP header is not a string and not array.');
             }
 
             if (count($ipHeader) !== 2) {
-                throw new InvalidArgumentException('The ipHeader array must have exactly 2 elements.');
+                throw new InvalidArgumentException('The IP header array must have exactly 2 elements.');
             }
 
             [$type, $header] = $ipHeader;
 
             if (!is_string($type)) {
-                throw new InvalidArgumentException('The type is not a string.');
+                throw new InvalidArgumentException('The IP header type is not a string.');
             }
 
             if (!is_string($header)) {
-                throw new InvalidArgumentException('The header is not a string.');
+                throw new InvalidArgumentException('The IP header value is not a string.');
             }
 
             if ($type === self::IP_HEADER_TYPE_RFC7239) {
@@ -151,7 +151,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             throw new InvalidArgumentException("Not supported IP header type: $type.");
         }
 
-        if (count($hosts) === 0) {
+        if ($hosts === []) {
             throw new InvalidArgumentException('Empty hosts not allowed.');
         }
 
@@ -168,7 +168,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             $host = str_replace('*', 'wildcard', $host); // wildcard is allowed in host
 
             if (filter_var($host, FILTER_VALIDATE_DOMAIN) === false) {
-                throw new InvalidArgumentException("'$host' host is not a domain and not an IP address");
+                throw new InvalidArgumentException("\"$host\" host is not a domain and not an IP address.");
             }
         }
 
@@ -468,7 +468,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
                 throw new RuntimeException('Accepted values is not an array nor callable.');
             }
 
-            if (count($protocolAndAcceptedValues) === 0) {
+            if ($protocolAndAcceptedValues === []) {
                 throw new RuntimeException('Accepted values cannot be an empty array.');
             }
 

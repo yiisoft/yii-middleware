@@ -129,6 +129,7 @@ final class ForceSecureConnectionTest extends TestCase
         $this->assertTrue($response->hasHeader(Header::LOCATION));
         $this->assertTrue($response->hasHeader(Header::STRICT_TRANSPORT_SECURITY));
         $this->assertFalse($response->hasHeader(Header::CONTENT_SECURITY_POLICY));
+        $this->assertSame('max-age=31536000', $response->getHeaderLine(Header::STRICT_TRANSPORT_SECURITY));
     }
 
     public function testWithoutRedirection(): void
