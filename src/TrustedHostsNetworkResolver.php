@@ -151,7 +151,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             throw new InvalidArgumentException("Not supported IP header type: $type.");
         }
 
-        if (empty($hosts)) {
+        if ($hosts === []) {
             throw new InvalidArgumentException('Empty hosts not allowed.');
         }
 
@@ -468,7 +468,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
                 throw new RuntimeException('Accepted values is not an array nor callable.');
             }
 
-            if (empty($protocolAndAcceptedValues)) {
+            if ($protocolAndAcceptedValues === []) {
                 throw new RuntimeException('Accepted values cannot be an empty array.');
             }
 
