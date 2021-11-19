@@ -8,6 +8,8 @@ use InvalidArgumentException;
 use HttpSoft\Message\ServerRequest;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
+use RuntimeException;
+use Yiisoft\Http\Status;
 use Yiisoft\Validator\Rule\Ip;
 use Yiisoft\Yii\Middleware\TrustedHostsNetworkResolver;
 use Yiisoft\Yii\Middleware\Tests\TestAsset\MockRequestHandler;
@@ -164,8 +166,8 @@ final class TrustedHostsNetworkResolverTest extends TestCase
     ): void {
         $request = $this->createRequestWithSchemaAndHeaders('http', $headers, $serverParams);
         $requestHandler = new MockRequestHandler();
-
         $middleware = new TrustedHostsNetworkResolver();
+
         foreach ($trustedHosts as $data) {
             $middleware = $middleware->withAddedTrustedHosts(
                 $data['hosts'],
@@ -177,12 +179,15 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 $data['trustedHeaders'] ?? null
             );
         }
+
         $response = $middleware->process($request, $requestHandler);
-        $this->assertSame(200, $response->getStatusCode());
-        $this->assertSame($expectedClientIp, $requestHandler->processedRequest->getAttribute('requestClientIp'));
+
         if ($expectedHttpHost !== null) {
             $this->assertSame($expectedHttpHost, $requestHandler->processedRequest->getUri()->getHost());
         }
+
+        $this->assertSame(Status::OK, $response->getStatusCode());
+        $this->assertSame($expectedClientIp, $requestHandler->processedRequest->getAttribute('requestClientIp'));
         $this->assertSame($expectedHttpScheme, $requestHandler->processedRequest->getUri()->getScheme());
         $this->assertSame($expectedPath, $requestHandler->processedRequest->getUri()->getPath());
         $this->assertSame($expectedQuery, $requestHandler->processedRequest->getUri()->getQuery());
@@ -237,26 +242,74 @@ final class TrustedHostsNetworkResolverTest extends TestCase
     public function addedTrustedHostsInvalidParameterDataProvider(): array
     {
         return [
-            'hostsEmpty' => ['hosts' => []],
-            'hostsEmptyString' => ['hosts' => ['']],
-            'hostsNumeric' => ['hosts' => [888]],
-            'hostsSpaces' => ['hosts' => ['    ']],
-            'hostsNotDomain' => ['host' => ['-apple']],
-            'urlHeadersEmpty' => ['urlHeaders' => ['']],
-            'urlHeadersNumeric' => ['urlHeaders' => [888]],
-            'urlHeadersSpaces' => ['urlHeaders' => ['   ']],
-            'trustedHeadersEmpty' => ['trustedHeaders' => ['']],
-            'trustedHeadersNumeric' => ['trustedHeaders' => [888]],
-            'trustedHeadersSpaces' => ['trustedHeaders' => ['   ']],
-            'protocolHeadersNumeric' => ['protocolHeaders' => ['http' => 888]],
-            'ipHeadersEmptyString' => ['ipHeaders' => [' ']],
-            'ipHeadersNumeric' => ['ipHeaders' => [888]],
-            'ipHeadersInvalidType' => ['ipHeaders' => [['---', 'aaa']]],
-            'ipHeadersInvalidTypeValue' => [
-                'ipHeaders' => [
-                    [
-                        TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239,
-                        888,
+            'hostsEmpty' => [['hosts' => []]],
+            'hostsEmptyString' => [['hosts' => ['']]],
+            'hostsNumeric' => [['hosts' => [888]]],
+            'hostsSpaces' => [['hosts' => ['    ']]],
+            'hostsNotDomain' => [['hosts' => ['11111111111111111111111111111111111111111111111111111111111111111111']]],
+            'urlHeadersEmpty' => [['urlHeaders' => ['']]],
+            'urlHeadersNumeric' => [['urlHeaders' => [888]]],
+            'urlHeadersSpaces' => [['urlHeaders' => ['   ']]],
+            'trustedHeadersEmpty' => [['trustedHeaders' => ['']]],
+            'trustedHeadersNumeric' => [['trustedHeaders' => [888]]],
+            'trustedHeadersSpaces' => [['trustedHeaders' => ['   ']]],
+            'protocolHeadersEmptyArray' => [
+                [
+                    'hosts' => ['127.0.0.1'],
+                    'protocolHeaders' => ['x-forwarded-proto' => []],
+                ],
+                true,
+            ],
+            'protocolHeadersNumeric' => [
+                [
+                    'hosts' => ['127.0.0.1'],
+                    'protocolHeaders' => ['x-forwarded-proto' => 888],
+                ],
+                true,
+            ],
+            'protocolHeadersKeyItemNumeric' => [
+                [
+                    'hosts' => ['127.0.0.1'],
+                    'protocolHeaders' => ['x-forwarded-proto' => [888 => 'http']],
+                ],
+                true,
+            ],
+            'protocolHeadersKeyItemEmptyString' => [
+                [
+                    'hosts' => ['127.0.0.1'],
+                    'protocolHeaders' => ['x-forwarded-proto' => ['' => 'http']],
+                ],
+                true,
+            ],
+            'ipHeadersEmptyString' => [['ipHeaders' => [' ']]],
+            'ipHeadersNumeric' => [['ipHeaders' => [888]]],
+            'ipHeadersNotSupportedIpHeaderType' => [['ipHeaders' => [['---', 'aaa']]]],
+            'ipHeadersInvalidIpHeaderType' => [
+                [
+                    'ipHeaders' => [
+                        [
+                            888,
+                            'aaa',
+                        ],
+                    ],
+                ],
+            ],
+            'ipHeadersInvalidIpHeaderValue' => [
+                [
+                    'ipHeaders' => [
+                        [
+                            TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239,
+                            888,
+                        ],
+                    ],
+                ],
+            ],
+            'ipHeadersOnlyIpHeaderTypeWithoutIpHeaderValue' => [
+                [
+                    'ipHeaders' => [
+                        [
+                            TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239,
+                        ],
                     ],
                 ],
             ],
@@ -266,9 +319,9 @@ final class TrustedHostsNetworkResolverTest extends TestCase
     /**
      * @dataProvider addedTrustedHostsInvalidParameterDataProvider
      */
-    public function testAddedTrustedHostsInvalidParameter(array $data): void
+    public function testAddedTrustedHostsInvalidParameter(array $data, bool $isRuntimeException = false): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException($isRuntimeException ? RuntimeException::class : InvalidArgumentException::class);
 
         (new TrustedHostsNetworkResolver())
             ->withAddedTrustedHosts(
@@ -280,6 +333,26 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 $data['portHeaders'] ?? [],
                 $data['trustedHeaders'] ?? null
             );
+    }
+
+    public function testProcessWithAttributeIpsAndWithoutActualHost(): void
+    {
+        $request = $this->createRequestWithSchemaAndHeaders();
+        $requestHandler = new MockRequestHandler();
+        $response = (new TrustedHostsNetworkResolver())->withAttributeIps('ip')->process($request, $requestHandler);
+
+        $this->assertSame(Status::OK, $response->getStatusCode());
+        $this->assertSame('', $requestHandler->processedRequest->getUri()->getHost());
+        $this->assertNull($requestHandler->processedRequest->getAttribute('ip', 'default'));
+        $this->assertNull($requestHandler->processedRequest->getAttribute('requestClientIp', 'default'));
+
+    }
+
+    public function testAttributeIpsInvalidWhenEmptyString(): void
+    {
+        $this->expectException(RuntimeException::class);
+
+        (new TrustedHostsNetworkResolver())->withAttributeIps('');
     }
 
     public function testImmutability(): void
