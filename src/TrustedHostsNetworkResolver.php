@@ -41,21 +41,21 @@ use function trim;
  * ->withAddedTrustedHosts(
  *   // List of secure hosts including $_SERVER['REMOTE_ADDR'], can specify IPv4, IPv6, domains and aliases {@see Ip}.
  *   ['1.1.1.1', '2.2.2.1/3', '2001::/32', 'localhost'].
- *   // IP list headers. For advanced handling headers, see the constants IP_HEADER_TYPE_ *.
- *   // Headers containing multiple sub-elements (eg RFC 7239) must also be listed for other relevant types
- *   // (eg. host headers), otherwise they will only be used as an IP list.
+ *   // IP list headers. For advanced handling headers {@see TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239}.
+ *   // Headers containing multiple sub-elements (e.g. RFC 7239) must also be listed for other relevant types
+ *   // (e.g. host headers), otherwise they will only be used as an IP list.
  *   ['x-forwarded-for', [TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded']]
- *   // protocol headers with accepted protocols and values. Matching of values ​​is case insensitive.
+ *   // Protocol headers with accepted protocols and values. Matching of values is case-insensitive.
  *   ['front-end-https' => ['https' => 'on']],
  *   // Host headers
  *   ['forwarded', 'x-forwarded-for']
  *   // URL headers
  *   ['x-rewrite-url'],
+ *   // Port headers
+ *   ['x-rewrite-port'],
  *   // Trusted headers. It is a good idea to list all relevant headers.
- *   ['x-forwarded-for', 'forwarded', ...]
- * )
- * ->withAddedTrustedHosts(...)
- * ;
+ *   ['x-forwarded-for', 'forwarded', ...],
+ * );
  * ```
  */
 class TrustedHostsNetworkResolver implements MiddlewareInterface
@@ -93,13 +93,13 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
      * Returns a new instance with the added trusted hosts and related headers.
      *
      * The header lists are evaluated in the order they were specified.
-     * If you specify multiple headers by type (eg IP headers), you must ensure that the irrelevant header is removed
-     * eg. web server application, otherwise spoof clients can be use this vulnerability.
+     * If you specify multiple headers by type (e.g. IP headers), you must ensure that the irrelevant header is removed
+     * e.g. web server application, otherwise spoof clients can be use this vulnerability.
      *
      * @param string[] $hosts List of trusted hosts IP addresses. If {@see isValidHost()} method is extended,
-     * then can use domain names with reverse DNS resolving eg. yiiframework.com, * .yiiframework.com.
+     * then can use domain names with reverse DNS resolving e.g. yiiframework.com, * .yiiframework.com.
      * @param array $ipHeaders List of headers containing IP lists.
-     * @param array $protocolHeaders List of headers containing protocol. eg.
+     * @param array $protocolHeaders List of headers containing protocol. e.g.
      * ['x-forwarded-for' => ['http' => 'http', 'https' => ['on', 'https']]].
      * @param string[] $hostHeaders List of headers containing HTTP host.
      * @param string[] $urlHeaders List of headers containing HTTP URL.
@@ -199,8 +199,6 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
     /**
      * Returns a new instance with the specified request's attribute name to which trusted path data is added.
-     *
-     * The list starts with the server and the last item is the client itself.
      *
      * @param string|null $attribute The request attribute name.
      *
@@ -404,7 +402,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
     /**
      * Validate host by range.
      *
-     * This method can be extendable by overwriting eg. with reverse DNS verification.
+     * This method can be extendable by overwriting e.g. with reverse DNS verification.
      */
     protected function isValidHost(string $host, array $ranges, Ip $validator): bool
     {
@@ -532,7 +530,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
     }
 
     /**
-     * Forwarded elements by RFC7239
+     * Forwarded elements by RFC7239.
      *
      * The structure of the elements:
      * - `host`: IP or obfuscated hostname or "unknown"
@@ -542,9 +540,11 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
      * - `protocol`: protocol received by proxy (only if presented)
      * - `httpHost`: HTTP host received by proxy (only if presented)
      *
+     * The list starts with the server and the last item is the client itself.
+     *
      * @link https://tools.ietf.org/html/rfc7239
      *
-     * @return array proxy data elements
+     * @return array Proxy data elements.
      */
     private function getElementsByRfc7239(array $forwards): array
     {

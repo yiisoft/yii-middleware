@@ -19,9 +19,7 @@ use function strtolower;
 /**
  * Basic network resolver updates an instance of server request with protocol from special headers.
  *
- * It can be used in the following cases:
- * - not required IP resolve to access the user's IP
- * - user's IP is already resolved (eg `ngx_http_realip_module` or similar)
+ * It can be used in if your server is behind a trusted load balancer or a proxy that is setting a special header.
  */
 final class BasicNetworkResolver implements MiddlewareInterface
 {
@@ -36,8 +34,8 @@ final class BasicNetworkResolver implements MiddlewareInterface
     private array $protocolHeaders = [];
 
     /**
-     * Returns a new instance with added the specified protocol header to check for
-     * determining whether the connection is made via HTTP or HTTPS (or any protocol).
+     * Returns a new instance with added the specified protocol header to check
+     * whether the connection is made via HTTP or HTTPS (or any protocol).
      *
      * The match of header names and values is case-insensitive.
      * It's not advisable to put insecure/untrusted headers here.
@@ -56,6 +54,7 @@ final class BasicNetworkResolver implements MiddlewareInterface
      * ```
      * - array: The array keys are protocol string and the array value is a list of header values that
      * indicate the protocol.
+     *
      * ```php
      * ->withProtocolHeader('x-forwarded-proto', [
      *     'http' => ['http'],
