@@ -40,10 +40,7 @@ middleware and do not interact with each other in any way.
 
 Updates an instance of server request with protocol from special headers.
 
-It can be used in the following cases:
-
-- not required IP resolve to access the user's IP
-- user's IP is already resolved (eg `ngx_http_realip_module` or similar)
+It can be used in if your server is behind a trusted load balancer or a proxy that is setting a special header.
 
 ```php
 use Yiisoft\Yii\Middleware\BasicNetworkResolver;
