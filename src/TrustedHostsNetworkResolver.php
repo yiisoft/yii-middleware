@@ -14,6 +14,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 use RuntimeException;
 use Yiisoft\Http\HeaderValueHelper;
 use Yiisoft\NetworkUtilities\IpHelper;
+use Yiisoft\Validator\Result;
 use Yiisoft\Validator\Rule\Ip\Ip;
 use Yiisoft\Validator\ValidatorInterface;
 use function array_diff;
@@ -233,7 +234,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
         $trustedHostData = null;
         $trustedHeaders = [];
-        $validator = function ($value, array $ranges) {
+        $validator = function (string $value, array $ranges): Result {
             return $this->validator->validate(
                 $value,
                 [new Ip(allowNegation: false, allowSubnet: false, ranges: $ranges)]
