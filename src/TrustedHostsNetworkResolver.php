@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Yiisoft\Yii\Middleware;
 
 use InvalidArgumentException;
+use PhpParser\Node\Expr\Closure;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -14,6 +15,7 @@ use RuntimeException;
 use Yiisoft\Http\HeaderValueHelper;
 use Yiisoft\NetworkUtilities\IpHelper;
 use Yiisoft\Validator\Rule\Ip\Ip;
+use Yiisoft\Validator\ValidatorInterface;
 use function array_diff;
 use function array_pad;
 use function array_reverse;
@@ -86,7 +88,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
     private array $trustedHosts = [];
     private ?string $attributeIps = null;
-    private ?Ip $ipValidator = null;
+    private ?ValidatorInterface $validator = null;
 
     /**
      * Returns a new instance with the added trusted hosts and related headers.
@@ -219,14 +221,14 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
     /**
      * Returns a new instance with the specified client IP validator.
      *
-     * @param Ip $ipValidator Client IP validator.
+     * @param Ip $validator Client IP validator.
      *
      * @return self
      */
-    public function withIpValidator(Ip $ipValidator): self
+    public function withValidator(ValidatorInterface $validator): self
     {
         $new = clone $this;
-        $new->ipValidator = $ipValidator;
+        $new->validator = $validator;
         return $new;
     }
 
@@ -241,7 +243,12 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
         $trustedHostData = null;
         $trustedHeaders = [];
-        $ipValidator = ($this->ipValidator ?? Ip::rule())->disallowSubnet()->disallowNegation();
+        $validator = function ($value, array $ranges) {
+            return $this->validator->validate(
+                $value,
+                [new Ip(allowNegation: false, allowSubnet: false, ranges: $ranges)]
+            );
+        };
 
         foreach ($this->trustedHosts as $data) {
             // collect all trusted headers
@@ -252,7 +259,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
                 continue;
             }
 
-            if ($this->isValidHost($actualHost, $data[self::DATA_KEY_HOSTS], $ipValidator)) {
+            if ($this->isValidHost($actualHost, $data[self::DATA_KEY_HOSTS], $validator)) {
                 $trustedHostData = $data;
             }
         }
@@ -294,14 +301,14 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
             $ip = $hostData['ip'];
 
-            if (!$this->isValidHost($ip, ['any'], $ipValidator)) {
+            if (!$this->isValidHost($ip, ['any'], $validator)) {
                 // invalid IP
                 break;
             }
 
             $hostDataList[] = $hostData;
 
-            if (!$this->isValidHost($ip, $trustedHostData[self::DATA_KEY_HOSTS], $ipValidator)) {
+            if (!$this->isValidHost($ip, $trustedHostData[self::DATA_KEY_HOSTS], $validator)) {
                 // not trusted host
                 break;
             }
@@ -403,9 +410,9 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
      *
      * This method can be extendable by overwriting e.g. with reverse DNS verification.
      */
-    protected function isValidHost(string $host, array $ranges, Ip $validator): bool
+    protected function isValidHost(string $host, array $ranges, \Closure $validator): bool
     {
-        return $validator->ranges($ranges)->validate($host)->isValid();
+        return $validator($host,$ranges)->isValid();
     }
 
     /**

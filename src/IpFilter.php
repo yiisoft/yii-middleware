@@ -11,18 +11,19 @@ use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Yiisoft\Http\Status;
 use Yiisoft\Validator\Rule\Ip\Ip;
+use Yiisoft\Validator\ValidatorInterface;
 
 /**
  * IpFilter validates the IP received in the request.
  */
 final class IpFilter implements MiddlewareInterface
 {
-    private Ip $ipValidator;
+    private ValidatorInterface $validator;
     private ResponseFactoryInterface $responseFactory;
     private ?string $clientIpAttribute;
 
     /**
-     * @param Ip $ipValidator Client IP validator. The properties of the validator
+     * @param Ip $validator Client IP validator. The properties of the validator
      * can be modified up to the moment of processing.
      * @param ResponseFactoryInterface $responseFactory The response factory instance.
      * @param string|null $clientIpAttribute Attribute name of client IP. If `null`, then `REMOTE_ADDR` value
@@ -30,11 +31,11 @@ final class IpFilter implements MiddlewareInterface
      * must have a value, otherwise the request will closed with forbidden.
      */
     public function __construct(
-        Ip $ipValidator,
+        ValidatorInterface $validator,
         ResponseFactoryInterface $responseFactory,
         string $clientIpAttribute = null
     ) {
-        $this->ipValidator = $ipValidator;
+        $this->validator = $validator;
         $this->responseFactory = $responseFactory;
         $this->clientIpAttribute = $clientIpAttribute;
     }
@@ -42,15 +43,15 @@ final class IpFilter implements MiddlewareInterface
     /**
      * Returns a new instance with the specified client IP validator.
      *
-     * @param Ip $ipValidator Client IP validator. The properties of the validator
+     * @param Ip $validator Client IP validator. The properties of the validator
      * can be modified up to the moment of processing.
      *
      * @return self
      */
-    public function withIpValidator(Ip $ipValidator): self
+    public function withValidator(ValidatorInterface $validator): self
     {
         $new = clone $this;
-        $new->ipValidator = $ipValidator;
+        $new->validator = $validator;
         return $new;
     }
 
@@ -64,7 +65,7 @@ final class IpFilter implements MiddlewareInterface
 
         if (
             $clientIp === null
-            || !$this->ipValidator->disallowNegation()->disallowSubnet()->validate($clientIp)->isValid()
+            || !$this->validator->validate($clientIp, [new Ip(allowNegation: false, allowSubnet: false)])->isValid()
         ) {
             $response = $this->responseFactory->createResponse(Status::FORBIDDEN);
             $response->getBody()->write(Status::TEXTS[Status::FORBIDDEN]);

@@ -162,7 +162,7 @@ use Yiisoft\Yii\Middleware\IpFilter;
  * @var Psr\Http\Message\ResponseFactoryInterface $responseFactory
  * @var Psr\Http\Message\ServerRequestInterface $request
  * @var Psr\Http\Server\RequestHandlerInterface $handler
- * @var Yiisoft\Validator\Rule\Ip $ipValidator
+ * @var Yiisoft\Validator\Rule\ValidatorInterface $validator
  */
 
 // Name of the client IP address request attribute:
@@ -170,10 +170,10 @@ $clientIpAttribute = 'client-ip';
 // If `null`, then `REMOTE_ADDR` value of the server parameters is processed. If the value is not `null`,
 // then the attribute specified must have a value, otherwise the request will be closed with forbidden.
 
-$middleware = new IpFilter($ipValidator, $responseFactory, $clientIpAttribute);
+$middleware = new IpFilter($validator, $responseFactory, $clientIpAttribute);
 
 // Change client IP validator:
-$middleware = $middleware->withIpValidator($ipValidator);
+$middleware = $middleware->withValidator($validator);
 
 $response = $middleware->process($request, $handler);
 ```
@@ -301,6 +301,10 @@ $response = $middleware->process($request, $handler);
 Additionally, you can specify the following options:
 
 ```php
+use Yiisoft\Yii\Middleware\TrustedHostsNetworkResolver;
+
+$middleware = new TrustedHostsNetworkResolver();
+
 /**
  * Specify request attribute name to which trusted path data is added.
  * 
@@ -311,9 +315,9 @@ $middleware = $middleware->withAttributeIps($attribute);
 /**
  * Specify client IP validator.
  * 
- * @var Yiisoft\Validator\Rule\Ip $ipValidator
+ * @var Yiisoft\Validator\ValidatorInterface $validator
  */
-$middleware = $middleware->withIpValidator($ipValidator);
+$middleware = $middleware->withValidator($validator);
 ```
 
 ## Testing

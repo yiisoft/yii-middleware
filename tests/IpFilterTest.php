@@ -11,7 +11,9 @@ use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Yiisoft\Http\Status;
+use Yiisoft\Test\Support\Container\SimpleContainer;
 use Yiisoft\Validator\Rule\Ip\Ip;
+use Yiisoft\Validator\Validator;
 use Yiisoft\Yii\Middleware\IpFilter;
 
 final class IpFilterTest extends TestCase
@@ -116,6 +118,6 @@ final class IpFilterTest extends TestCase
 
     public function testImmutability(): void
     {
-        $this->assertNotSame($this->ipFilter, $this->ipFilter->withIpValidator(new Ip(ranges: [self::ALLOWED_IP])));
+        $this->assertNotSame($this->ipFilter, $this->ipFilter->withValidator(new Validator(new SimpleContainer([]))));
     }
 }
