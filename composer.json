@@ -40,7 +40,7 @@
         "yiisoft/http": "^1.2",
         "yiisoft/network-utilities": "^1.0",
         "yiisoft/router": "^1.0",
-        "yiisoft/validator": "^3.0@dev"
+        "yiisoft/validator": "dev-refactoring-v2"
     },
     "require-dev": {
         "httpsoft/http-message": "^1.0",
