@@ -266,14 +266,11 @@ The header lists are evaluated in the order they were specified. If you specify 
 otherwise spoof clients can be use this vulnerability.
 
 ```php
-use Yiisoft\Yii\Middleware\TrustedHostsNetworkResolver;
-
 /**
  * @var Psr\Http\Message\ServerRequestInterface $request
  * @var Psr\Http\Server\RequestHandlerInterface $handler
+ * @var Yiisoft\Yii\Middleware\TrustedHostsNetworkResolver $middleware
  */
-
-$middleware = new TrustedHostsNetworkResolver();
 
 $middleware = $middleware->withAddedTrustedHosts(
     // List of secure hosts including `$_SERVER['REMOTE_ADDR']`, can specify IPv4, IPv6, domains and aliases.
@@ -301,13 +298,10 @@ $response = $middleware->process($request, $handler);
 Additionally, you can specify the following options:
 
 ```php
-use Yiisoft\Yii\Middleware\TrustedHostsNetworkResolver;
-
-$middleware = new TrustedHostsNetworkResolver();
-
 /**
  * Specify request attribute name to which trusted path data is added.
  * 
+ * @var Yiisoft\Yii\Middleware\TrustedHostsNetworkResolver $middleware
  * @var string|null $attribute
  */
 $middleware = $middleware->withAttributeIps($attribute);

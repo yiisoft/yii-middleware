@@ -12,6 +12,7 @@ use RuntimeException;
 use Yiisoft\Http\Status;
 use Yiisoft\Test\Support\Container\SimpleContainer;
 use Yiisoft\Validator\Rule\Ip\Ip;
+use Yiisoft\Validator\Rule\Ip\IpValidator;
 use Yiisoft\Validator\Validator;
 use Yiisoft\Yii\Middleware\TrustedHostsNetworkResolver;
 use Yiisoft\Yii\Middleware\Tests\TestAsset\MockRequestHandler;
@@ -168,7 +169,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
     ): void {
         $request = $this->createRequestWithSchemaAndHeaders('http', $headers, $serverParams);
         $requestHandler = new MockRequestHandler();
-        $middleware = new TrustedHostsNetworkResolver();
+        $middleware = $this->createTrustedHostsNetworkResolver();
 
         foreach ($trustedHosts as $data) {
             $middleware = $middleware->withAddedTrustedHosts(
@@ -224,7 +225,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
     {
         $request = $this->createRequestWithSchemaAndHeaders('http', $headers, $serverParams);
         $requestHandler = new MockRequestHandler();
-        $middleware = new TrustedHostsNetworkResolver();
+        $middleware = $this->createTrustedHostsNetworkResolver();
 
         foreach ($trustedHosts as $data) {
             $middleware = $middleware->withAddedTrustedHosts(
@@ -325,7 +326,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
     {
         $this->expectException($isRuntimeException ? RuntimeException::class : InvalidArgumentException::class);
 
-        (new TrustedHostsNetworkResolver())
+        ($this->createTrustedHostsNetworkResolver())
             ->withAddedTrustedHosts(
                 $data['hosts'] ?? [],
                 $data['ipHeaders'] ?? [],
@@ -341,7 +342,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
     {
         $request = $this->createRequestWithSchemaAndHeaders();
         $requestHandler = new MockRequestHandler();
-        $response = (new TrustedHostsNetworkResolver())->withAttributeIps('ip')->process($request, $requestHandler);
+        $response = ($this->createTrustedHostsNetworkResolver())->withAttributeIps('ip')->process($request, $requestHandler);
 
         $this->assertSame(Status::OK, $response->getStatusCode());
         $this->assertSame('', $requestHandler->processedRequest->getUri()->getHost());
@@ -354,18 +355,17 @@ final class TrustedHostsNetworkResolverTest extends TestCase
     {
         $this->expectException(RuntimeException::class);
 
-        (new TrustedHostsNetworkResolver())->withAttributeIps('');
+        ($this->createTrustedHostsNetworkResolver())->withAttributeIps('');
     }
 
     public function testImmutability(): void
     {
-        $middleware = new TrustedHostsNetworkResolver();
+        $middleware = $this->createTrustedHostsNetworkResolver();
 
         $this->assertNotSame($middleware, $middleware->withAddedTrustedHosts(['8.8.8.8']));
         $this->assertNotSame($middleware, $middleware->withoutTrustedHosts());
         $this->assertNotSame($middleware, $middleware->withAttributeIps('test'));
         $this->assertNotSame($middleware, $middleware->withAttributeIps(null));
-        $this->assertNotSame($middleware, $middleware->withValidator(new Validator(new SimpleContainer([]))));
     }
 
     private function createRequestWithSchemaAndHeaders(
@@ -381,5 +381,14 @@ final class TrustedHostsNetworkResolverTest extends TestCase
 
         $uri = $request->getUri()->withScheme($scheme)->withPath('/');
         return $request->withUri($uri);
+    }
+
+    private function createTrustedHostsNetworkResolver(): TrustedHostsNetworkResolver
+    {
+        return new TrustedHostsNetworkResolver(
+            new Validator(new SimpleContainer([
+                IpValidator::class => new IpValidator(),
+            ]))
+        );
     }
 }

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Yiisoft\Yii\Middleware;
 
+use Closure;
 use InvalidArgumentException;
-use PhpParser\Node\Expr\Closure;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -38,8 +38,7 @@ use function trim;
  * Trusted hosts network resolver.
  *
  * ```php
- * (new TrustedHostsNetworkResolver($responseFactory))
- * ->withAddedTrustedHosts(
+ * $trustedHostsNetworkResolver->withAddedTrustedHosts(
  *   // List of secure hosts including $_SERVER['REMOTE_ADDR'], can specify IPv4, IPv6, domains and aliases {@see Ip}.
  *   ['1.1.1.1', '2.2.2.1/3', '2001::/32', 'localhost'].
  *   // IP list headers. For advanced handling headers {@see TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239}.
@@ -88,7 +87,12 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
     private array $trustedHosts = [];
     private ?string $attributeIps = null;
-    private ?ValidatorInterface $validator = null;
+    private ValidatorInterface $validator;
+
+    public function __construct(ValidatorInterface $validator)
+    {
+        $this->validator = $validator;
+    }
 
     /**
      * Returns a new instance with the added trusted hosts and related headers.
@@ -215,20 +219,6 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
         $new = clone $this;
         $new->attributeIps = $attribute;
-        return $new;
-    }
-
-    /**
-     * Returns a new instance with the specified client IP validator.
-     *
-     * @param Ip $validator Client IP validator.
-     *
-     * @return self
-     */
-    public function withValidator(ValidatorInterface $validator): self
-    {
-        $new = clone $this;
-        $new->validator = $validator;
         return $new;
     }
 
@@ -410,7 +400,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
      *
      * This method can be extendable by overwriting e.g. with reverse DNS verification.
      */
-    protected function isValidHost(string $host, array $ranges, \Closure $validator): bool
+    protected function isValidHost(string $host, array $ranges, Closure $validator): bool
     {
         return $validator($host,$ranges)->isValid();
     }
