@@ -11,7 +11,7 @@ use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Yiisoft\Http\Status;
-use Yiisoft\Validator\Rule\Ip;
+use Yiisoft\Validator\Rule\Ip\Ip;
 use Yiisoft\Yii\Middleware\IpFilter;
 
 final class IpFilterTest extends TestCase
@@ -27,7 +27,7 @@ final class IpFilterTest extends TestCase
         parent::setUp();
         $this->responseFactoryMock = $this->createMock(ResponseFactoryInterface::class);
         $this->requestHandlerMock = $this->createMock(RequestHandlerInterface::class);
-        $this->ipFilter = new IpFilter(Ip::rule()->ranges([self::ALLOWED_IP]), $this->responseFactoryMock);
+        $this->ipFilter = new IpFilter(new Ip(ranges: [self::ALLOWED_IP]), $this->responseFactoryMock);
     }
 
     public function ipNotAllowedDataProvider(): array
@@ -108,7 +108,7 @@ final class IpFilterTest extends TestCase
             ->willReturn(new Response(Status::OK))
         ;
 
-        $ipFilter = new IpFilter(Ip::rule()->ranges([self::ALLOWED_IP]), $this->responseFactoryMock, $attributeName);
+        $ipFilter = new IpFilter(new Ip(ranges: [self::ALLOWED_IP]), $this->responseFactoryMock, $attributeName);
         $response = $ipFilter->process($requestMock, $this->requestHandlerMock);
 
         $this->assertSame(Status::OK, $response->getStatusCode());
@@ -116,6 +116,6 @@ final class IpFilterTest extends TestCase
 
     public function testImmutability(): void
     {
-        $this->assertNotSame($this->ipFilter, $this->ipFilter->withIpValidator(Ip::rule()->ranges([self::ALLOWED_IP])));
+        $this->assertNotSame($this->ipFilter, $this->ipFilter->withIpValidator(new Ip(ranges: [self::ALLOWED_IP])));
     }
 }
