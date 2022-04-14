@@ -10,7 +10,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Yiisoft\Http\Status;
-use Yiisoft\Validator\Rule\Ip;
+use Yiisoft\Validator\Rule\Ip\Ip;
 
 /**
  * IpFilter validates the IP received in the request.
