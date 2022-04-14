@@ -29,7 +29,7 @@ final class IpFilterTest extends TestCase
         parent::setUp();
         $this->responseFactoryMock = $this->createMock(ResponseFactoryInterface::class);
         $this->requestHandlerMock = $this->createMock(RequestHandlerInterface::class);
-        $this->ipFilter = new IpFilter($this->createValidator(), $this->responseFactoryMock);
+        $this->ipFilter = new IpFilter($this->createValidator(), $this->responseFactoryMock, null, [self::ALLOWED_IP]);
     }
 
     public function ipNotAllowedDataProvider(): array
@@ -42,6 +42,7 @@ final class IpFilterTest extends TestCase
 
     /**
      * @dataProvider ipNotAllowedDataProvider
+     * @group t
      */
     public function testProcessReturnsAccessDeniedResponseWhenIpIsNotAllowed(array $serverParams): void
     {
@@ -110,15 +111,10 @@ final class IpFilterTest extends TestCase
             ->willReturn(new Response(Status::OK))
         ;
 
-        $ipFilter = new IpFilter($this->createValidator(), $this->responseFactoryMock, $attributeName);
+        $ipFilter = new IpFilter($this->createValidator(), $this->responseFactoryMock, $attributeName, [self::ALLOWED_IP]);
         $response = $ipFilter->process($requestMock, $this->requestHandlerMock);
 
         $this->assertSame(Status::OK, $response->getStatusCode());
-    }
-
-    public function testImmutability(): void
-    {
-        $this->assertNotSame($this->ipFilter, $this->ipFilter->withValidator(new Validator(new SimpleContainer([]))));
     }
 
     protected function createValidator(): Validator
