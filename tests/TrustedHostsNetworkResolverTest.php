@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
 use Yiisoft\Http\Status;
-use Yiisoft\Validator\Rule\Ip;
+use Yiisoft\Validator\Rule\Ip\Ip;
 use Yiisoft\Yii\Middleware\TrustedHostsNetworkResolver;
 use Yiisoft\Yii\Middleware\Tests\TestAsset\MockRequestHandler;
 
@@ -363,7 +363,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
         $this->assertNotSame($middleware, $middleware->withoutTrustedHosts());
         $this->assertNotSame($middleware, $middleware->withAttributeIps('test'));
         $this->assertNotSame($middleware, $middleware->withAttributeIps(null));
-        $this->assertNotSame($middleware, $middleware->withIpValidator(Ip::rule()));
+        $this->assertNotSame($middleware, $middleware->withIpValidator(new Ip()));
     }
 
     private function createRequestWithSchemaAndHeaders(
