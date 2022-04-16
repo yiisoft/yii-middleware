@@ -13,7 +13,7 @@ use Yiisoft\Http\Status;
 use Yiisoft\Test\Support\Container\SimpleContainer;
 use Yiisoft\Validator\Rule\Ip\Ip;
 use Yiisoft\Validator\Rule\Ip\IpHandler;
-use Yiisoft\Validator\Tests\Stub\StaticRuleHandlerResolver;
+use Yiisoft\Validator\StaticRuleHandlerResolver;
 use Yiisoft\Validator\Validator;
 use Yiisoft\Yii\Middleware\TrustedHostsNetworkResolver;
 use Yiisoft\Yii\Middleware\Tests\TestAsset\MockRequestHandler;
