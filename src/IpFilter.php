@@ -51,8 +51,6 @@ final class IpFilter implements MiddlewareInterface
 
         $serverParams = $request->getServerParams();
         $clientIp ??= $serverParams['REMOTE_ADDR'] ?? null;
-//        var_dump($clientIp, $serverParams);
-//        exit();
 
         $result = $this->validator->validate(
             $clientIp,
