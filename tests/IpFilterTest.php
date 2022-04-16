@@ -12,7 +12,8 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Yiisoft\Http\Status;
 use Yiisoft\Test\Support\Container\SimpleContainer;
-use Yiisoft\Validator\Rule\Ip\IpValidator;
+use Yiisoft\Validator\Rule\Ip\IpHandler;
+use Yiisoft\Validator\Tests\Stub\StaticRuleHandlerResolver;
 use Yiisoft\Validator\Validator;
 use Yiisoft\Yii\Middleware\IpFilter;
 
@@ -119,8 +120,8 @@ final class IpFilterTest extends TestCase
 
     protected function createValidator(): Validator
     {
-        return new Validator(new SimpleContainer([
-            IpValidator::class => new IpValidator(),
+        return new Validator(new StaticRuleHandlerResolver([
+            IpHandler::class => new IpHandler(),
         ]));
     }
 }
