@@ -40,6 +40,10 @@ final class IpFilter implements MiddlewareInterface
         }
 
         $clientIp ??= $request->getServerParams()['REMOTE_ADDR'] ?? null;
+        if ($clientIp === null) {
+            return $this->createForbiddenResponse();
+        }
+
         $validationResult = $this->validator->validate(
             ['ip' => $clientIp],
             [
@@ -52,13 +56,17 @@ final class IpFilter implements MiddlewareInterface
                 ],
             ]
         );
-
-        if ($clientIp === null || !$validationResult->isValid()) {
-            $response = $this->responseFactory->createResponse(Status::FORBIDDEN);
-            $response->getBody()->write(Status::TEXTS[Status::FORBIDDEN]);
-            return $response;
+        if (!$validationResult->isValid()) {
+            return $this->createForbiddenResponse();
         }
 
         return $handler->handle($request);
+    }
+
+    private function createForbiddenResponse(): ResponseInterface
+    {
+        $response = $this->responseFactory->createResponse(Status::FORBIDDEN);
+        $response->getBody()->write(Status::TEXTS[Status::FORBIDDEN]);
+        return $response;
     }
 }

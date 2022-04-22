@@ -63,9 +63,9 @@ final class IpFilterTest extends TestCase
         ;
 
         $ipFilter = new IpFilter(
-            validator:       new Validator(),
+            validator: new Validator(),
             responseFactory: $this->responseFactoryMock,
-            ipRanges:        [$serverParams['REMOTE_ADDR'] ?? []]
+            ipRanges: [self::ALLOWED_IP]
         );
         $response = $ipFilter->process($requestMock, $this->requestHandlerMock);
 
