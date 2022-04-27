@@ -14,6 +14,7 @@ use RuntimeException;
 use Yiisoft\Http\HeaderValueHelper;
 use Yiisoft\NetworkUtilities\IpHelper;
 use Yiisoft\Validator\Rule\Ip;
+use Yiisoft\Validator\ValidatorInterface;
 
 use function array_diff;
 use function array_pad;
@@ -87,7 +88,10 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
     private array $trustedHosts = [];
     private ?string $attributeIps = null;
-    private ?Ip $ipValidator = null;
+
+    public function __construct(private ValidatorInterface $validator)
+    {
+    }
 
     /**
      * Returns a new instance with the added trusted hosts and related headers.
@@ -217,20 +221,6 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
         return $new;
     }
 
-    /**
-     * Returns a new instance with the specified client IP validator.
-     *
-     * @param Ip $ipValidator Client IP validator.
-     *
-     * @return self
-     */
-    public function withIpValidator(Ip $ipValidator): self
-    {
-        $new = clone $this;
-        $new->ipValidator = $ipValidator;
-        return $new;
-    }
-
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $actualHost = $request->getServerParams()['REMOTE_ADDR'] ?? null;
@@ -242,7 +232,6 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
         $trustedHostData = null;
         $trustedHeaders = [];
-        $ipValidator = ($this->ipValidator ?? Ip::rule())->disallowSubnet()->disallowNegation();
 
         foreach ($this->trustedHosts as $data) {
             // collect all trusted headers
@@ -253,7 +242,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
                 continue;
             }
 
-            if ($this->isValidHost($actualHost, $data[self::DATA_KEY_HOSTS], $ipValidator)) {
+            if ($this->isValidHost($actualHost, $data[self::DATA_KEY_HOSTS])) {
                 $trustedHostData = $data;
             }
         }
@@ -295,14 +284,14 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
             $ip = $hostData['ip'];
 
-            if (!$this->isValidHost($ip, ['any'], $ipValidator)) {
+            if (!$this->isValidHost($ip, ['any'])) {
                 // invalid IP
                 break;
             }
 
             $hostDataList[] = $hostData;
 
-            if (!$this->isValidHost($ip, $trustedHostData[self::DATA_KEY_HOSTS], $ipValidator)) {
+            if (!$this->isValidHost($ip, $trustedHostData[self::DATA_KEY_HOSTS])) {
                 // not trusted host
                 break;
             }
@@ -404,9 +393,13 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
      *
      * This method can be extendable by overwriting e.g. with reverse DNS verification.
      */
-    protected function isValidHost(string $host, array $ranges, Ip $validator): bool
+    protected function isValidHost(string $host, array $ranges): bool
     {
-        return $validator->ranges($ranges)->validate($host)->isValid();
+        $validationResult = $this->validator->validate(
+            ['host' => $host],
+            ['host' => [new Ip(ranges: $ranges, allowNegation: false, allowSubnet: false)]]
+        );
+        return $validationResult->isValid();
     }
 
     /**
@@ -568,11 +561,11 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
             $ipData = [];
             $host = $matches['host'];
-            $obfuscatedHost = $host === 'unknown' || strpos($host, '_') === 0;
+            $obfuscatedHost = $host === 'unknown' || str_starts_with($host, '_');
 
             if (!$obfuscatedHost) {
                 // IPv4 & IPv6
-                $ipData['ip'] = strpos($host, '[') === 0 ? trim($host /* IPv6 */, '[]') : $host;
+                $ipData['ip'] = str_starts_with($host, '[') ? trim($host /* IPv6 */, '[]') : $host;
             }
 
             $ipData['host'] = $host;
@@ -615,7 +608,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
             $url = $request->getHeaderLine($header);
 
-            if (strpos($url, '/') === 0) {
+            if (str_starts_with($url, '/')) {
                 return array_pad(explode('?', $url, 2), 2, null);
             }
         }
