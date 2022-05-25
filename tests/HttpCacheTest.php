@@ -148,7 +148,7 @@ final class HttpCacheTest extends TestCase
 
     private function createServerRequest(string $method = Method::GET, array $headers = []): ServerRequestInterface
     {
-        $request =  (new ServerRequest())->withMethod($method);
+        $request = (new ServerRequest())->withMethod($method);
 
         foreach ($headers as $name => $value) {
             $request = $request->withHeader($name, $value);

@@ -30,7 +30,6 @@ use function filter_var;
 use function is_string;
 use function preg_match;
 use function str_replace;
-use function strpos;
 use function strtolower;
 use function trim;
 
