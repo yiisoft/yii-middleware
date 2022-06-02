@@ -24,15 +24,19 @@ final class RedirectTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Either `toUrl()` or `toRoute()` method should be used.');
 
-        $this->createRedirectMiddleware()->process($this->createRequest(), $this->createRequestHandler());
+        $this
+            ->createRedirectMiddleware()
+            ->process($this->createRequest(), $this->createRequestHandler());
     }
 
     public function testGenerateUri(): void
     {
-        $middleware = $this->createRedirectMiddleware()->toRoute('test/route', [
-            'param1' => 1,
-            'param2' => 2,
-        ]);
+        $middleware = $this
+            ->createRedirectMiddleware()
+            ->toRoute('test/route', [
+                'param1' => 1,
+                'param2' => 2,
+            ]);
 
         $response = $middleware->process($this->createRequest(), $this->createRequestHandler());
         $header = $response->getHeader('Location');
@@ -42,7 +46,8 @@ final class RedirectTest extends TestCase
 
     public function testTemporaryReturnCode302(): void
     {
-        $middleware = $this->createRedirectMiddleware()
+        $middleware = $this
+            ->createRedirectMiddleware()
             ->toRoute('test/route')
             ->temporary()
         ;
@@ -54,7 +59,8 @@ final class RedirectTest extends TestCase
 
     public function testPermanentReturnCode301(): void
     {
-        $middleware = $this->createRedirectMiddleware()
+        $middleware = $this
+            ->createRedirectMiddleware()
             ->toRoute('test/route')
             ->permanent()
         ;
@@ -66,7 +72,8 @@ final class RedirectTest extends TestCase
 
     public function testStatusReturnCode400(): void
     {
-        $middleware = $this->createRedirectMiddleware()
+        $middleware = $this
+            ->createRedirectMiddleware()
             ->toRoute('test/route')
             ->withStatus(Status::BAD_REQUEST)
         ;
@@ -78,7 +85,8 @@ final class RedirectTest extends TestCase
 
     public function testSetUri(): void
     {
-        $middleware = $this->createRedirectMiddleware()
+        $middleware = $this
+            ->createRedirectMiddleware()
             ->toUrl('test/custom/route');
 
         $response = $middleware->process($this->createRequest(), $this->createRequestHandler());

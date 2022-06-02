@@ -105,7 +105,9 @@ final class BasicNetworkResolverTest extends TestCase
         $resultRequest = $requestHandler->processedRequest;
 
         /* @var $resultRequest ServerRequestInterface */
-        $this->assertSame($expectedScheme, $resultRequest->getUri()->getScheme());
+        $this->assertSame($expectedScheme, $resultRequest
+            ->getUri()
+            ->getScheme());
     }
 
     public function schemeArrayFailureDataProvider(): array
@@ -149,8 +151,12 @@ final class BasicNetworkResolverTest extends TestCase
     public function testCallableSchemeFailure(mixed $scheme): void
     {
         $request = $this->createMock(ServerRequestInterface::class);
-        $request->method('hasHeader')->willReturn(true);
-        $request->method('getHeader')->willReturn($scheme);
+        $request
+            ->method('hasHeader')
+            ->willReturn(true);
+        $request
+            ->method('getHeader')
+            ->willReturn($scheme);
 
         $middleware = (new BasicNetworkResolver())
             ->withAddedProtocolHeader('x-forwarded-proto', static fn () => $scheme)
@@ -180,7 +186,9 @@ final class BasicNetworkResolverTest extends TestCase
         $resultRequest = $requestHandler->processedRequest;
 
         /* @var $resultRequest ServerRequestInterface */
-        $this->assertSame('http', $resultRequest->getUri()->getScheme());
+        $this->assertSame('http', $resultRequest
+            ->getUri()
+            ->getScheme());
     }
 
     public function testWithoutProtocolHeadersMulti(): void
@@ -202,7 +210,9 @@ final class BasicNetworkResolverTest extends TestCase
         $resultRequest = $requestHandler->processedRequest;
 
         /* @var $resultRequest ServerRequestInterface */
-        $this->assertSame('http', $resultRequest->getUri()->getScheme());
+        $this->assertSame('http', $resultRequest
+            ->getUri()
+            ->getScheme());
     }
 
     public function testWithoutProtocolHeader(): void
@@ -224,14 +234,18 @@ final class BasicNetworkResolverTest extends TestCase
         $resultRequest = $requestHandler->processedRequest;
 
         /* @var $resultRequest ServerRequestInterface */
-        $this->assertSame('http', $resultRequest->getUri()->getScheme());
+        $this->assertSame('http', $resultRequest
+            ->getUri()
+            ->getScheme());
 
         $middleware = $middleware->withoutProtocolHeader('x-forwarded-proto-2');
         $middleware->process($request, $requestHandler);
         $resultRequest = $requestHandler->processedRequest;
 
         /* @var $resultRequest ServerRequestInterface */
-        $this->assertSame('https', $resultRequest->getUri()->getScheme());
+        $this->assertSame('https', $resultRequest
+            ->getUri()
+            ->getScheme());
     }
 
     private function createRequestWithSchemaAndHeaders(
@@ -244,7 +258,9 @@ final class BasicNetworkResolverTest extends TestCase
             $request = $request->withHeader($name, $value);
         }
 
-        $uri = $request->getUri()->withScheme($scheme);
+        $uri = $request
+            ->getUri()
+            ->withScheme($scheme);
         return $request->withUri($uri);
     }
 }

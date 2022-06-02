@@ -26,7 +26,9 @@ final class ForceSecureConnectionTest extends TestCase
         ;
 
         $request = $this->createServerRequest();
-        $request = $request->withUri($request->getUri()->withScheme('http'));
+        $request = $request->withUri($request
+            ->getUri()
+            ->withScheme('http'));
         $handler = $this->createHandler();
 
         $response = $middleware->process($request, $handler);
@@ -120,7 +122,9 @@ final class ForceSecureConnectionTest extends TestCase
         ;
 
         $request = $this->createServerRequest();
-        $request = $request->withUri($request->getUri()->withScheme('http'));
+        $request = $request->withUri($request
+            ->getUri()
+            ->withScheme('http'));
         $handler = $this->createHandler();
 
         $response = $middleware->process($request, $handler);
@@ -136,7 +140,9 @@ final class ForceSecureConnectionTest extends TestCase
     {
         $middleware = (new ForceSecureConnection(new ResponseFactory()))->withoutRedirection();
         $request = $this->createServerRequest();
-        $request = $request->withUri($request->getUri()->withScheme('http'));
+        $request = $request->withUri($request
+            ->getUri()
+            ->withScheme('http'));
         $handler = $this->createHandler();
 
         $response = $middleware->process($request, $handler);

@@ -66,7 +66,9 @@ final class IpFilter implements MiddlewareInterface
     private function createForbiddenResponse(): ResponseInterface
     {
         $response = $this->responseFactory->createResponse(Status::FORBIDDEN);
-        $response->getBody()->write(Status::TEXTS[Status::FORBIDDEN]);
+        $response
+            ->getBody()
+            ->write(Status::TEXTS[Status::FORBIDDEN]);
         return $response;
     }
 }

@@ -144,8 +144,13 @@ final class ForceSecureConnection implements MiddlewareInterface
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        if ($this->redirect && strcasecmp($request->getUri()->getScheme(), 'http') === 0) {
-            $url = (string) $request->getUri()->withScheme('https')->withPort($this->port);
+        if ($this->redirect && strcasecmp($request
+                ->getUri()
+                ->getScheme(), 'http') === 0) {
+            $url = (string) $request
+                ->getUri()
+                ->withScheme('https')
+                ->withPort($this->port);
 
             return $this->addHSTS(
                 $this->responseFactory
