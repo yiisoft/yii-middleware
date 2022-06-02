@@ -142,7 +142,9 @@ final class HttpCacheTest extends TestCase
     private function createRequestHandler(): RequestHandlerInterface
     {
         $requestHandler = $this->createMock(RequestHandlerInterface::class);
-        $requestHandler->method('handle')->willReturn(new Response(Status::OK));
+        $requestHandler
+            ->method('handle')
+            ->willReturn(new Response(Status::OK));
         return $requestHandler;
     }
 
