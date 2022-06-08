@@ -10,7 +10,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Yiisoft\Http\Status;
-use Yiisoft\Validator\Rule\Ip\Ip;
+use Yiisoft\Validator\Rule\Ip;
 use Yiisoft\Validator\ValidatorInterface;
 
 /**
@@ -54,7 +54,7 @@ final class IpFilter implements MiddlewareInterface
 
         $result = $this->validator->validate(
             $clientIp,
-            [new Ip(allowNegation: false, allowSubnet: false, ranges: $this->ipRanges)]
+            [new Ip(allowSubnet: false, allowNegation: false, ranges: $this->ipRanges)]
         );
 
         if (

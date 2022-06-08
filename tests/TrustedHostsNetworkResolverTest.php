@@ -11,9 +11,8 @@ use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
 use Yiisoft\Http\Status;
 use Yiisoft\Test\Support\Container\SimpleContainer;
-use Yiisoft\Validator\Rule\Ip\Ip;
-use Yiisoft\Validator\Rule\Ip\IpHandler;
-use Yiisoft\Validator\StaticRuleHandlerResolver;
+use Yiisoft\Validator\Rule\Ip;
+use Yiisoft\Validator\SimpleRuleHandlerContainer;
 use Yiisoft\Validator\Validator;
 use Yiisoft\Yii\Middleware\TrustedHostsNetworkResolver;
 use Yiisoft\Yii\Middleware\Tests\TestAsset\MockRequestHandler;
@@ -387,9 +386,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
     private function createTrustedHostsNetworkResolver(): TrustedHostsNetworkResolver
     {
         return new TrustedHostsNetworkResolver(
-            new Validator(new StaticRuleHandlerResolver([
-                IpHandler::class => new IpHandler(),
-            ]))
+            new Validator(new SimpleRuleHandlerContainer())
         );
     }
 }
