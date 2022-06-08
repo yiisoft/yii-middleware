@@ -346,7 +346,6 @@ final class TrustedHostsNetworkResolverTest extends TestCase
         $this->assertSame('', $requestHandler->processedRequest->getUri()->getHost());
         $this->assertNull($requestHandler->processedRequest->getAttribute('ip', 'default'));
         $this->assertNull($requestHandler->processedRequest->getAttribute('requestClientIp', 'default'));
-
     }
 
     public function testAttributeIpsInvalidWhenEmptyString(): void
