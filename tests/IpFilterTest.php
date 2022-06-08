@@ -11,6 +11,7 @@ use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Yiisoft\Http\Status;
+use Yiisoft\Validator\SimpleRuleHandlerContainer;
 use Yiisoft\Validator\Validator;
 use Yiisoft\Yii\Middleware\IpFilter;
 
@@ -27,7 +28,7 @@ final class IpFilterTest extends TestCase
         parent::setUp();
         $this->responseFactoryMock = $this->createMock(ResponseFactoryInterface::class);
         $this->requestHandlerMock = $this->createMock(RequestHandlerInterface::class);
-        $this->ipFilter = new IpFilter(validator: new Validator(), responseFactory: $this->responseFactoryMock, ipRanges: [self::ALLOWED_IP]);
+        $this->ipFilter = new IpFilter(validator: new Validator(new SimpleRuleHandlerContainer()), responseFactory: $this->responseFactoryMock, ipRanges: [self::ALLOWED_IP]);
     }
 
     public function ipNotAllowedDataProvider(): array
@@ -63,7 +64,7 @@ final class IpFilterTest extends TestCase
         ;
 
         $ipFilter = new IpFilter(
-            validator: new Validator(),
+            validator: new Validator(new SimpleRuleHandlerContainer()),
             responseFactory: $this->responseFactoryMock,
             ipRanges: [self::ALLOWED_IP]
         );
@@ -113,7 +114,7 @@ final class IpFilterTest extends TestCase
             ->willReturn(new Response(Status::OK))
         ;
 
-        $ipFilter = new IpFilter(new Validator(), $this->responseFactoryMock, $attributeName, [self::ALLOWED_IP]);
+        $ipFilter = new IpFilter(new Validator(new SimpleRuleHandlerContainer()), $this->responseFactoryMock, $attributeName, [self::ALLOWED_IP]);
         $response = $ipFilter->process($requestMock, $this->requestHandlerMock);
 
         $this->assertSame(Status::OK, $response->getStatusCode());

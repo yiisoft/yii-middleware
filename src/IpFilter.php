@@ -45,15 +45,13 @@ final class IpFilter implements MiddlewareInterface
         }
 
         $validationResult = $this->validator->validate(
-            ['ip' => $clientIp],
+            $clientIp,
             [
-                'ip' => [
-                    new Ip(
-                        allowSubnet: false,
-                        allowNegation: false,
-                        ranges: $this->ipRanges
-                    ),
-                ],
+                new Ip(
+                    allowSubnet: false,
+                    allowNegation: false,
+                    ranges: $this->ipRanges
+                ),
             ]
         );
         if (!$validationResult->isValid()) {

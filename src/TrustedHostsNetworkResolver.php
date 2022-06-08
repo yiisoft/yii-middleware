@@ -396,8 +396,8 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
     protected function isValidHost(string $host, array $ranges): bool
     {
         $validationResult = $this->validator->validate(
-            ['host' => $host],
-            ['host' => [new Ip(ranges: $ranges, allowNegation: false, allowSubnet: false)]]
+            $host,
+            [new Ip(allowSubnet: false, allowNegation: false, ranges: $ranges)]
         );
         return $validationResult->isValid();
     }
