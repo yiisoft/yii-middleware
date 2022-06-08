@@ -10,8 +10,6 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
 use Yiisoft\Http\Status;
-use Yiisoft\Test\Support\Container\SimpleContainer;
-use Yiisoft\Validator\Rule\Ip;
 use Yiisoft\Validator\SimpleRuleHandlerContainer;
 use Yiisoft\Validator\Validator;
 use Yiisoft\Yii\Middleware\TrustedHostsNetworkResolver;
@@ -348,7 +346,6 @@ final class TrustedHostsNetworkResolverTest extends TestCase
         $this->assertSame('', $requestHandler->processedRequest->getUri()->getHost());
         $this->assertNull($requestHandler->processedRequest->getAttribute('ip', 'default'));
         $this->assertNull($requestHandler->processedRequest->getAttribute('requestClientIp', 'default'));
-
     }
 
     public function testAttributeIpsInvalidWhenEmptyString(): void

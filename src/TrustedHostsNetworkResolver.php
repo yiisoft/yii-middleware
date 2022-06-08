@@ -404,7 +404,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
      */
     protected function isValidHost(string $host, array $ranges, Closure $validator): bool
     {
-        return $validator($host,$ranges)->isValid();
+        return $validator($host, $ranges)->isValid();
     }
 
     /**
