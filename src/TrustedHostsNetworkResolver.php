@@ -210,8 +210,8 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
      * @param string|null $attribute The request attribute name.
      *
      * @return self
-     * @see getElementsByRfc7239()
      *
+     * @see getElementsByRfc7239()
      */
     public function withAttributeIps(?string $attribute): self
     {
