@@ -32,7 +32,7 @@ use function is_callable;
 use function is_string;
 use function preg_match;
 use function str_replace;
-use function strpos;
+use function str_starts_with;
 use function strtolower;
 use function trim;
 
@@ -209,9 +209,9 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
      *
      * @param string|null $attribute The request attribute name.
      *
+     * @return self
      * @see getElementsByRfc7239()
      *
-     * @return self
      */
     public function withAttributeIps(?string $attribute): self
     {
@@ -380,7 +380,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
                 $portHeader === $ipHeader
                 && $ipListType === self::IP_HEADER_TYPE_RFC7239
                 && isset($hostData['port'])
-                && $this->checkPort((string) $hostData['port'])
+                && $this->checkPort((string)$hostData['port'])
             ) {
                 $uri = $uri->withPort($hostData['port']);
                 break;
@@ -389,12 +389,16 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             $port = $request->getHeaderLine($portHeader);
 
             if ($this->checkPort($port)) {
-                $uri = $uri->withPort((int) $port);
+                $uri = $uri->withPort((int)$port);
                 break;
             }
         }
 
-        return $handler->handle($request->withUri($uri)->withAttribute('requestClientIp', $hostData['ip'] ?? null));
+        return $handler->handle(
+            $request
+                ->withUri($uri)
+                ->withAttribute('requestClientIp', $hostData['ip'] ?? null)
+        );
     }
 
     /**
@@ -566,11 +570,11 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
             $ipData = [];
             $host = $matches['host'];
-            $obfuscatedHost = $host === 'unknown' || strpos($host, '_') === 0;
+            $obfuscatedHost = $host === 'unknown' || str_starts_with($host, '_');
 
             if (!$obfuscatedHost) {
                 // IPv4 & IPv6
-                $ipData['ip'] = strpos($host, '[') === 0 ? trim($host /* IPv6 */, '[]') : $host;
+                $ipData['ip'] = str_starts_with($host, '[') ? trim($host /* IPv6 */, '[]') : $host;
             }
 
             $ipData['host'] = $host;
@@ -613,7 +617,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
             $url = $request->getHeaderLine($header);
 
-            if (strpos($url, '/') === 0) {
+            if (str_starts_with($url, '/')) {
                 return array_pad(explode('?', $url, 2), 2, null);
             }
         }
