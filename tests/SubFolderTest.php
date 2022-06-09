@@ -190,17 +190,23 @@ final class SubFolderTest extends TestCase
 
     private function getRequestPath(): string
     {
-        return $this->lastRequest->getUri()->getPath();
+        return $this->lastRequest
+            ->getUri()
+            ->getPath();
     }
 
     private function createMiddleware(?string $prefix = null, ?string $alias = null): SubFolder
     {
         $urlGenerator = $this->createMock(UrlGeneratorInterface::class);
-        $urlGenerator->method('setUriPrefix')->willReturnCallback(function ($prefix) {
-            $this->urlGeneratorUriPrefix = $prefix;
-        });
+        $urlGenerator
+            ->method('setUriPrefix')
+            ->willReturnCallback(function ($prefix) {
+                $this->urlGeneratorUriPrefix = $prefix;
+            });
 
-        $urlGenerator->method('getUriPrefix')->willReturnReference($this->urlGeneratorUriPrefix);
+        $urlGenerator
+            ->method('getUriPrefix')
+            ->willReturnReference($this->urlGeneratorUriPrefix);
         return new SubFolder($urlGenerator, $this->aliases, $prefix, $alias);
     }
 
