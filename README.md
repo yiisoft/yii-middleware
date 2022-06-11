@@ -162,7 +162,7 @@ use Yiisoft\Yii\Middleware\IpFilter;
  * @var Psr\Http\Message\ResponseFactoryInterface $responseFactory
  * @var Psr\Http\Message\ServerRequestInterface $request
  * @var Psr\Http\Server\RequestHandlerInterface $handler
- * @var Yiisoft\Validator\Rule\Ip $ipValidator
+ * @var Yiisoft\Validator\Rule\ValidatorInterface $validator
  */
 
 // Name of the client IP address request attribute:
@@ -170,10 +170,10 @@ $clientIpAttribute = 'client-ip';
 // If `null`, then `REMOTE_ADDR` value of the server parameters is processed. If the value is not `null`,
 // then the attribute specified must have a value, otherwise the request will be closed with forbidden.
 
-$middleware = new IpFilter($ipValidator, $responseFactory, $clientIpAttribute);
+$middleware = new IpFilter($validator, $responseFactory, $clientIpAttribute);
 
 // Change client IP validator:
-$middleware = $middleware->withIpValidator($ipValidator);
+$middleware = $middleware->withValidator($validator);
 
 $response = $middleware->process($request, $handler);
 ```
@@ -266,14 +266,11 @@ The header lists are evaluated in the order they were specified. If you specify 
 otherwise spoof clients can be use this vulnerability.
 
 ```php
-use Yiisoft\Yii\Middleware\TrustedHostsNetworkResolver;
-
 /**
  * @var Psr\Http\Message\ServerRequestInterface $request
  * @var Psr\Http\Server\RequestHandlerInterface $handler
+ * @var Yiisoft\Yii\Middleware\TrustedHostsNetworkResolver $middleware
  */
-
-$middleware = new TrustedHostsNetworkResolver();
 
 $middleware = $middleware->withAddedTrustedHosts(
     // List of secure hosts including `$_SERVER['REMOTE_ADDR']`, can specify IPv4, IPv6, domains and aliases.
@@ -304,6 +301,7 @@ Additionally, you can specify the following options:
 /**
  * Specify request attribute name to which trusted path data is added.
  * 
+ * @var Yiisoft\Yii\Middleware\TrustedHostsNetworkResolver $middleware
  * @var string|null $attribute
  */
 $middleware = $middleware->withAttributeIps($attribute);
@@ -311,9 +309,9 @@ $middleware = $middleware->withAttributeIps($attribute);
 /**
  * Specify client IP validator.
  * 
- * @var Yiisoft\Validator\Rule\Ip $ipValidator
+ * @var Yiisoft\Validator\ValidatorInterface $validator
  */
-$middleware = $middleware->withIpValidator($ipValidator);
+$middleware = $middleware->withValidator($validator);
 ```
 
 ## Testing

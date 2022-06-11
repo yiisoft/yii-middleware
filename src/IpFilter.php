@@ -18,19 +18,29 @@ use Yiisoft\Validator\ValidatorInterface;
  */
 final class IpFilter implements MiddlewareInterface
 {
+    private ValidatorInterface $validator;
+    private ResponseFactoryInterface $responseFactory;
+    private ?string $clientIpAttribute;
+    private array $ipRanges;
+
     /**
-     * @param ValidatorInterface $validator The validator to use.
+     * @param ValidatorInterface $validator Client IP validator. The properties of the validator
+     * can be modified up to the moment of processing.
      * @param ResponseFactoryInterface $responseFactory The response factory instance.
      * @param string|null $clientIpAttribute Attribute name of client IP. If `null`, then `REMOTE_ADDR` value
      * of the server parameters is processed. If the value is not `null`, then the attribute specified
      * must have a value, otherwise the request will closed with forbidden.
      */
     public function __construct(
-        private ValidatorInterface $validator,
-        private ResponseFactoryInterface $responseFactory,
-        private ?string $clientIpAttribute = null,
-        private array $ipRanges = []
+        ValidatorInterface $validator,
+        ResponseFactoryInterface $responseFactory,
+        string $clientIpAttribute = null,
+        array $ipRanges = [],
     ) {
+        $this->validator = $validator;
+        $this->responseFactory = $responseFactory;
+        $this->clientIpAttribute = $clientIpAttribute;
+        $this->ipRanges = $ipRanges;
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
@@ -39,36 +49,23 @@ final class IpFilter implements MiddlewareInterface
             $clientIp = $request->getAttribute($this->clientIpAttribute);
         }
 
-        $clientIp ??= $request->getServerParams()['REMOTE_ADDR'] ?? null;
-        if ($clientIp === null) {
-            return $this->createForbiddenResponse();
-        }
+        $serverParams = $request->getServerParams();
+        $clientIp ??= $serverParams['REMOTE_ADDR'] ?? null;
 
-        $validationResult = $this->validator->validate(
-            ['ip' => $clientIp],
-            [
-                'ip' => [
-                    new Ip(
-                        allowSubnet: false,
-                        allowNegation: false,
-                        ranges: $this->ipRanges
-                    ),
-                ],
-            ]
+        $result = $this->validator->validate(
+            $clientIp,
+            [new Ip(allowSubnet: false, allowNegation: false, ranges: $this->ipRanges)]
         );
-        if (!$validationResult->isValid()) {
-            return $this->createForbiddenResponse();
+
+        if (
+            $clientIp === null
+            || !$result->isValid()
+        ) {
+            $response = $this->responseFactory->createResponse(Status::FORBIDDEN);
+            $response->getBody()->write(Status::TEXTS[Status::FORBIDDEN]);
+            return $response;
         }
 
         return $handler->handle($request);
-    }
-
-    private function createForbiddenResponse(): ResponseInterface
-    {
-        $response = $this->responseFactory->createResponse(Status::FORBIDDEN);
-        $response
-            ->getBody()
-            ->write(Status::TEXTS[Status::FORBIDDEN]);
-        return $response;
     }
 }
