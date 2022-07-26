@@ -32,14 +32,18 @@
     "require": {
         "php": "^8.0",
         "psr/http-factory": "^1.0",
+        "psr/log": "^3.0",
         "psr/http-message": "^1.0",
         "psr/http-server-handler": "^1.0",
         "psr/http-server-middleware": "^1.0",
         "yiisoft/aliases": "^2.0",
+        "yiisoft/cookies": "^1.2",
         "yiisoft/friendly-exception": "^1.0",
         "yiisoft/http": "^1.2",
         "yiisoft/network-utilities": "^1.0",
         "yiisoft/router": "^1.0",
+        "yiisoft/session": "^1.0",
+        "yiisoft/translator": "^1.0",
         "yiisoft/validator": "dev-master"
     },
     "require-dev": {
