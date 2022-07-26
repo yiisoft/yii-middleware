@@ -64,24 +64,13 @@ final class Locale implements MiddlewareInterface
         [$locale, $country] = $this->getLocaleFromPath($path);
 
         if ($locale !== null) {
-            $length = strlen($locale);
-            $newPath = substr($path, $length + 1);
-            if ($newPath === '') {
-                $newPath = '/';
-            }
-            $this->translator->setLocale($locale);
-            $this->urlGenerator->setDefaultArgument($this->queryParameterName, $locale);
-
             $response = $handler->handle($request);
+            $newPath = null;
             if ($this->isDefaultLocale($locale, $country) && $request->getMethod() === 'GET') {
-                $response = $this->responseFactory
-                    ->createResponse(Status::FOUND)
-                    ->withHeader(Header::LOCATION, $newPath);
+                $length = strlen($locale);
+                $newPath = substr($path, $length + 1);
             }
-            if ($this->enableSaveLocale) {
-                $response = $this->saveLocale($locale, $response);
-            }
-            return $response;
+            return $this->applyLocaleFromPath($locale, $response, $newPath);
         }
         if ($this->enableSaveLocale) {
             [$locale, $country] = $this->getLocaleFromRequest($request);
@@ -103,6 +92,28 @@ final class Locale implements MiddlewareInterface
         }
 
         return $handler->handle($request);
+    }
+
+    private function applyLocaleFromPath(
+        string $locale,
+        ResponseInterface $response,
+        ?string $newPath = null
+    ): ResponseInterface {
+        if ($newPath === '') {
+            $newPath = '/';
+        }
+        $this->translator->setLocale($locale);
+        $this->urlGenerator->setDefaultArgument($this->queryParameterName, $locale);
+
+        if ($newPath !== null) {
+            $response = $this->responseFactory
+                ->createResponse(Status::FOUND)
+                ->withHeader(Header::LOCATION, $newPath);
+        }
+        if ($this->enableSaveLocale) {
+            $response = $this->saveLocale($locale, $response);
+        }
+        return $response;
     }
 
     private function getLocaleFromPath(string $path): array
