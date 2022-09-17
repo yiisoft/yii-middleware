@@ -16,9 +16,7 @@ use Yiisoft\Router\UrlGeneratorInterface;
 use Yiisoft\Session\SessionInterface;
 use Yiisoft\Test\Support\Log\SimpleLogger;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Yii\Middleware\Exception\BadUriPrefixException;
 use Yiisoft\Yii\Middleware\Locale;
-use Yiisoft\Yii\Middleware\SubFolder;
 
 final class LocaleTest extends TestCase
 {
