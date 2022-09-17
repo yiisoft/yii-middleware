@@ -11,6 +11,7 @@ use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Yiisoft\Http\Status;
+use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\Validator\SimpleRuleHandlerContainer;
 use Yiisoft\Validator\Validator;
 use Yiisoft\Yii\Middleware\IpFilter;
@@ -118,6 +119,12 @@ final class IpFilterTest extends TestCase
 
     protected function createValidator(): Validator
     {
-        return new Validator(new SimpleRuleHandlerContainer());
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->method('translate')
+                   ->willReturnCallback(function ($message, $parameters) {
+                       return $message;
+                   });
+
+        return new Validator(new SimpleRuleHandlerContainer($translator));
     }
 }
