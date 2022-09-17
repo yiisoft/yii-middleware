@@ -11,7 +11,6 @@ use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Yiisoft\Http\Status;
-use Yiisoft\Translator\Translator;
 use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\Validator\SimpleRuleHandlerContainer;
 use Yiisoft\Validator\Validator;
