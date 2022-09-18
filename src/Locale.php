@@ -73,6 +73,8 @@ final class Locale implements MiddlewareInterface
             $request = $request->withUri($uri->withPath('/' . $this->defaultLocale . $path));
             return $handler->handle($request);
         }
+
+        $this->translator->setLocale($locale);
         $this->urlGenerator->setDefaultArgument($this->queryParameterName, $locale);
 
         if ($request->getMethod() === Method::GET) {
@@ -80,6 +82,7 @@ final class Locale implements MiddlewareInterface
                 ->createResponse(Status::FOUND)
                 ->withHeader(Header::LOCATION, '/' . $locale . $path);
         }
+
 
         return $handler->handle($request);
     }
@@ -171,6 +174,10 @@ final class Locale implements MiddlewareInterface
     {
         if (str_contains($locale, '-')) {
             return explode('-', $locale, 2);
+        }
+
+        if (str_contains($locale, '_')) {
+            return explode('_', $locale, 2);
         }
         if (isset($this->locales[$locale]) && str_contains($this->locales[$locale], '-')) {
             return explode('-', $this->locales[$locale], 2);

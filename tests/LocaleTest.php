@@ -23,12 +23,13 @@ use Yiisoft\Yii\Middleware\Locale;
 
 final class LocaleTest extends TestCase
 {
-    private string $locale = 'en';
+    private ?string $locale;
     private array $session = [];
     private ?ServerRequestInterface $lastRequest;
 
     public function setUp(): void
     {
+        $this->locale = null;
         $this->lastRequest = null;
     }
 
@@ -47,13 +48,48 @@ final class LocaleTest extends TestCase
 
     public function testDefaultLocale(): void
     {
-        $request = $this->createRequest($uri = '/');
+        $request = $this->createRequest($uri = '/en');
+        $middleware = $this->createMiddleware(['en' => 'en-US', 'uz' => 'uz-UZ']);
+
+        $response = $this->process($middleware, $request);
+
+        $this->assertSame('en', $this->locale);
+        $this->assertSame($uri, $this->getRequestPath());
+        $this->assertSame('/', $response->getHeaderLine(Header::LOCATION));
+    }
+
+    public function testDefaultLocaleWithCountry(): void
+    {
+        $request = $this->createRequest($uri = '/uz');
+        $middleware = $this->createMiddleware(['uz' => 'uz-UZ'])->withDefaultLocale('uz-UZ');
+
+        $response = $this->process($middleware, $request);
+
+        $this->assertSame('uz', $this->locale);
+        $this->assertSame('/', $response->getHeaderLine(Header::LOCATION));
+        $this->assertSame(Status::FOUND, $response->getStatusCode());
+    }
+
+    public function testWithoutLocales(): void
+    {
+        $request = $this->createRequest($uri = '/ru');
         $middleware = $this->createMiddleware([]);
 
         $this->process($middleware, $request);
 
-        $this->assertSame('en', $this->locale);
+        $this->assertNull($this->locale);
         $this->assertSame($uri, $this->getRequestPath());
+    }
+
+    public function testDefaultLocaleWithLocales(): void
+    {
+        $request = $this->createRequest($uri = '/ru/home');
+        $middleware = $this->createMiddleware(['en' => 'en-US', 'ru' => 'ru-RU'])->withDefaultLocale('ru');
+
+        $response = $this->process($middleware, $request);
+
+        $this->assertSame('ru', $this->locale);
+        $this->assertSame('/home', $response->getHeaderLine(Header::LOCATION));
     }
 
     public function testLocale(): void
@@ -98,6 +134,31 @@ final class LocaleTest extends TestCase
         $this->assertSame('uz', $this->locale);
         $this->assertSame('/uz' . $uri, $response->getHeaderLine(Header::LOCATION));
         $this->assertSame(Status::FOUND, $response->getStatusCode());
+    }
+
+    public function testDetectLocaleWithoutHeader(): void
+    {
+        $request = $this->createRequest($uri = '/');
+        $middleware = $this->createMiddleware(['uz' => 'uz-UZ'])->withEnableDetectLocale(true);
+
+        $response = $this->process($middleware, $request);
+
+        $this->assertNull($this->locale);
+        $this->assertSame('/en' . $uri, $this->getRequestPath());
+        $this->assertSame('', $response->getHeaderLine(Header::LOCATION));
+        $this->assertSame(Status::OK, $response->getStatusCode());
+    }
+
+    public function testLocaleWithOtherMethod(): void
+    {
+        $request = $this->createRequest($uri = '/', Method::POST, queryParams: ['_language' => 'uz']);
+        $middleware = $this->createMiddleware(['uz' => 'uz-UZ']);
+
+        $response = $this->process($middleware, $request);
+
+        $this->assertSame('uz', $this->locale);
+        $this->assertSame('', $response->getHeaderLine(Header::LOCATION));
+        $this->assertSame(Status::OK, $response->getStatusCode());
     }
 
     private function process(Locale $middleware, ServerRequestInterface $request): ResponseInterface
