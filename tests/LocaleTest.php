@@ -34,15 +34,16 @@ final class LocaleTest extends TestCase
 
     public function testImmutability(): void
     {
-        $locale = $this->createMiddleware();
+        $localeMiddleware = $this->createMiddleware();
 
-        $this->assertNotSame($locale->withCookieSecure(true), $locale);
-        $this->assertNotSame($locale->withDefaultLocale('uz'), $locale);
-        $this->assertNotSame($locale->withEnableDetectLocale(true), $locale);
-        $this->assertNotSame($locale->withEnableSaveLocale(false), $locale);
-        $this->assertNotSame($locale->withLocales(['ru-RU', 'uz-UZ']), $locale);
-        $this->assertNotSame($locale->withQueryParameterName('lang'), $locale);
-        $this->assertNotSame($locale->withSessionName('lang'), $locale);
+        $this->assertNotSame($localeMiddleware->withCookieSecure(true), $localeMiddleware);
+        $this->assertNotSame($localeMiddleware->withDefaultLocale('uz'), $localeMiddleware);
+        $this->assertNotSame($localeMiddleware->withEnableDetectLocale(true), $localeMiddleware);
+        $this->assertNotSame($localeMiddleware->withEnableSaveLocale(false), $localeMiddleware);
+        $this->assertNotSame($localeMiddleware->withLocales(['ru-RU', 'uz-UZ']), $localeMiddleware);
+        $this->assertNotSame($localeMiddleware->withQueryParameterName('lang'), $localeMiddleware);
+        $this->assertNotSame($localeMiddleware->withSessionName('lang'), $localeMiddleware);
+        $this->assertNotSame($localeMiddleware->withIgnoredRequests(['/auth**']), $localeMiddleware);
     }
 
     public function testDefaultLocale(): void
@@ -160,6 +161,18 @@ final class LocaleTest extends TestCase
         $this->assertSame(Status::OK, $response->getStatusCode());
     }
 
+    public function testIgnoredRequests(): void
+    {
+        $request = $this->createRequest($uri = '/auth/login', queryParams: ['_language' => 'uz']);
+        $middleware = $this->createMiddleware(['uz' => 'uz-UZ'])->withIgnoredRequests(['/auth/**']);
+
+        $response = $this->process($middleware, $request);
+
+        $this->assertSame(null, $this->locale);
+        $this->assertSame('/en' . $uri, $this->getRequestPath());
+        $this->assertSame(Status::OK, $response->getStatusCode());
+    }
+
     private function process(Locale $middleware, ServerRequestInterface $request): ResponseInterface
     {
         $handler = new class () implements RequestHandlerInterface {
@@ -231,6 +244,7 @@ final class LocaleTest extends TestCase
             new SimpleLogger(),
             new ResponseFactory(),
             $locales,
+            [],
             $secure
         );
     }

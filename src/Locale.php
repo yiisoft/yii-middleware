@@ -17,6 +17,7 @@ use Yiisoft\Http\Method;
 use Yiisoft\Http\Status;
 use Yiisoft\Router\UrlGeneratorInterface;
 use Yiisoft\Session\SessionInterface;
+use Yiisoft\Strings\WildcardPattern;
 use Yiisoft\Translator\TranslatorInterface;
 
 final class Locale implements MiddlewareInterface
@@ -38,6 +39,7 @@ final class Locale implements MiddlewareInterface
         private LoggerInterface $logger,
         private ResponseFactoryInterface $responseFactory,
         private array $locales = [],
+        private array $ignoredRequests = [],
         private bool $cookieSecure = false
     ) {
         $this->cookieDuration = new DateInterval('P30D');
@@ -51,9 +53,13 @@ final class Locale implements MiddlewareInterface
 
         $uri = $request->getUri();
         $path = $uri->getPath();
+
         [$locale, $country] = $this->getLocaleFromPath($path);
 
         if ($locale !== null) {
+            $this->translator->setLocale($locale);
+            $this->urlGenerator->setDefaultArgument($this->queryParameterName, $locale);
+
             $response = $handler->handle($request);
             $newPath = null;
             if ($this->isDefaultLocale($locale, $country) && $request->getMethod() === Method::GET) {
@@ -68,7 +74,7 @@ final class Locale implements MiddlewareInterface
         if ($locale === null && $this->enableDetectLocale) {
             [$locale, $country] = $this->detectLocale($request);
         }
-        if ($locale === null || $this->isDefaultLocale($locale, $country)) {
+        if ($locale === null || $this->isDefaultLocale($locale, $country) || $this->isRequestIgnored($request)) {
             $this->urlGenerator->setDefaultArgument($this->queryParameterName, null);
             $request = $request->withUri($uri->withPath('/' . $this->defaultLocale . $path));
             return $handler->handle($request);
@@ -95,8 +101,6 @@ final class Locale implements MiddlewareInterface
         if ($newPath === '') {
             $newPath = '/';
         }
-        $this->translator->setLocale($locale);
-        $this->urlGenerator->setDefaultArgument($this->queryParameterName, $locale);
 
         if ($newPath !== null) {
             $response = $this->responseFactory
@@ -185,6 +189,16 @@ final class Locale implements MiddlewareInterface
         return [$locale, null];
     }
 
+    private function isRequestIgnored(ServerRequestInterface $request): bool
+    {
+        foreach ($this->ignoredRequests as $ignoredRequest) {
+            if ((new WildcardPattern($ignoredRequest))->match($request->getUri()->getPath())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public function withLocales(array $locales): self
     {
         $new = clone $this;
@@ -224,6 +238,13 @@ final class Locale implements MiddlewareInterface
     {
         $new = clone $this;
         $new->enableDetectLocale = $enableDetectLocale;
+        return $new;
+    }
+
+    public function withIgnoredRequests(array $ignoredRequests): self
+    {
+        $new = clone $this;
+        $new->ignoredRequests = $ignoredRequests;
         return $new;
     }
 
