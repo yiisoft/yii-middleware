@@ -14,7 +14,6 @@ use Yiisoft\Yii\Middleware\Exception\BadUriPrefixException;
 
 use function is_string;
 use function strlen;
-use function strpos;
 use function substr;
 
 /**

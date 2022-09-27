@@ -203,7 +203,6 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
      *
      * @param string|null $attribute The request attribute name.
      *
-     *
      * @see getElementsByRfc7239()
      */
     public function withAttributeIps(?string $attribute): self
@@ -228,7 +227,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
         $trustedHostData = null;
         $trustedHeaders = [];
-        $validator = fn(string $value, array $ranges): Result => $this->validator->validate(
+        $validator = fn (string $value, array $ranges): Result => $this->validator->validate(
             $value,
             [new Ip(allowSubnet: false, allowNegation: false, ranges: $ranges)]
         );
