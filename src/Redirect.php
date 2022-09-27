@@ -22,21 +22,15 @@ final class Redirect implements MiddlewareInterface
     private ?string $route = null;
     private array $parameters = [];
     private int $statusCode = Status::MOVED_PERMANENTLY;
-    private ResponseFactoryInterface $responseFactory;
-    private UrlGeneratorInterface $urlGenerator;
 
-    public function __construct(ResponseFactoryInterface $responseFactory, UrlGeneratorInterface $urlGenerator)
+    public function __construct(private ResponseFactoryInterface $responseFactory, private UrlGeneratorInterface $urlGenerator)
     {
-        $this->responseFactory = $responseFactory;
-        $this->urlGenerator = $urlGenerator;
     }
 
     /**
      * Returns a new instance with the specified URL for redirection.
      *
      * @param string $url URL for redirection.
-     *
-     * @return self
      */
     public function toUrl(string $url): self
     {
@@ -52,8 +46,6 @@ final class Redirect implements MiddlewareInterface
      *
      * @param string $name The route name for redirection.
      * @param array $parameters The route parameters for redirection.
-     *
-     * @return self
      */
     public function toRoute(string $name, array $parameters = []): self
     {
@@ -67,8 +59,6 @@ final class Redirect implements MiddlewareInterface
      * Returns a new instance with the specified status code of the response for redirection.
      *
      * @param int $statusCode The status code of the response for redirection.
-     *
-     * @return self
      */
     public function withStatus(int $statusCode): self
     {
@@ -81,8 +71,6 @@ final class Redirect implements MiddlewareInterface
      * Returns a new instance with the response status code of permanent redirection.
      *
      * @see Status::MOVED_PERMANENTLY
-     *
-     * @return self
      */
     public function permanent(): self
     {
@@ -95,8 +83,6 @@ final class Redirect implements MiddlewareInterface
      * Returns a new instance with the response status code of temporary redirection.
      *
      * @see Status::FOUND
-     *
-     * @return self
      */
     public function temporary(): self
     {
