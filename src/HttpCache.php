@@ -54,8 +54,6 @@ final class HttpCache implements MiddlewareInterface
      * `$params` takes the value of {@see withParams()}. The callback should return a UNIX timestamp.
      *
      * @see http://tools.ietf.org/html/rfc7232#section-2.2
-     *
-     * @return self
      */
     public function withLastModified(callable $lastModified): self
     {
@@ -78,8 +76,6 @@ final class HttpCache implements MiddlewareInterface
      * Where `$request` is the {@see ServerRequestInterface} object that this middleware is currently handling;
      * `$params` takes the value of {@see withParams()}. The callback should return a string serving
      * as the seed for generating an ETag.
-     *
-     * @return self
      */
     public function withEtagSeed(callable $etagSeed): self
     {
@@ -94,8 +90,6 @@ final class HttpCache implements MiddlewareInterface
      * Weak ETags should be used if the content should be considered semantically equivalent, but not byte-equal.
      *
      * @see http://tools.ietf.org/html/rfc7232#section-2.3
-     *
-     * @return self
      */
     public function withWeakTag(): self
     {
@@ -108,8 +102,6 @@ final class HttpCache implements MiddlewareInterface
      * Returns a new instance with the specified additional parameters for ETag seed string generation.
      *
      * @param mixed Additional parameters that should be passed to the {@see withEtagSeed()} callbacks.
-     *
-     * @return self
      */
     public function withParams(mixed $params): self
     {
@@ -124,8 +116,6 @@ final class HttpCache implements MiddlewareInterface
      * @param string|null The value of the `Cache-Control` HTTP header. If null, the header will not be sent.
      *
      * @see http://tools.ietf.org/html/rfc2616#section-14.9
-     *
-     * @return self
      */
     public function withCacheControlHeader(?string $header): self
     {

@@ -66,8 +66,6 @@ final class BasicNetworkResolver implements MiddlewareInterface
      * @param array|callable|null $values The protocol header values.
      *
      * @see DEFAULT_PROTOCOL_AND_ACCEPTABLE_VALUES
-     *
-     * @return self
      */
     public function withAddedProtocolHeader(string $header, array|callable $values = null): self
     {
@@ -111,8 +109,6 @@ final class BasicNetworkResolver implements MiddlewareInterface
      * @param string $header The protocol header name.
      *
      * @see withAddedProtocolHeader()
-     *
-     * @return self
      */
     public function withoutProtocolHeader(string $header): self
     {
@@ -127,8 +123,6 @@ final class BasicNetworkResolver implements MiddlewareInterface
      * @param string[] $headers The protocol header names. If `null` is specified all protocol headers will be removed.
      *
      * @see withoutProtocolHeader()
-     *
-     * @return self
      */
     public function withoutProtocolHeaders(?array $headers = null): self
     {

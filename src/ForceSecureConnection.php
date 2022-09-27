@@ -42,11 +42,8 @@ final class ForceSecureConnection implements MiddlewareInterface
     private int $hstsMaxAge = self::DEFAULT_HSTS_MAX_AGE;
     private bool $hstsSubDomains = false;
 
-    private ResponseFactoryInterface $responseFactory;
-
-    public function __construct(ResponseFactoryInterface $responseFactory)
+    public function __construct(private ResponseFactoryInterface $responseFactory)
     {
-        $this->responseFactory = $responseFactory;
     }
 
     /**
@@ -54,8 +51,6 @@ final class ForceSecureConnection implements MiddlewareInterface
      *
      * @param int $statusCode The response status code of redirection.
      * @param int|null $port The redirection port.
-     *
-     * @return self
      */
     public function withRedirection(int $statusCode = Status::MOVED_PERMANENTLY, int $port = null): self
     {
@@ -70,8 +65,6 @@ final class ForceSecureConnection implements MiddlewareInterface
      * Returns a new instance and disables redirection from HTTP to HTTPS.
      *
      * @see withRedirection()
-     *
-     * @return self
      */
     public function withoutRedirection(): self
     {
@@ -86,8 +79,6 @@ final class ForceSecureConnection implements MiddlewareInterface
      * @param string $directives The directives {@see DEFAULT_CSP_DIRECTIVES}.
      *
      * @see Header::CONTENT_SECURITY_POLICY
-     *
-     * @return self
      */
     public function withCSP(string $directives = self::DEFAULT_CSP_DIRECTIVES): self
     {
@@ -101,8 +92,6 @@ final class ForceSecureConnection implements MiddlewareInterface
      * Returns a new instance without the `Content-Security-Policy` header in response.
      *
      * @see withCSP()
-     *
-     * @return self
      */
     public function withoutCSP(): self
     {
@@ -116,8 +105,6 @@ final class ForceSecureConnection implements MiddlewareInterface
      *
      * @param int $maxAge The max age {@see DEFAULT_HSTS_MAX_AGE}.
      * @param bool $subDomains Whether to add the `includeSubDomains` option to the header value.
-     *
-     * @return self
      */
     public function withHSTS(int $maxAge = self::DEFAULT_HSTS_MAX_AGE, bool $subDomains = false): self
     {
@@ -132,8 +119,6 @@ final class ForceSecureConnection implements MiddlewareInterface
      * Returns a new instance without the `Strict-Transport-Security` header in response.
      *
      * @see withHSTS()
-     *
-     * @return self
      */
     public function withoutHSTS(): self
     {

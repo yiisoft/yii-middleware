@@ -89,11 +89,9 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
     private array $trustedHosts = [];
     private ?string $attributeIps = null;
-    private ValidatorInterface $validator;
 
-    public function __construct(ValidatorInterface $validator)
+    public function __construct(private ValidatorInterface $validator)
     {
-        $this->validator = $validator;
     }
 
     /**
@@ -113,8 +111,6 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
      * @param string[] $portHeaders List of headers containing port number.
      * @param string[]|null $trustedHeaders List of trusted headers. Removed from the request, if in checking process
      * are classified as untrusted by hosts.
-     *
-     * @return self
      */
     public function withAddedTrustedHosts(
         array $hosts,
@@ -162,7 +158,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             throw new InvalidArgumentException('Empty hosts not allowed.');
         }
 
-        $trustedHeaders = $trustedHeaders ?? self::DEFAULT_TRUSTED_HEADERS;
+        $trustedHeaders ??= self::DEFAULT_TRUSTED_HEADERS;
         $protocolHeaders = $this->prepareProtocolHeaders($protocolHeaders);
 
         $this->checkTypeStringOrArray($hosts, 'hosts');
@@ -194,8 +190,6 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
     /**
      * Returns a new instance without the trusted hosts and related headers.
-     *
-     * @return self
      */
     public function withoutTrustedHosts(): self
     {
@@ -209,7 +203,6 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
      *
      * @param string|null $attribute The request attribute name.
      *
-     * @return self
      *
      * @see getElementsByRfc7239()
      */
@@ -235,12 +228,10 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
         $trustedHostData = null;
         $trustedHeaders = [];
-        $validator = function (string $value, array $ranges): Result {
-            return $this->validator->validate(
-                $value,
-                [new Ip(allowSubnet: false, allowNegation: false, ranges: $ranges)]
-            );
-        };
+        $validator = fn(string $value, array $ranges): Result => $this->validator->validate(
+            $value,
+            [new Ip(allowSubnet: false, allowNegation: false, ranges: $ranges)]
+        );
 
         foreach ($this->trustedHosts as $data) {
             // collect all trusted headers
