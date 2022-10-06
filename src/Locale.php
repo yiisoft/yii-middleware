@@ -126,7 +126,7 @@ final class Locale implements MiddlewareInterface
             $locale = $matches[1];
             [$locale, $country] = $this->parseLocale($locale);
             if (isset($this->locales[$locale])) {
-                $this->logger->info(sprintf("Locale '%s' found in URL", $locale));
+                $this->logger->debug(sprintf("Locale '%s' found in URL", $locale));
                 return [$locale, $country];
             }
         }
@@ -138,11 +138,11 @@ final class Locale implements MiddlewareInterface
         $cookies = $request->getCookieParams();
         $queryParameters = $request->getQueryParams();
         if (isset($cookies[$this->sessionName])) {
-            $this->logger->info(sprintf("Locale '%s' found in cookies", $cookies[$this->sessionName]));
+            $this->logger->debug(sprintf("Locale '%s' found in cookies", $cookies[$this->sessionName]));
             return $this->parseLocale($cookies[$this->sessionName]);
         }
         if (isset($queryParameters[$this->queryParameterName])) {
-            $this->logger->info(
+            $this->logger->debug(
                 sprintf("Locale '%s' found in query string", $queryParameters[$this->queryParameterName])
             );
             return $this->parseLocale($queryParameters[$this->queryParameterName]);
@@ -165,7 +165,7 @@ final class Locale implements MiddlewareInterface
 
     private function saveLocale(string $locale, ResponseInterface $response): ResponseInterface
     {
-        $this->logger->info('Saving found locale to cookies');
+        $this->logger->debug('Saving found locale to cookies');
         $this->session->set($this->sessionName, $locale);
         $cookie = new Cookie(name: $this->sessionName, value: $locale, secure: $this->cookieSecure);
         if ($this->cookieDuration !== null) {
