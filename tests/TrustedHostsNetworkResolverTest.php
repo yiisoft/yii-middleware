@@ -390,7 +390,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                    });
 
         return new TrustedHostsNetworkResolver(
-            new Validator(new SimpleRuleHandlerContainer($translator))
+            new Validator(new SimpleRuleHandlerContainer(), $translator)
         );
     }
 }

@@ -125,6 +125,6 @@ final class IpFilterTest extends TestCase
                        return $message;
                    });
 
-        return new Validator(new SimpleRuleHandlerContainer($translator));
+        return new Validator(new SimpleRuleHandlerContainer(), $translator);
     }
 }
