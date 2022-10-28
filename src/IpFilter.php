@@ -18,11 +18,6 @@ use Yiisoft\Validator\ValidatorInterface;
  */
 final class IpFilter implements MiddlewareInterface
 {
-    private ValidatorInterface $validator;
-    private ResponseFactoryInterface $responseFactory;
-    private ?string $clientIpAttribute;
-    private array $ipRanges;
-
     /**
      * @param ValidatorInterface $validator Client IP validator. The properties of the validator
      * can be modified up to the moment of processing.
@@ -31,16 +26,8 @@ final class IpFilter implements MiddlewareInterface
      * of the server parameters is processed. If the value is not `null`, then the attribute specified
      * must have a value, otherwise the request will closed with forbidden.
      */
-    public function __construct(
-        ValidatorInterface $validator,
-        ResponseFactoryInterface $responseFactory,
-        string $clientIpAttribute = null,
-        array $ipRanges = [],
-    ) {
-        $this->validator = $validator;
-        $this->responseFactory = $responseFactory;
-        $this->clientIpAttribute = $clientIpAttribute;
-        $this->ipRanges = $ipRanges;
+    public function __construct(private ValidatorInterface $validator, private ResponseFactoryInterface $responseFactory, private ?string $clientIpAttribute = null, private array $ipRanges = [])
+    {
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
