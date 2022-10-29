@@ -388,7 +388,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                    ->willReturnCallback(fn ($message, $parameters) => $message);
 
         return new TrustedHostsNetworkResolver(
-            new Validator(new SimpleRuleHandlerContainer($translator))
+            new Validator(new SimpleRuleHandlerContainer(), $translator)
         );
     }
 }

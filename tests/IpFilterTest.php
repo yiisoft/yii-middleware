@@ -123,6 +123,6 @@ final class IpFilterTest extends TestCase
         $translator->method('translate')
                    ->willReturnCallback(fn ($message, $parameters) => $message);
 
-        return new Validator(new SimpleRuleHandlerContainer($translator));
+        return new Validator(new SimpleRuleHandlerContainer(), $translator);
     }
 }
