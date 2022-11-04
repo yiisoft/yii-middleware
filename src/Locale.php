@@ -138,11 +138,11 @@ final class Locale implements MiddlewareInterface
     private function getLocaleFromRequest(ServerRequestInterface $request): array
     {
         $cookies = $request->getCookieParams();
-        $queryParameters = $request->getQueryParams();
         if (isset($cookies[$this->sessionName])) {
             $this->logger->debug(sprintf("Locale '%s' found in cookies", $cookies[$this->sessionName]));
             return $this->parseLocale($cookies[$this->sessionName]);
         }
+        $queryParameters = $request->getQueryParams();
         if (isset($queryParameters[$this->queryParameterName])) {
             $this->logger->debug(
                 sprintf("Locale '%s' found in query string", $queryParameters[$this->queryParameterName])
@@ -232,7 +232,7 @@ final class Locale implements MiddlewareInterface
     public function withEnableSaveLocale(bool $enableSaveLocale): self
     {
         $new = clone $this;
-        $new->enableDetectLocale = $enableSaveLocale;
+        $new->enableSaveLocale = $enableSaveLocale;
         return $new;
     }
 
