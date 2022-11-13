@@ -385,12 +385,10 @@ final class TrustedHostsNetworkResolverTest extends TestCase
     {
         $translator = $this->createMock(TranslatorInterface::class);
         $translator->method('translate')
-                   ->willReturnCallback(function ($message, $parameters) {
-                       return $message;
-                   });
+                   ->willReturnCallback(fn ($message, $parameters) => $message);
 
         return new TrustedHostsNetworkResolver(
-            new Validator(new SimpleRuleHandlerContainer($translator))
+            new Validator(new SimpleRuleHandlerContainer(), $translator)
         );
     }
 }

@@ -14,7 +14,6 @@ use Yiisoft\Yii\Middleware\Exception\BadUriPrefixException;
 
 use function is_string;
 use function strlen;
-use function strpos;
 use function substr;
 
 /**
@@ -22,11 +21,6 @@ use function substr;
  */
 final class SubFolder implements MiddlewareInterface
 {
-    private UrlGeneratorInterface $uriGenerator;
-    private Aliases $aliases;
-    private ?string $prefix;
-    private ?string $alias;
-
     /**
      * @param UrlGeneratorInterface $uriGenerator The URI generator instance.
      * @param Aliases $aliases The aliases instance.
@@ -34,16 +28,8 @@ final class SubFolder implements MiddlewareInterface
      * The prefix value usually begins with a slash and must not end with a slash.
      * @param string|null $alias The path alias {@see Aliases::get()}.
      */
-    public function __construct(
-        UrlGeneratorInterface $uriGenerator,
-        Aliases $aliases,
-        ?string $prefix = null,
-        ?string $alias = null
-    ) {
-        $this->uriGenerator = $uriGenerator;
-        $this->aliases = $aliases;
-        $this->prefix = $prefix;
-        $this->alias = $alias;
+    public function __construct(private UrlGeneratorInterface $uriGenerator, private Aliases $aliases, private ?string $prefix = null, private ?string $alias = null)
+    {
     }
 
     /**
@@ -65,11 +51,11 @@ final class SubFolder implements MiddlewareInterface
             // and URI contains a prefix
             $scriptName = $request->getServerParams()['SCRIPT_NAME'];
 
-            if (is_string($scriptName) && strpos($scriptName, '/', 1) !== false) {
+            if (is_string($scriptName) && str_contains($scriptName, '/')) {
                 $position = strrpos($scriptName, '/');
                 $tmpPrefix = substr($scriptName, 0, $position === false ? null : $position);
 
-                if (strpos($path, $tmpPrefix) === 0) {
+                if (str_starts_with($path, $tmpPrefix)) {
                     $prefix = $tmpPrefix;
                     $length = strlen($prefix);
                 }
@@ -80,7 +66,7 @@ final class SubFolder implements MiddlewareInterface
                 throw new BadUriPrefixException('Wrong URI prefix value.');
             }
 
-            if (strpos($path, $prefix) !== 0) {
+            if (!str_starts_with($path, $prefix)) {
                 throw new BadUriPrefixException('URI prefix does not match.');
             }
         }

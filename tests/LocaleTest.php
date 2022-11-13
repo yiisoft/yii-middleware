@@ -48,14 +48,14 @@ final class LocaleTest extends TestCase
 
     public function testDefaultLocale(): void
     {
-        $request = $this->createRequest($uri = '/en');
+        $request = $this->createRequest($uri = '/en/home?test=1');
         $middleware = $this->createMiddleware(['en' => 'en-US', 'uz' => 'uz-UZ']);
 
         $response = $this->process($middleware, $request);
 
         $this->assertSame('en', $this->locale);
         $this->assertSame($uri, $this->getRequestPath());
-        $this->assertSame('/', $response->getHeaderLine(Header::LOCATION));
+        $this->assertSame('/home?test=1', $response->getHeaderLine(Header::LOCATION));
     }
 
     public function testDefaultLocaleWithCountry(): void
@@ -111,6 +111,17 @@ final class LocaleTest extends TestCase
 
         $this->assertSame('uz', $this->locale);
         $this->assertStringContainsString('_language=uz', $response->getHeaderLine(Header::SET_COOKIE));
+    }
+
+    public function testSavedLocale(): void
+    {
+        $request = $this->createRequest($uri = '/home?test=1', cookieParams: ['_language' => 'uz']);
+        $middleware = $this->createMiddleware(['uz' => 'uz-UZ', 'en' => 'en-US']);
+
+        $response = $this->process($middleware, $request);
+
+        $this->assertSame('/uz' . $uri, $response->getHeaderLine(Header::LOCATION));
+        $this->assertSame(Status::FOUND, $response->getStatusCode());
     }
 
     public function testLocaleWithQueryParam(): void
@@ -191,9 +202,8 @@ final class LocaleTest extends TestCase
 
     private function getRequestPath(): string
     {
-        return $this->lastRequest
-            ->getUri()
-            ->getPath();
+        $uri = $this->lastRequest->getUri();
+        return $uri->getPath() . ($uri->getQuery() !== '' ? '?' . $uri->getQuery() : '');
     }
 
     private function createMiddleware(array $locales = [], bool $secure = false): Locale
@@ -249,8 +259,8 @@ final class LocaleTest extends TestCase
         );
     }
 
-    private function createRequest(string $uri = '/', string $method = Method::GET, array $queryParams = [], array $headers = []): ServerRequestInterface
+    private function createRequest(string $uri = '/', string $method = Method::GET, array $queryParams = [], array $headers = [], $cookieParams = []): ServerRequestInterface
     {
-        return new ServerRequest([], [], [], $queryParams, null, $method, $uri, $headers);
+        return new ServerRequest([], [], $cookieParams, $queryParams, null, $method, $uri, $headers);
     }
 }

@@ -53,6 +53,7 @@ final class Locale implements MiddlewareInterface
 
         $uri = $request->getUri();
         $path = $uri->getPath();
+        $query = $uri->getQuery();
 
         [$locale, $country] = $this->getLocaleFromPath($path);
 
@@ -66,7 +67,7 @@ final class Locale implements MiddlewareInterface
                 $length = strlen($locale);
                 $newPath = substr($path, $length + 1);
             }
-            return $this->applyLocaleFromPath($locale, $response, $newPath);
+            return $this->applyLocaleFromPath($locale, $response, $query, $newPath);
         }
         if ($this->enableSaveLocale) {
             [$locale, $country] = $this->getLocaleFromRequest($request);
@@ -86,7 +87,7 @@ final class Locale implements MiddlewareInterface
         if ($request->getMethod() === Method::GET) {
             return $this->responseFactory
                 ->createResponse(Status::FOUND)
-                ->withHeader(Header::LOCATION, '/' . $locale . $path);
+                ->withHeader(Header::LOCATION, '/' . $locale . $path . ($query !== '' ? '?' . $query : ''));
         }
 
 
@@ -96,7 +97,8 @@ final class Locale implements MiddlewareInterface
     private function applyLocaleFromPath(
         string $locale,
         ResponseInterface $response,
-        ?string $newPath = null
+        string $query,
+        ?string $newPath = null,
     ): ResponseInterface {
         if ($newPath === '') {
             $newPath = '/';
@@ -105,7 +107,7 @@ final class Locale implements MiddlewareInterface
         if ($newPath !== null) {
             $response = $this->responseFactory
                 ->createResponse(Status::FOUND)
-                ->withHeader(Header::LOCATION, $newPath);
+                ->withHeader(Header::LOCATION, $newPath . ($query !== '' ? '?' . $query : ''));
         }
         if ($this->enableSaveLocale) {
             $response = $this->saveLocale($locale, $response);
@@ -136,11 +138,11 @@ final class Locale implements MiddlewareInterface
     private function getLocaleFromRequest(ServerRequestInterface $request): array
     {
         $cookies = $request->getCookieParams();
-        $queryParameters = $request->getQueryParams();
         if (isset($cookies[$this->sessionName])) {
             $this->logger->debug(sprintf("Locale '%s' found in cookies", $cookies[$this->sessionName]));
             return $this->parseLocale($cookies[$this->sessionName]);
         }
+        $queryParameters = $request->getQueryParams();
         if (isset($queryParameters[$this->queryParameterName])) {
             $this->logger->debug(
                 sprintf("Locale '%s' found in query string", $queryParameters[$this->queryParameterName])
@@ -230,7 +232,7 @@ final class Locale implements MiddlewareInterface
     public function withEnableSaveLocale(bool $enableSaveLocale): self
     {
         $new = clone $this;
-        $new->enableDetectLocale = $enableSaveLocale;
+        $new->enableSaveLocale = $enableSaveLocale;
         return $new;
     }
 
