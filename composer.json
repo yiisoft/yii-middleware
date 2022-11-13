@@ -42,7 +42,7 @@
         "yiisoft/friendly-exception": "^1.0",
         "yiisoft/http": "^1.2",
         "yiisoft/network-utilities": "^1.0",
-        "yiisoft/router": "^1.0",
+        "yiisoft/router": "^1.0|^2.0",
         "yiisoft/session": "^1.0",
         "yiisoft/strings": "^2.1",
         "yiisoft/translator": "^2.0",
