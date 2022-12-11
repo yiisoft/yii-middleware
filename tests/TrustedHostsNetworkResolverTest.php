@@ -10,8 +10,6 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
 use Yiisoft\Http\Status;
-use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Validator\SimpleRuleHandlerContainer;
 use Yiisoft\Validator\Validator;
 use Yiisoft\Yii\Middleware\TrustedHostsNetworkResolver;
 use Yiisoft\Yii\Middleware\Tests\TestAsset\MockRequestHandler;
@@ -383,12 +381,6 @@ final class TrustedHostsNetworkResolverTest extends TestCase
 
     private function createTrustedHostsNetworkResolver(): TrustedHostsNetworkResolver
     {
-        $translator = $this->createMock(TranslatorInterface::class);
-        $translator->method('translate')
-                   ->willReturnCallback(fn ($message, $parameters) => $message);
-
-        return new TrustedHostsNetworkResolver(
-            new Validator(new SimpleRuleHandlerContainer(), $translator)
-        );
+        return new TrustedHostsNetworkResolver(new Validator());
     }
 }
