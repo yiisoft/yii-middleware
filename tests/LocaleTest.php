@@ -243,7 +243,7 @@ final class LocaleTest extends TestCase
                 });
 
         $session->method('get')
-                ->willReturnCallback(fn($name) => $this->session[$name]);
+                ->willReturnCallback(fn ($name) => $this->session[$name]);
 
         return new Locale(
             $translator,
