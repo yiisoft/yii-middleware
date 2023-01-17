@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Yiisoft\Yii\Middleware\Exception;
 
+use Exception;
 use Yiisoft\FriendlyException\FriendlyExceptionInterface;
 
-final class BadUriPrefixException extends \Exception implements FriendlyExceptionInterface
+final class BadUriPrefixException extends Exception implements FriendlyExceptionInterface
 {
     public function getName(): string
     {

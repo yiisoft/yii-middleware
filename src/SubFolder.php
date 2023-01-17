@@ -28,12 +28,16 @@ final class SubFolder implements MiddlewareInterface
      * The prefix value usually begins with a slash and must not end with a slash.
      * @param string|null $alias The path alias {@see Aliases::get()}.
      */
-    public function __construct(private UrlGeneratorInterface $uriGenerator, private Aliases $aliases, private ?string $prefix = null, private ?string $alias = null)
-    {
+    public function __construct(
+        private UrlGeneratorInterface $uriGenerator,
+        private Aliases $aliases,
+        private ?string $prefix = null,
+        private ?string $alias = null,
+    ) {
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      *
      * @throws BadUriPrefixException If wrong URI prefix.
      */

@@ -120,7 +120,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
         array $hostHeaders = [],
         array $urlHeaders = [],
         array $portHeaders = [],
-        ?array $trustedHeaders = null
+        ?array $trustedHeaders = null,
     ): self {
         $new = clone $this;
 

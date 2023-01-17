@@ -23,8 +23,10 @@ final class Redirect implements MiddlewareInterface
     private array $parameters = [];
     private int $statusCode = Status::MOVED_PERMANENTLY;
 
-    public function __construct(private ResponseFactoryInterface $responseFactory, private UrlGeneratorInterface $urlGenerator)
-    {
+    public function __construct(
+        private ResponseFactoryInterface $responseFactory,
+        private UrlGeneratorInterface $urlGenerator,
+    ) {
     }
 
     /**
@@ -92,7 +94,7 @@ final class Redirect implements MiddlewareInterface
     }
 
     /**
-     * {@inheritDoc}
+     * @inheritDoc
      *
      * @throws RuntimeException If the data for redirection was not set earlier.
      */

@@ -67,7 +67,7 @@ final class BasicNetworkResolver implements MiddlewareInterface
      *
      * @see DEFAULT_PROTOCOL_AND_ACCEPTABLE_VALUES
      */
-    public function withAddedProtocolHeader(string $header, array|callable $values = null): self
+    public function withAddedProtocolHeader(string $header, array|callable|null $values = null): self
     {
         $new = clone $this;
         $header = strtolower($header);
