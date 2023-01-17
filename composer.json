@@ -55,7 +55,7 @@
         "rector/rector": "^0.15.3",
         "roave/infection-static-analysis-plugin": "^1.16",
         "spatie/phpunit-watcher": "^1.23",
-        "vimeo/psalm": "^5.4",
+        "vimeo/psalm": "^4.30|^5.4",
         "yiisoft/router-fastroute": "^2.0",
         "yiisoft/test-support": "^3.0"
     },
