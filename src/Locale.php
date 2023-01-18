@@ -40,7 +40,7 @@ final class Locale implements MiddlewareInterface
         private ResponseFactoryInterface $responseFactory,
         private array $locales = [],
         private array $ignoredRequests = [],
-        private bool $cookieSecure = false
+        private bool $cookieSecure = false,
     ) {
         $this->cookieDuration = new DateInterval('P30D');
     }

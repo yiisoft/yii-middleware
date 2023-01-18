@@ -14,7 +14,7 @@ use Yiisoft\Validator\Rule\Ip;
 use Yiisoft\Validator\ValidatorInterface;
 
 /**
- * IpFilter validates the IP received in the request.
+ * `IpFilter` validates the IP received in the request.
  */
 final class IpFilter implements MiddlewareInterface
 {
@@ -26,8 +26,12 @@ final class IpFilter implements MiddlewareInterface
      * of the server parameters is processed. If the value is not `null`, then the attribute specified
      * must have a value, otherwise the request will closed with forbidden.
      */
-    public function __construct(private ValidatorInterface $validator, private ResponseFactoryInterface $responseFactory, private ?string $clientIpAttribute = null, private array $ipRanges = [])
-    {
+    public function __construct(
+        private ValidatorInterface $validator,
+        private ResponseFactoryInterface $responseFactory,
+        private ?string $clientIpAttribute = null,
+        private array $ipRanges = [],
+    ) {
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface

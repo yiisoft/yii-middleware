@@ -1,7 +1,7 @@
 {
     "name": "yiisoft/yii-middleware",
     "type": "library",
-    "description": "Yii middleware",
+    "description": "Yii Middleware",
     "keywords": [
         "yii",
         "framework",

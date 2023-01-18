@@ -42,7 +42,7 @@ final class HttpCache implements MiddlewareInterface
     /**
      * Returns a new instance with the specified callable that generates the last modified.
      *
-     * @param callable A PHP callback that returns the UNIX timestamp of the last modification time.
+     * @param callable $lastModified A PHP callback that returns the UNIX timestamp of the last modification time.
      *
      * The callback's signature should be:
      *
@@ -65,7 +65,7 @@ final class HttpCache implements MiddlewareInterface
     /**
      * Returns a new instance with the specified callable that generates the ETag seed string.
      *
-     * @param callable A PHP callback that generates the ETag seed string.
+     * @param callable $etagSeed A PHP callback that generates the ETag seed string.
      *
      * The callback's signature should be:
      *
@@ -101,7 +101,7 @@ final class HttpCache implements MiddlewareInterface
     /**
      * Returns a new instance with the specified additional parameters for ETag seed string generation.
      *
-     * @param mixed Additional parameters that should be passed to the {@see withEtagSeed()} callbacks.
+     * @param mixed $params Additional parameters that should be passed to the {@see withEtagSeed()} callbacks.
      */
     public function withParams(mixed $params): self
     {
@@ -113,7 +113,7 @@ final class HttpCache implements MiddlewareInterface
     /**
      * Returns a new instance with the specified value of the `Cache-Control` HTTP header.
      *
-     * @param string|null The value of the `Cache-Control` HTTP header. If null, the header will not be sent.
+     * @param string|null $header The value of the `Cache-Control` HTTP header. If null, the header will not be sent.
      *
      * @see http://tools.ietf.org/html/rfc2616#section-14.9
      */
@@ -158,7 +158,7 @@ final class HttpCache implements MiddlewareInterface
             $response = $response->withHeader(Header::ETAG, $etag);
         }
 
-        // See: https://tools.ietf.org/html/rfc7232#section-4.1
+        /** @see https://tools.ietf.org/html/rfc7232#section-4.1 */
         if ($lastModified !== null && (!$cacheIsValid || $etag === null)) {
             $response = $response->withHeader(
                 Header::LAST_MODIFIED,
