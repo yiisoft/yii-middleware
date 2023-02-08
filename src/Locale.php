@@ -11,6 +11,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Log\LoggerInterface;
+use Yiisoft\Aliases\Aliases;
 use Yiisoft\Cookies\Cookie;
 use Yiisoft\Http\Header;
 use Yiisoft\Http\Method;
@@ -36,6 +37,7 @@ final class Locale implements MiddlewareInterface
         private TranslatorInterface $translator,
         private UrlGeneratorInterface $urlGenerator,
         private SessionInterface $session,
+        private Aliases $aliases,
         private LoggerInterface $logger,
         private ResponseFactoryInterface $responseFactory,
         private array $locales = [],
@@ -85,9 +87,11 @@ final class Locale implements MiddlewareInterface
         $this->urlGenerator->setDefaultArgument($this->queryParameterName, $locale);
 
         if ($request->getMethod() === Method::GET) {
+            $location = rtrim($this->aliases->get('@baseUrl'), '/') . '/'
+                . $locale . $path . ($query !== '' ? '?' . $query : '');
             return $this->responseFactory
                 ->createResponse(Status::FOUND)
-                ->withHeader(Header::LOCATION, '/' . $locale . $path . ($query !== '' ? '?' . $query : ''));
+                ->withHeader(Header::LOCATION, $location);
         }
 
 
@@ -105,9 +109,11 @@ final class Locale implements MiddlewareInterface
         }
 
         if ($newPath !== null) {
+            $location = rtrim($this->aliases->get('@baseUrl'), '/')
+                . $newPath . ($query !== '' ? '?' . $query : '');
             $response = $this->responseFactory
                 ->createResponse(Status::FOUND)
-                ->withHeader(Header::LOCATION, $newPath . ($query !== '' ? '?' . $query : ''));
+                ->withHeader(Header::LOCATION, $location);
         }
         if ($this->enableSaveLocale) {
             $response = $this->saveLocale($locale, $response);

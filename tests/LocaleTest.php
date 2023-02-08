@@ -11,6 +11,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Yiisoft\Aliases\Aliases;
 use Yiisoft\Http\Header;
 use Yiisoft\Http\Method;
 use Yiisoft\Http\Status;
@@ -24,12 +25,14 @@ final class LocaleTest extends TestCase
 {
     private ?string $locale;
     private array $session = [];
+    private Aliases $aliases;
     private ?ServerRequestInterface $lastRequest;
 
     public function setUp(): void
     {
         $this->locale = null;
         $this->lastRequest = null;
+        $this->aliases = new Aliases(['@baseUrl' => '/']);
     }
 
     public function testImmutability(): void
@@ -249,6 +252,7 @@ final class LocaleTest extends TestCase
             $translator,
             $urlGenerator,
             $session,
+            $this->aliases,
             new SimpleLogger(),
             new ResponseFactory(),
             $locales,

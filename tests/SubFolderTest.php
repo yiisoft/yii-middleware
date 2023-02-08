@@ -32,7 +32,7 @@ final class SubFolderTest extends TestCase
     public function testDefault(): void
     {
         $request = $this->createRequest($uri = '/', $script = '/index.php');
-        $mw = $this->createMiddleware(null, '@baseUrl');
+        $mw = $this->createMiddleware('@baseUrl');
 
         $this->process($mw, $request);
 
@@ -41,22 +41,10 @@ final class SubFolderTest extends TestCase
         $this->assertSame($uri, $this->getRequestPath());
     }
 
-    public function testCustomPrefix(): void
-    {
-        $request = $this->createRequest($uri = '/custom_public/index.php?test', $script = '/index.php');
-        $mw = $this->createMiddleware('/custom_public', '@baseUrl');
-
-        $this->process($mw, $request);
-
-        $this->assertSame('/custom_public', $this->aliases->get('@baseUrl'));
-        $this->assertSame('/custom_public', $this->urlGeneratorUriPrefix);
-        $this->assertSame('/index.php', $this->getRequestPath());
-    }
-
     public function testAutoPrefix(): void
     {
         $request = $this->createRequest($uri = '/public/', $script = '/public/index.php');
-        $mw = $this->createMiddleware(null, '@baseUrl');
+        $mw = $this->createMiddleware('@baseUrl');
 
         $this->process($mw, $request);
 
@@ -71,7 +59,7 @@ final class SubFolderTest extends TestCase
         $uri = "{$prefix}/";
         $script = "{$prefix}/index.php";
         $request = $this->createRequest($uri, $script);
-        $mw = $this->createMiddleware(null, '@baseUrl');
+        $mw = $this->createMiddleware('@baseUrl');
 
         $this->process($mw, $request);
 
@@ -83,7 +71,7 @@ final class SubFolderTest extends TestCase
     public function testAutoPrefixAndUriWithoutTrailingSlash(): void
     {
         $request = $this->createRequest($uri = '/public', $script = '/public/index.php');
-        $mw = $this->createMiddleware(null, '@baseUrl');
+        $mw = $this->createMiddleware('@baseUrl');
 
         $this->process($mw, $request);
 
@@ -95,7 +83,7 @@ final class SubFolderTest extends TestCase
     public function testAutoPrefixFullUrl(): void
     {
         $request = $this->createRequest($uri = '/public/index.php?test', $script = '/public/index.php');
-        $mw = $this->createMiddleware(null, '@baseUrl');
+        $mw = $this->createMiddleware('@baseUrl');
 
         $this->process($mw, $request);
 
@@ -107,68 +95,24 @@ final class SubFolderTest extends TestCase
     public function testFailedAutoPrefix(): void
     {
         $request = $this->createRequest($uri = '/web/index.php', $script = '/public/index.php');
-        $mw = $this->createMiddleware(null, '@baseUrl');
+        $mw = $this->createMiddleware('@baseUrl');
 
         $this->process($mw, $request);
 
-        $this->assertSame('/default/web', $this->aliases->get('@baseUrl'));
-        $this->assertSame('', $this->urlGeneratorUriPrefix);
+        $this->assertSame('/public', $this->aliases->get('@baseUrl'));
+        $this->assertSame('/public', $this->urlGeneratorUriPrefix);
         $this->assertSame($uri, $this->getRequestPath());
-    }
-
-    public function testCustomPrefixWithTrailingSlash(): void
-    {
-        $request = $this->createRequest($uri = '/web/', $script = '/public/index.php');
-        $mw = $this->createMiddleware('/web/', '@baseUrl');
-
-        $this->expectException(BadUriPrefixException::class);
-        $this->expectExceptionMessage('Wrong URI prefix value');
-
-        $this->process($mw, $request);
-    }
-
-    public function testCustomPrefixFromMiddleOfUri(): void
-    {
-        $request = $this->createRequest($uri = '/web/middle/public', $script = '/public/index.php');
-        $mw = $this->createMiddleware('/middle', '@baseUrl');
-
-        $this->expectException(BadUriPrefixException::class);
-        $this->expectExceptionMessage('URI prefix does not match');
-
-        $this->process($mw, $request);
-    }
-
-    public function testCustomPrefixDoesNotMatch(): void
-    {
-        $request = $this->createRequest($uri = '/web/', $script = '/public/index.php');
-        $mw = $this->createMiddleware('/other_prefix', '@baseUrl');
-
-        $this->expectException(BadUriPrefixException::class);
-        $this->expectExceptionMessage('URI prefix does not match');
-
-        $this->process($mw, $request);
-    }
-
-    public function testCustomPrefixDoesNotMatchCompletely(): void
-    {
-        $request = $this->createRequest($uri = '/project1/web/', $script = '/public/index.php');
-        $mw = $this->createMiddleware('/project1/we', '@baseUrl');
-
-        $this->expectException(BadUriPrefixException::class);
-        $this->expectExceptionMessage('URI prefix does not match completely');
-
-        $this->process($mw, $request);
     }
 
     public function testAutoPrefixDoesNotMatchCompletely(): void
     {
         $request = $this->createRequest($uri = '/public/web/', $script = '/pub/index.php');
-        $mw = $this->createMiddleware(null, '@baseUrl');
+        $mw = $this->createMiddleware('@baseUrl');
 
         $this->process($mw, $request);
 
-        $this->assertSame('/default/web', $this->aliases->get('@baseUrl'));
-        $this->assertSame('', $this->urlGeneratorUriPrefix);
+        $this->assertSame('/pub', $this->aliases->get('@baseUrl'));
+        $this->assertSame('/pub', $this->urlGeneratorUriPrefix);
         $this->assertSame($uri, $this->getRequestPath());
     }
 
@@ -195,7 +139,7 @@ final class SubFolderTest extends TestCase
             ->getPath();
     }
 
-    private function createMiddleware(?string $prefix = null, ?string $alias = null): SubFolder
+    private function createMiddleware(?string $alias = null): SubFolder
     {
         $urlGenerator = $this->createMock(UrlGeneratorInterface::class);
         $urlGenerator
@@ -207,11 +151,11 @@ final class SubFolderTest extends TestCase
         $urlGenerator
             ->method('getUriPrefix')
             ->willReturnReference($this->urlGeneratorUriPrefix);
-        return new SubFolder($urlGenerator, $this->aliases, $prefix, $alias);
+        return new SubFolder($urlGenerator, $this->aliases, $alias);
     }
 
     private function createRequest(string $uri = '/', string $scriptPath = '/'): ServerRequestInterface
     {
-        return new ServerRequest(['SCRIPT_NAME' => $scriptPath], [], [], [], null, Method::GET, $uri);
+        return new ServerRequest(['SCRIPT_FILENAME' => $scriptPath], [], [], [], null, Method::GET, $uri);
     }
 }
