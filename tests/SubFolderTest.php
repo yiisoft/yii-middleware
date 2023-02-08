@@ -13,7 +13,6 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Yiisoft\Aliases\Aliases;
 use Yiisoft\Http\Method;
 use Yiisoft\Router\UrlGeneratorInterface;
-use Yiisoft\Yii\Middleware\Exception\BadUriPrefixException;
 use Yiisoft\Yii\Middleware\SubFolder;
 
 final class SubFolderTest extends TestCase
