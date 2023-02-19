@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Yiisoft\Yii\Middleware\Tests\Middleware;
+namespace Yiisoft\Yii\Middleware\Tests;
 
 use HttpSoft\Message\Response;
 use HttpSoft\Message\ResponseFactory;
@@ -211,8 +211,9 @@ final class LocaleTest extends TestCase
         $translator = $this->createMock(TranslatorInterface::class);
         $translator
             ->method('setLocale')
-            ->willReturnCallback(function ($locale) {
+            ->willReturnCallback(function ($locale) use ($translator) {
                 $this->locale = $locale;
+                return $translator;
             });
 
         $translator
@@ -257,8 +258,13 @@ final class LocaleTest extends TestCase
         );
     }
 
-    private function createRequest(string $uri = '/', string $method = Method::GET, array $queryParams = [], array $headers = [], $cookieParams = []): ServerRequestInterface
-    {
+    private function createRequest(
+        string $uri = '/',
+        string $method = Method::GET,
+        array $queryParams = [],
+        array $headers = [],
+        $cookieParams = []
+    ): ServerRequestInterface {
         return new ServerRequest([], [], $cookieParams, $queryParams, null, $method, $uri, $headers);
     }
 }
