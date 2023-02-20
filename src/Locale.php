@@ -43,6 +43,7 @@ final class Locale implements MiddlewareInterface
         private array $locales = [],
         private array $ignoredRequests = [],
         private bool $cookieSecure = false,
+        private string $baseUrlAlias = '@baseUrl',
     ) {
         $this->cookieDuration = new DateInterval('P30D');
     }
@@ -87,7 +88,7 @@ final class Locale implements MiddlewareInterface
         $this->urlGenerator->setDefaultArgument($this->queryParameterName, $locale);
 
         if ($request->getMethod() === Method::GET) {
-            $location = rtrim($this->aliases->get('@baseUrl'), '/') . '/'
+            $location = rtrim($this->aliases->get($this->baseUrlAlias), '/') . '/'
                 . $locale . $path . ($query !== '' ? '?' . $query : '');
             return $this->responseFactory
                 ->createResponse(Status::FOUND)
@@ -109,7 +110,7 @@ final class Locale implements MiddlewareInterface
         }
 
         if ($newPath !== null) {
-            $location = rtrim($this->aliases->get('@baseUrl'), '/')
+            $location = rtrim($this->aliases->get($this->baseUrlAlias), '/')
                 . $newPath . ($query !== '' ? '?' . $query : '');
             $response = $this->responseFactory
                 ->createResponse(Status::FOUND)
@@ -260,6 +261,13 @@ final class Locale implements MiddlewareInterface
     {
         $new = clone $this;
         $new->cookieSecure = $secure;
+        return $new;
+    }
+
+    public function withBaseUrlAlias(string $baseUrlAlias): self
+    {
+        $new = clone $this;
+        $new->baseUrlAlias = $baseUrlAlias;
         return $new;
     }
 }

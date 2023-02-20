@@ -33,7 +33,8 @@ final class SubFolder implements MiddlewareInterface
     public function __construct(
         private UrlGeneratorInterface $uriGenerator,
         private Aliases $aliases,
-        private string $baseUrlAlias = '@baseUrl',
+        private ?string $prefix = null,
+        private ?string $baseUrlAlias = '@baseUrl',
     ) {
     }
 
@@ -44,7 +45,7 @@ final class SubFolder implements MiddlewareInterface
     {
         $uri = $request->getUri();
         $path = $uri->getPath();
-        $baseUrl = $this->getBaseUrl($request);
+        $baseUrl = $this->prefix ?? $this->getBaseUrl($request);
         $length = strlen($baseUrl);
 
         if ($length > 0 && str_starts_with($path, $baseUrl)) {
@@ -60,7 +61,9 @@ final class SubFolder implements MiddlewareInterface
 
         if ($length !== 0) {
             $this->uriGenerator->setUriPrefix($baseUrl);
-            $this->aliases->set($this->baseUrlAlias, $baseUrl);
+            if ($this->baseUrlAlias !== null) {
+                $this->aliases->set($this->baseUrlAlias, $baseUrl);
+            }
         }
 
         return $handler->handle($request);
