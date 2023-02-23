@@ -75,7 +75,7 @@ final class SubFolder implements MiddlewareInterface
             }
 
             $this->uriGenerator->setUriPrefix($baseUrl);
-            if ($this->baseUrlAlias !== null && $this->prefix === null) {
+            if ($this->baseUrlAlias !== null) {
                 $this->aliases->set($this->baseUrlAlias, $baseUrl);
             }
         }
