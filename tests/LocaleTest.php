@@ -47,6 +47,7 @@ final class LocaleTest extends TestCase
         $this->assertNotSame($localeMiddleware->withQueryParameterName('lang'), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withSessionName('lang'), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withIgnoredRequests(['/auth**']), $localeMiddleware);
+        $this->assertNotSame($localeMiddleware->withBaseUrlAlias('@baseUrl'), $localeMiddleware);
     }
 
     public function testDefaultLocale(): void

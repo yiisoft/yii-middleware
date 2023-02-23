@@ -100,8 +100,13 @@ final class SubFolderTest extends TestCase
     /**
      * @dataProvider autoPrefixDataProvider
      */
-    public function testAutoPrefix(string $uri, string $script, string $expectedBaseUrl, string $expectedPrefix, $expectedPath): void
-    {
+    public function testAutoPrefix(
+        string $uri,
+        string $script,
+        string $expectedBaseUrl,
+        string $expectedPrefix,
+        $expectedPath
+    ): void {
         $request = $this->createRequest($uri, $script);
         $mw = $this->createMiddleware(alias: '@baseUrl');
 
@@ -110,6 +115,21 @@ final class SubFolderTest extends TestCase
         $this->assertSame($expectedBaseUrl, $this->aliases->get('@baseUrl'));
         $this->assertSame($expectedPrefix, $this->urlGeneratorUriPrefix);
         $this->assertSame($expectedPath, $this->getRequestPath());
+    }
+
+    /**
+     * @dataProvider scriptParamsProvider
+     */
+    public function testAutoPrefixWithScriptParams(array $scriptParams): void
+    {
+        $request = new ServerRequest($scriptParams, [], [], [], null, Method::GET, '/public/');
+        $mw = $this->createMiddleware(alias: '@baseUrl');
+
+        $this->process($mw, $request);
+
+        $this->assertSame('/public', $this->aliases->get('@baseUrl'));
+        $this->assertSame('/public', $this->urlGeneratorUriPrefix);
+        $this->assertSame('/', $this->getRequestPath());
     }
 
     public function autoPrefixDataProvider(): array
@@ -160,6 +180,34 @@ final class SubFolderTest extends TestCase
         ];
     }
 
+    public function scriptParamsProvider(): iterable
+    {
+        yield [
+            [
+                'PHP_SELF' => '/public/index.php',
+                'SCRIPT_FILENAME' => '/public/index.php',
+            ],
+        ];
+        yield [
+            [
+                'PHP_SELF' => '/public/index.php/test',
+                'SCRIPT_FILENAME' => '/public/index.php',
+            ],
+        ];
+        yield [
+            [
+                'ORIG_SCRIPT_NAME' => '/public/index.php',
+                'SCRIPT_FILENAME' => '/public/index.php',
+            ],
+        ];
+        yield [
+            [
+                'DOCUMENT_ROOT' => '/www',
+                'SCRIPT_FILENAME' => '/www/public/index.php',
+            ],
+        ];
+    }
+
     private function process(SubFolder $middleware, ServerRequestInterface $request): ResponseInterface
     {
         $handler = new class () implements RequestHandlerInterface {
@@ -198,8 +246,8 @@ final class SubFolderTest extends TestCase
         return new SubFolder($urlGenerator, $this->aliases, prefix: $prefix, baseUrlAlias: $alias);
     }
 
-    private function createRequest(string $uri = '/', string $scriptPath = '/', string $scriptParam = 'SCRIPT_FILENAME'): ServerRequestInterface
+    private function createRequest(string $uri = '/', string $scriptPath = '/'): ServerRequestInterface
     {
-        return new ServerRequest([$scriptParam => $scriptPath], [], [], [], null, Method::GET, $uri);
+        return new ServerRequest(['SCRIPT_FILENAME' => $scriptPath], [], [], [], null, Method::GET, $uri);
     }
 }
