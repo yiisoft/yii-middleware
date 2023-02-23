@@ -70,13 +70,12 @@ final class SubFolder implements MiddlewareInterface
 
             if ($newPath[0] === '/') {
                 $request = $request->withUri($uri->withPath($newPath));
+                $this->uriGenerator->setUriPrefix($baseUrl);
+                if ($this->baseUrlAlias !== null) {
+                    $this->aliases->set($this->baseUrlAlias, $baseUrl);
+                }
             } elseif ($this->prefix !== null) {
                 throw new BadUriPrefixException('URI prefix does not match completely.');
-            }
-
-            $this->uriGenerator->setUriPrefix($baseUrl);
-            if ($this->baseUrlAlias !== null) {
-                $this->aliases->set($this->baseUrlAlias, $baseUrl);
             }
         }
 
