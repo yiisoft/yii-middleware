@@ -31,7 +31,7 @@ final class SubFolderTest extends TestCase
     public function testDefault(): void
     {
         $request = $this->createRequest($uri = '/', $script = '/index.php');
-        $mw = $this->createMiddleware('@baseUrl');
+        $mw = $this->createMiddleware(alias: '@baseUrl');
 
         $this->process($mw, $request);
 
@@ -40,79 +40,61 @@ final class SubFolderTest extends TestCase
         $this->assertSame($uri, $this->getRequestPath());
     }
 
-    public function testAutoPrefix(): void
+    /**
+     * @dataProvider dataProvider
+     */
+    public function testAutoPrefix(string $uri, string $script, string $expectedPrefix, $expectedPath): void
     {
-        $request = $this->createRequest($uri = '/public/', $script = '/public/index.php');
-        $mw = $this->createMiddleware('@baseUrl');
-
-        $this->process($mw, $request);
-
-        $this->assertSame('/public', $this->aliases->get('@baseUrl'));
-        $this->assertSame('/public', $this->urlGeneratorUriPrefix);
-        $this->assertSame('/', $this->getRequestPath());
-    }
-
-    public function testAutoPrefixLogn(): void
-    {
-        $prefix = '/root/php/dev-server/project-42/index_html/public/web';
-        $uri = "{$prefix}/";
-        $script = "{$prefix}/index.php";
         $request = $this->createRequest($uri, $script);
-        $mw = $this->createMiddleware('@baseUrl');
+        $mw = $this->createMiddleware(alias: '@baseUrl');
 
         $this->process($mw, $request);
 
-        $this->assertSame($prefix, $this->aliases->get('@baseUrl'));
-        $this->assertSame($prefix, $this->urlGeneratorUriPrefix);
-        $this->assertSame('/', $this->getRequestPath());
+        $this->assertSame($expectedPrefix, $this->aliases->get('@baseUrl'));
+        $this->assertSame($expectedPrefix, $this->urlGeneratorUriPrefix);
+        $this->assertSame($expectedPath, $this->getRequestPath());
     }
 
-    public function testAutoPrefixAndUriWithoutTrailingSlash(): void
+    public function dataProvider(): array
     {
-        $request = $this->createRequest($uri = '/public', $script = '/public/index.php');
-        $mw = $this->createMiddleware('@baseUrl');
-
-        $this->process($mw, $request);
-
-        $this->assertSame('/public', $this->aliases->get('@baseUrl'));
-        $this->assertSame('/public', $this->urlGeneratorUriPrefix);
-        $this->assertSame('/', $this->getRequestPath());
-    }
-
-    public function testAutoPrefixFullUrl(): void
-    {
-        $request = $this->createRequest($uri = '/public/index.php?test', $script = '/public/index.php');
-        $mw = $this->createMiddleware('@baseUrl');
-
-        $this->process($mw, $request);
-
-        $this->assertSame('/public', $this->aliases->get('@baseUrl'));
-        $this->assertSame('/public', $this->urlGeneratorUriPrefix);
-        $this->assertSame('/index.php', $this->getRequestPath());
-    }
-
-    public function testFailedAutoPrefix(): void
-    {
-        $request = $this->createRequest($uri = '/web/index.php', $script = '/public/index.php');
-        $mw = $this->createMiddleware('@baseUrl');
-
-        $this->process($mw, $request);
-
-        $this->assertSame('/public', $this->aliases->get('@baseUrl'));
-        $this->assertSame('/public', $this->urlGeneratorUriPrefix);
-        $this->assertSame($uri, $this->getRequestPath());
-    }
-
-    public function testAutoPrefixDoesNotMatchCompletely(): void
-    {
-        $request = $this->createRequest($uri = '/public/web/', $script = '/pub/index.php');
-        $mw = $this->createMiddleware('@baseUrl');
-
-        $this->process($mw, $request);
-
-        $this->assertSame('/pub', $this->aliases->get('@baseUrl'));
-        $this->assertSame('/pub', $this->urlGeneratorUriPrefix);
-        $this->assertSame($uri, $this->getRequestPath());
+        return [
+            'auto prefix' => [
+                '/public/',
+                '/public/index.php',
+                '/public',
+                '/',
+            ],
+            'auto prefix logn' => [
+                '/root/php/dev-server/project-42/index_html/public/web/',
+                '/root/php/dev-server/project-42/index_html/public/web/index.php',
+                '/root/php/dev-server/project-42/index_html/public/web',
+                '/',
+            ],
+            'auto prefix and uri without trailing slash' => [
+                '/public',
+                '/public/index.php',
+                '/public',
+                '/',
+            ],
+            'auto prefix full url' => [
+                '/public/index.php?test',
+                '/public/index.php',
+                '/public',
+                '/index.php',
+            ],
+            'failed auto prefix' => [
+                '/web/index.php',
+                '/public/index.php',
+                '/public',
+                '/web/index.php',
+            ],
+            'auto prefix does not match completely' => [
+                '/public/web/',
+                '/pub/index.php',
+                '/pub',
+                '/public/web/'
+            ]
+        ];
     }
 
     private function process(SubFolder $middleware, ServerRequestInterface $request): ResponseInterface
@@ -138,7 +120,7 @@ final class SubFolderTest extends TestCase
             ->getPath();
     }
 
-    private function createMiddleware(?string $alias = null): SubFolder
+    private function createMiddleware(?string $prefix = null, ?string $alias = null): SubFolder
     {
         $urlGenerator = $this->createMock(UrlGeneratorInterface::class);
         $urlGenerator
@@ -150,7 +132,7 @@ final class SubFolderTest extends TestCase
         $urlGenerator
             ->method('getUriPrefix')
             ->willReturnReference($this->urlGeneratorUriPrefix);
-        return new SubFolder($urlGenerator, $this->aliases, $alias);
+        return new SubFolder($urlGenerator, $this->aliases, prefix: $prefix, baseUrlAlias: $alias);
     }
 
     private function createRequest(string $uri = '/', string $scriptPath = '/'): ServerRequestInterface

@@ -10,6 +10,7 @@ use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Yiisoft\Aliases\Aliases;
 use Yiisoft\Router\UrlGeneratorInterface;
+use Yiisoft\Yii\Middleware\Exception\BadUriPrefixException;
 
 use function basename;
 use function dirname;
@@ -28,7 +29,9 @@ final class SubFolder implements MiddlewareInterface
     /**
      * @param UrlGeneratorInterface $uriGenerator The URI generator instance.
      * @param Aliases $aliases The aliases instance.
-     * @param string $baseUrlAlias The base url alias {@see Aliases::get()}. Default "@baseUrl".
+     * @param string|null $prefix URI prefix the specified immediately after the domain part.
+     * The prefix value usually begins with a slash and must not end with a slash.
+     * @param string|null $baseUrlAlias The base url alias {@see Aliases::get()}. Default "@baseUrl".
      */
     public function __construct(
         private UrlGeneratorInterface $uriGenerator,
@@ -48,20 +51,31 @@ final class SubFolder implements MiddlewareInterface
         $baseUrl = $this->prefix ?? $this->getBaseUrl($request);
         $length = strlen($baseUrl);
 
-        if ($length > 0 && str_starts_with($path, $baseUrl)) {
+        if ($this->prefix !== null) {
+            if ($baseUrl[-1] === '/') {
+                throw new BadUriPrefixException('Wrong URI prefix value.');
+            }
+
+            if (!str_starts_with($path, $baseUrl)) {
+                throw new BadUriPrefixException('URI prefix does not match.');
+            }
+        }
+
+        if ($length > 0) {
             $newPath = substr($path, $length);
 
             if ($newPath === '') {
                 $newPath = '/';
             }
+
             if ($newPath[0] === '/') {
                 $request = $request->withUri($uri->withPath($newPath));
+            } elseif ($this->prefix !== null) {
+                throw new BadUriPrefixException('URI prefix does not match completely.');
             }
-        }
 
-        if ($length !== 0) {
             $this->uriGenerator->setUriPrefix($baseUrl);
-            if ($this->baseUrlAlias !== null) {
+            if ($this->baseUrlAlias !== null && $this->prefix === null) {
                 $this->aliases->set($this->baseUrlAlias, $baseUrl);
             }
         }
