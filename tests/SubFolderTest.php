@@ -92,8 +92,8 @@ final class SubFolderTest extends TestCase
                 '/public/web/',
                 '/pub/index.php',
                 '/pub',
-                '/public/web/'
-            ]
+                '/public/web/',
+            ],
         ];
     }
 
