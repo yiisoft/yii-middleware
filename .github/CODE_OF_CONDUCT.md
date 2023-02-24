@@ -25,12 +25,12 @@ Examples of unacceptable behavior by participants include:
 
 ## Enforcement Responsibilities
 
-Core team members are responsible for clarifying and enforcing our standards of acceptable behavior and will take
+Core team members are responsible for clarifying and enforcing our standards of acceptable behavior and will take 
 appropriate and fair corrective action in response to any behavior that they deem inappropriate, threatening, offensive,
 or harmful.
 
 Core team members have the right and responsibility to remove, edit, or reject comments, commits, code, wiki edits,
-issues, and other contributions that are not aligned to this Code of Conduct, and will communicate reasons for
+issues, and other contributions that are not aligned to this Code of Conduct, and will communicate reasons for 
 moderation decisions when appropriate.
 
 ## Scope
@@ -54,7 +54,7 @@ deem in violation of this Code of Conduct:
 
 ### 1. Correction
 
-**Community Impact**: Use of inappropriate language or other behavior deemed unprofessional or unwelcome in
+**Community Impact**: Use of inappropriate language or other behavior deemed unprofessional or unwelcome in 
 the community.
 
 **Consequence**: A private, written warning from core team members, providing clarity around the nature of the violation
@@ -66,7 +66,7 @@ and an explanation of why the behavior was inappropriate. A public apology may b
 
 **Consequence**: A warning with consequences for continued behavior. No interaction with the people involved, including
 unsolicited interaction with those enforcing the Code of Conduct, for a specified period of time. This includes avoiding
-interactions in community spaces as well as external channels like social media. Violating these terms may lead to
+interactions in community spaces as well as external channels like social media. Violating these terms may lead to 
 a temporary or permanent ban.
 
 ### 3. Temporary Ban
