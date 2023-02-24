@@ -12,14 +12,8 @@ use Yiisoft\Aliases\Aliases;
 use Yiisoft\Router\UrlGeneratorInterface;
 use Yiisoft\Yii\Middleware\Exception\BadUriPrefixException;
 
-use function basename;
 use function dirname;
-use function rtrim;
-use function str_replace;
-use function str_starts_with;
 use function strlen;
-use function strpos;
-use function substr;
 
 /**
  * This middleware supports routing when webroot is not the same folder as public.
@@ -31,7 +25,7 @@ final class SubFolder implements MiddlewareInterface
      * @param Aliases $aliases The aliases instance.
      * @param string|null $prefix URI prefix the specified immediately after the domain part.
      * The prefix value usually begins with a slash and must not end with a slash.
-     * @param string|null $baseUrlAlias The base url alias {@see Aliases::get()}. Default "@baseUrl".
+     * @param string|null $baseUrlAlias The base url alias {@see Aliases::get()}. Defaults to `@baseUrl`.
      */
     public function __construct(
         private UrlGeneratorInterface $uriGenerator,

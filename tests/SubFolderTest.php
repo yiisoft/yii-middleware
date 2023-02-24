@@ -122,7 +122,7 @@ final class SubFolderTest extends TestCase
      */
     public function testAutoPrefixWithScriptParams(array $scriptParams): void
     {
-        $request = new ServerRequest($scriptParams, [], [], [], null, Method::GET, '/public/');
+        $request = new ServerRequest(serverParams: $scriptParams, uri: '/public/');
         $mw = $this->createMiddleware(alias: '@baseUrl');
 
         $this->process($mw, $request);
