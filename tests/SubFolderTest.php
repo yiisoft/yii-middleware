@@ -48,7 +48,7 @@ final class SubFolderTest extends TestCase
 
         $this->process($mw, $request);
 
-        $this->assertSame('/custom_public', $this->aliases->get('@baseUrl'));
+        $this->assertSame('/default/web', $this->aliases->get('@baseUrl'));
         $this->assertSame('/custom_public', $this->urlGeneratorUriPrefix);
         $this->assertSame('/index.php', $this->getRequestPath());
     }
