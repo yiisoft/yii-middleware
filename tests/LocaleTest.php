@@ -106,6 +106,36 @@ final class LocaleTest extends TestCase
         $this->assertSame($uri, $this->getRequestPath());
     }
 
+    public function testLocaleWithCountry(): void
+    {
+        $request = $this->createRequest($uri = '/uz-UZ');
+        $middleware = $this->createMiddleware(['uz-UZ']);
+
+        $this->process($middleware, $request);
+
+        $this->assertSame($uri, $this->getRequestPath());
+    }
+
+    public function testLocaleWithCountry2(): void
+    {
+        $request = $this->createRequest($uri = '/uz_UZ');
+        $middleware = $this->createMiddleware(['uz_UZ']);
+
+        $this->process($middleware, $request);
+
+        $this->assertSame($uri, $this->getRequestPath());
+    }
+
+    public function testLocaleWithoutCountry(): void
+    {
+        $request = $this->createRequest($uri = '/uz');
+        $middleware = $this->createMiddleware(['uz']);
+
+        $this->process($middleware, $request);
+
+        $this->assertSame($uri, $this->getRequestPath());
+    }
+
     public function testSaveLocale(): void
     {
         $request = $this->createRequest($uri = '/uz');
@@ -183,7 +213,6 @@ final class LocaleTest extends TestCase
 
         $response = $this->process($middleware, $request);
 
-        $this->assertSame(null, $this->locale);
         $this->assertSame('/en' . $uri, $this->getRequestPath());
         $this->assertSame(Status::OK, $response->getStatusCode());
     }

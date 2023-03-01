@@ -59,6 +59,8 @@ use function trim;
  *   ['x-forwarded-for', 'forwarded', ...],
  * );
  * ```
+ *
+ * @psalm-type TrustedHostData = array<self::DATA_KEY_*: array|null|non-empty-string[]>
  */
 class TrustedHostsNetworkResolver implements MiddlewareInterface
 {
@@ -234,7 +236,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
         foreach ($this->trustedHosts as $data) {
             // collect all trusted headers
-            $trustedHeaders = array_merge($trustedHeaders, $data[self::DATA_KEY_TRUSTED_HEADERS]);
+            $trustedHeaders[] = $data[self::DATA_KEY_TRUSTED_HEADERS];
 
             if ($trustedHostData !== null) {
                 // trusted hosts already found
@@ -246,7 +248,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             }
         }
 
-        /** @psalm-suppress PossiblyNullArgument, PossiblyNullArrayAccess */
+        $trustedHeaders = array_merge(...$trustedHeaders);
         $untrustedHeaders = array_diff($trustedHeaders, $trustedHostData[self::DATA_KEY_TRUSTED_HEADERS] ?? []);
         $request = $this->removeHeaders($request, $untrustedHeaders);
 
@@ -407,7 +409,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
      * RFC 7239 allows to use obfuscated host data. In this case, either specifying the
      * IP address or dropping the proxy endpoint is required to determine validated route.
      *
-     * By default it does not perform any transformation on the data. You can override this method.
+     * By default, it does not perform any transformation on the data. You can override this method.
      *
      * @param array $hostData
      * @param array $hostDataListValidated

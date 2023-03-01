@@ -132,9 +132,9 @@ final class Locale implements MiddlewareInterface
 
         $pattern = implode('|', $parts);
         if (preg_match("#^/($pattern)\b(/?)#i", $path, $matches)) {
-            $locale = $matches[1];
-            [$locale, $country] = $this->parseLocale($locale);
-            if (isset($this->locales[$locale])) {
+            $matchedLocale = $matches[1];
+            [$locale, $country] = $this->parseLocale($matchedLocale);
+            if (isset($this->locales[$locale]) || in_array($matchedLocale, $this->locales, true)) {
                 $this->logger->debug(sprintf("Locale '%s' found in URL", $locale));
                 return [$locale, $country];
             }

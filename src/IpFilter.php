@@ -24,7 +24,7 @@ final class IpFilter implements MiddlewareInterface
      * @param ResponseFactoryInterface $responseFactory The response factory instance.
      * @param string|null $clientIpAttribute Attribute name of client IP. If `null`, then `REMOTE_ADDR` value
      * of the server parameters is processed. If the value is not `null`, then the attribute specified
-     * must have a value, otherwise the request will closed with forbidden.
+     * must have a value, otherwise the request will be closed with forbidden.
      */
     public function __construct(
         private ValidatorInterface $validator,

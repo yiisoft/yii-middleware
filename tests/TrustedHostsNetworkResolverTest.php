@@ -35,6 +35,15 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 ],
                 '5.5.5.5',
             ],
+            'xForwardLevel3' => [
+                ['x-forwarded-for' => ['9.9.9.9', '5.5.5.5', '2.2.2.2']],
+                ['REMOTE_ADDR' => '127.0.0.1'],
+                [
+                    ['hosts' => ['8.8.8.8', '127.0.0.1', '2.2.2.2'], 'ipHeaders' => ['x-forwarded-for']],
+                    ['hosts' => ['172.16.0.1', '127.0.0.1'], 'ipHeaders' => ['x-forwarded-for']],
+                ],
+                '5.5.5.5',
+            ],
             'rfc7239Level1' => [
                 ['forwarded' => ['for=9.9.9.9', 'for=5.5.5.5', 'for=2.2.2.2']],
                 ['REMOTE_ADDR' => '127.0.0.1'],
@@ -48,6 +57,17 @@ final class TrustedHostsNetworkResolverTest extends TestCase
             ],
             'rfc7239Level2' => [
                 ['forwarded' => ['for=9.9.9.9', 'for=5.5.5.5', 'for=2.2.2.2']],
+                ['REMOTE_ADDR' => '127.0.0.1'],
+                [
+                    [
+                        'hosts' => ['8.8.8.8', '127.0.0.1', '2.2.2.2'],
+                        'ipHeaders' => [[TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded']],
+                    ],
+                ],
+                '5.5.5.5',
+            ],
+            'rfc7239LevelContainsInvalidIp' => [
+                ['forwarded' => ['for=invalid9.9.9.9', 'for=5.5.5.5', 'for=2.2.2.2']],
                 ['REMOTE_ADDR' => '127.0.0.1'],
                 [
                     [
