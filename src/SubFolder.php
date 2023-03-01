@@ -12,9 +12,8 @@ use Yiisoft\Aliases\Aliases;
 use Yiisoft\Router\UrlGeneratorInterface;
 use Yiisoft\Yii\Middleware\Exception\BadUriPrefixException;
 
-use function is_string;
+use function dirname;
 use function strlen;
-use function substr;
 
 /**
  * This middleware supports routing when webroot is not the same folder as public.
@@ -26,51 +25,32 @@ final class SubFolder implements MiddlewareInterface
      * @param Aliases $aliases The aliases instance.
      * @param string|null $prefix URI prefix the specified immediately after the domain part.
      * The prefix value usually begins with a slash and must not end with a slash.
-     * @param string|null $alias The path alias {@see Aliases::get()}.
+     * @param string|null $baseUrlAlias The base url alias {@see Aliases::get()}. Defaults to `@baseUrl`.
      */
     public function __construct(
         private UrlGeneratorInterface $uriGenerator,
         private Aliases $aliases,
         private ?string $prefix = null,
-        private ?string $alias = null,
+        private ?string $baseUrlAlias = '@baseUrl',
     ) {
     }
 
     /**
      * @inheritDoc
-     *
-     * @throws BadUriPrefixException If wrong URI prefix.
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $uri = $request->getUri();
         $path = $uri->getPath();
-        $prefix = $this->prefix;
-        $auto = $prefix === null;
-        /** @var string $prefix */
-        $length = $auto ? 0 : strlen($prefix);
+        $baseUrl = $this->prefix ?? $this->getBaseUrl($request);
+        $length = strlen($baseUrl);
 
-        if ($auto) {
-            // automatically checks that the project is in a subfolder
-            // and URI contains a prefix
-            $scriptName = $request->getServerParams()['SCRIPT_NAME'];
-
-            if (is_string($scriptName) && str_contains($scriptName, '/')) {
-                $position = strrpos($scriptName, '/');
-                $tmpPrefix = substr($scriptName, 0, $position === false ? null : $position);
-
-                if (str_starts_with($path, $tmpPrefix)) {
-                    $prefix = $tmpPrefix;
-                    $length = strlen($prefix);
-                }
-            }
-        } elseif ($length > 0) {
-            /** @var string $prefix */
-            if ($prefix[-1] === '/') {
+        if ($this->prefix !== null) {
+            if ($baseUrl[-1] === '/') {
                 throw new BadUriPrefixException('Wrong URI prefix value.');
             }
 
-            if (!str_starts_with($path, $prefix)) {
+            if (!str_starts_with($path, $baseUrl)) {
                 throw new BadUriPrefixException('URI prefix does not match.');
             }
         }
@@ -82,21 +62,45 @@ final class SubFolder implements MiddlewareInterface
                 $newPath = '/';
             }
 
-            if ($newPath[0] !== '/') {
-                if (!$auto) {
-                    throw new BadUriPrefixException('URI prefix does not match completely.');
-                }
-            } else {
+            if ($newPath[0] === '/') {
                 $request = $request->withUri($uri->withPath($newPath));
-                /** @var string $prefix */
-                $this->uriGenerator->setUriPrefix($prefix);
-
-                if ($this->alias !== null) {
-                    $this->aliases->set($this->alias, $prefix . '/');
+                $this->uriGenerator->setUriPrefix($baseUrl);
+                if ($this->baseUrlAlias !== null && $this->prefix === null) {
+                    $this->aliases->set($this->baseUrlAlias, $baseUrl);
                 }
+            } elseif ($this->prefix !== null) {
+                throw new BadUriPrefixException('URI prefix does not match completely.');
             }
         }
 
         return $handler->handle($request);
+    }
+
+    public function getBaseUrl(ServerRequestInterface $request): string
+    {
+        $serverParams = $request->getServerParams();
+        $scriptUrl = $serverParams['SCRIPT_FILENAME'];
+        $scriptName = basename($scriptUrl);
+
+        if (isset($serverParams['PHP_SELF']) && basename($serverParams['PHP_SELF']) === $scriptName) {
+            $scriptUrl = $serverParams['PHP_SELF'];
+        } elseif (
+            isset($serverParams['ORIG_SCRIPT_NAME']) &&
+            basename($serverParams['ORIG_SCRIPT_NAME']) === $scriptName
+        ) {
+            $scriptUrl = $serverParams['ORIG_SCRIPT_NAME'];
+        } elseif (
+            isset($serverParams['PHP_SELF']) &&
+            ($pos = strpos($serverParams['PHP_SELF'], '/' . $scriptName)) !== false
+        ) {
+            $scriptUrl = substr($serverParams['PHP_SELF'], 0, $pos) . '/' . $scriptName;
+        } elseif (
+            !empty($serverParams['DOCUMENT_ROOT']) &&
+            str_starts_with($scriptUrl, $serverParams['DOCUMENT_ROOT'])
+        ) {
+            $scriptUrl = str_replace([$serverParams['DOCUMENT_ROOT'], '\\'], ['', '/'], $scriptUrl);
+        }
+
+        return rtrim(dirname($scriptUrl), '\\/');
     }
 }
