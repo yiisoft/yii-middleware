@@ -46,7 +46,7 @@
         "yiisoft/session": "^2.0",
         "yiisoft/strings": "^2.1",
         "yiisoft/translator": "^3.0",
-        "yiisoft/validator": "dev-master"
+        "yiisoft/validator": "^1.0"
     },
     "require-dev": {
         "httpsoft/http-message": "^1.0",
