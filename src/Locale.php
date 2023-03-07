@@ -236,7 +236,8 @@ final class Locale implements MiddlewareInterface
      * @param array<array-key, string> $locales
      *
      * @return $this
-     */public function withLocales(array $locales): self
+     */
+    public function withLocales(array $locales): self
     {
         $new = clone $this;
         $new->locales = $locales;
@@ -282,7 +283,8 @@ final class Locale implements MiddlewareInterface
      * @param string[] $ignoredRequests
      *
      * @return $this
-     */public function withIgnoredRequests(array $ignoredRequests): self
+     */
+    public function withIgnoredRequests(array $ignoredRequests): self
     {
         $new = clone $this;
         $new->ignoredRequests = $ignoredRequests;

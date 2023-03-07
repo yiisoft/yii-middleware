@@ -517,7 +517,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
     }
 
     /**
-     * @param array<string[]|string> $ipHeaders
+     * @param array<string|string[]> $ipHeaders
      *
      * @return array{0: string|null, 1: string|null, 2: string[]}
      */
