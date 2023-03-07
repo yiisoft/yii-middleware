@@ -199,8 +199,6 @@ final class Locale implements MiddlewareInterface
     }
 
     /**
-     * @param string $locale
-     *
      * @return list{0: string, 1: string|null}
      */
     private function parseLocale(string $locale): array
