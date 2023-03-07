@@ -25,6 +25,7 @@ final class IpFilter implements MiddlewareInterface
      * @param string|null $clientIpAttribute Attribute name of client IP. If `null`, then `REMOTE_ADDR` value
      * of the server parameters is processed. If the value is not `null`, then the attribute specified
      * must have a value, otherwise the request will be closed with forbidden.
+     * @param array<array-key, string> $ipRanges The IPv4 or IPv6 ranges that are allowed or forbidden.
      */
     public function __construct(
         private ValidatorInterface $validator,
@@ -37,10 +38,13 @@ final class IpFilter implements MiddlewareInterface
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         if ($this->clientIpAttribute !== null) {
+            /** @var mixed $clientIp */
             $clientIp = $request->getAttribute($this->clientIpAttribute);
         }
 
+        /** @psalm-var array{REMOTE_ADDR?: mixed} $serverParams */
         $serverParams = $request->getServerParams();
+        /** @var mixed $clientIp */
         $clientIp ??= $serverParams['REMOTE_ADDR'] ?? null;
 
         $result = $this->validator->validate(

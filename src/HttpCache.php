@@ -133,10 +133,12 @@ final class HttpCache implements MiddlewareInterface
             return $handler->handle($request);
         }
 
+        /** @var int|null $lastModified */
         $lastModified = $this->lastModified === null ? null : ($this->lastModified)($request, $this->params);
         $etag = null;
 
         if ($this->etagSeed !== null) {
+            /** @var string|null $seed */
             $seed = ($this->etagSeed)($request, $this->params);
 
             if ($seed !== null) {

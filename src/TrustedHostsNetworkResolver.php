@@ -60,10 +60,14 @@ use function trim;
  * );
  * ```
  *
- * @psalm-type TrustedHostData = array<self::DATA_KEY_*: array|null|non-empty-string[]>
+ * @psalm-type HostData = array{ip?:string, host?: string, by?: string, port?: string|int, protocol?: string, httpHost?: string}
+ * @psalm-type ProtocolHeadersData = array<lowercase-string, array<non-empty-string, array<array-key, lowercase-string>>|callable>
+ * @psalm-type DataKeys = array<self::DATA_KEY_*>
+ * @psalm-type TrustedHostData = non-empty-array<value-of<DataKeys>, non-empty-string[]>
  */
 class TrustedHostsNetworkResolver implements MiddlewareInterface
 {
+    public const REQUEST_CLIENT_IP = 'requestClientIp';
     public const IP_HEADER_TYPE_RFC7239 = 'rfc7239';
 
     public const DEFAULT_TRUSTED_HEADERS = [
@@ -89,6 +93,9 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
     private const DATA_KEY_TRUSTED_HEADERS = 'trustedHeaders';
     private const DATA_KEY_PORT_HEADERS = 'portHeaders';
 
+    /**
+     * @var array<TrustedHostData>
+     */
     private array $trustedHosts = [];
     private ?string $attributeIps = null;
 
@@ -163,11 +170,11 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
         $trustedHeaders ??= self::DEFAULT_TRUSTED_HEADERS;
         $protocolHeaders = $this->prepareProtocolHeaders($protocolHeaders);
 
-        $this->checkTypeStringOrArray($hosts, 'hosts');
-        $this->checkTypeStringOrArray($trustedHeaders, 'trustedHeaders');
-        $this->checkTypeStringOrArray($hostHeaders, 'hostHeaders');
-        $this->checkTypeStringOrArray($urlHeaders, 'urlHeaders');
-        $this->checkTypeStringOrArray($portHeaders, 'portHeaders');
+        $this->checkTypeStringOrArray($hosts, self::DATA_KEY_HOSTS);
+        $this->checkTypeStringOrArray($trustedHeaders, self::DATA_KEY_TRUSTED_HEADERS);
+        $this->checkTypeStringOrArray($hostHeaders, self::DATA_KEY_HOST_HEADERS);
+        $this->checkTypeStringOrArray($urlHeaders, self::DATA_KEY_URL_HEADERS);
+        $this->checkTypeStringOrArray($portHeaders, self::DATA_KEY_PORT_HEADERS);
 
         foreach ($hosts as $host) {
             $host = str_replace('*', 'wildcard', $host); // wildcard is allowed in host
@@ -220,6 +227,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
+        /** @var string|null $actualHost */
         $actualHost = $request->getServerParams()['REMOTE_ADDR'] ?? null;
 
         if ($actualHost === null) {
@@ -229,10 +237,6 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
         $trustedHostData = null;
         $trustedHeaders = [];
-        $validator = fn (string $value, array $ranges): Result => $this->validator->validate(
-            $value,
-            [new Ip(allowSubnet: false, allowNegation: false, ranges: $ranges)]
-        );
 
         foreach ($this->trustedHosts as $data) {
             // collect all trusted headers
@@ -243,27 +247,27 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
                 continue;
             }
 
-            if ($this->isValidHost($actualHost, $data[self::DATA_KEY_HOSTS], $validator)) {
+            if ($this->isValidHost($actualHost, $data[self::DATA_KEY_HOSTS])) {
                 $trustedHostData = $data;
             }
         }
-
-        $trustedHeaders = array_merge(...$trustedHeaders);
-        $untrustedHeaders = array_diff($trustedHeaders, $trustedHostData[self::DATA_KEY_TRUSTED_HEADERS] ?? []);
-        $request = $this->removeHeaders($request, $untrustedHeaders);
 
         if ($trustedHostData === null) {
             // No trusted host at all.
             return $this->handleNotTrusted($request, $handler);
         }
 
+        $trustedHeaders = array_merge(...$trustedHeaders);
+        $untrustedHeaders = array_diff($trustedHeaders, $trustedHostData[self::DATA_KEY_TRUSTED_HEADERS] ?? []);
+        $request = $this->removeHeaders($request, $untrustedHeaders);
+
         [$ipListType, $ipHeader, $hostList] = $this->getIpList($request, $trustedHostData[self::DATA_KEY_IP_HEADERS]);
         $hostList = array_reverse($hostList); // the first item should be the closest to the server
 
-        if ($ipListType === null) {
-            $hostList = $this->getFormattedIpList($hostList);
-        } elseif ($ipListType === self::IP_HEADER_TYPE_RFC7239) {
+        if ($ipListType === self::IP_HEADER_TYPE_RFC7239) {
             $hostList = $this->getElementsByRfc7239($hostList);
+        } else {
+            $hostList = $this->getFormattedIpList($hostList);
         }
 
         array_unshift($hostList, ['ip' => $actualHost]); // server's ip to first position
@@ -285,14 +289,14 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
             $ip = $hostData['ip'];
 
-            if (!$this->isValidHost($ip, ['any'], $validator)) {
+            if (!$this->isValidHost($ip, ['any'])) {
                 // invalid IP
                 break;
             }
 
             $hostDataList[] = $hostData;
 
-            if (!$this->isValidHost($ip, $trustedHostData[self::DATA_KEY_HOSTS], $validator)) {
+            if (!$this->isValidHost($ip, $trustedHostData[self::DATA_KEY_HOSTS])) {
                 // not trusted host
                 break;
             }
@@ -327,7 +331,9 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
         }
 
         // find protocol
-        foreach ($trustedHostData[self::DATA_KEY_PROTOCOL_HEADERS] as $protocolHeader => $protocols) {
+        /** @psalm-var ProtocolHeadersData $protocolHeadersData */
+        $protocolHeadersData = $trustedHostData[self::DATA_KEY_PROTOCOL_HEADERS];
+        foreach ($protocolHeadersData as $protocolHeader => $protocols) {
             if (!$request->hasHeader($protocolHeader)) {
                 continue;
             }
@@ -355,7 +361,9 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
         if ($urlParts !== null) {
             [$path, $query] = $urlParts;
-            $uri = $uri->withPath($path);
+            if ($path !== null) {
+                $uri = $uri->withPath($path);
+            }
 
             if ($query !== null) {
                 $uri = $uri->withQuery($query);
@@ -374,7 +382,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
                 && isset($hostData['port'])
                 && $this->checkPort((string)$hostData['port'])
             ) {
-                $uri = $uri->withPort($hostData['port']);
+                $uri = $uri->withPort((int)$hostData['port']);
                 break;
             }
 
@@ -387,9 +395,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
         }
 
         return $handler->handle(
-            $request
-                ->withUri($uri)
-                ->withAttribute('requestClientIp', $hostData['ip'] ?? null)
+            $request->withUri($uri)->withAttribute(self::REQUEST_CLIENT_IP, $hostData['ip'] ?? null)
         );
     }
 
@@ -397,10 +403,17 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
      * Validate host by range.
      *
      * This method can be extendable by overwriting e.g. with reverse DNS verification.
+     *
+     * @param string[] $ranges
+     * @param Closure(string, string[]): Result $validator
      */
-    protected function isValidHost(string $host, array $ranges, Closure $validator): bool
+    protected function isValidHost(string $host, array $ranges): bool
     {
-        return $validator($host, $ranges)->isValid();
+        $result = $this->validator->validate(
+            $host,
+            [new Ip(allowSubnet: false, allowNegation: false, ranges: $ranges)]
+        );
+        return $result->isValid();
     }
 
     /**
@@ -411,12 +424,12 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
      *
      * By default, it does not perform any transformation on the data. You can override this method.
      *
-     * @param array $hostData
+     * @param HostData|null $hostData
      * @param array $hostDataListValidated
      * @param array $hostDataListRemaining
      * @param RequestInterface $request
      *
-     * @return array|null reverse obfuscated host data or null.
+     * @return HostData|null reverse obfuscated host data or null.
      * In case of null data is discarded and the process continues with the next portion of host data.
      * If the return value is an array, it must contain at least the `ip` key.
      *
@@ -425,7 +438,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
      * @link https://tools.ietf.org/html/rfc7239#section-6.3
      */
     protected function reverseObfuscate(
-        array $hostData,
+        ?array $hostData,
         array $hostDataListValidated,
         array $hostDataListRemaining,
         RequestInterface $request
@@ -441,14 +454,20 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             $request = $request->withAttribute($this->attributeIps, null);
         }
 
-        return $handler->handle($request->withAttribute('requestClientIp', null));
+        return $handler->handle($request->withAttribute(self::REQUEST_CLIENT_IP, null));
     }
 
+    /**
+     * @return ProtocolHeadersData
+     */
     private function prepareProtocolHeaders(array $protocolHeaders): array
     {
         $output = [];
 
         foreach ($protocolHeaders as $header => $protocolAndAcceptedValues) {
+            if (!is_string($header)) {
+                throw new RuntimeException('The protocol header must be a string.');
+            }
             $header = strtolower($header);
 
             if (is_callable($protocolAndAcceptedValues)) {
@@ -466,6 +485,9 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
             $output[$header] = [];
 
+            /**
+             * @var array<string|string[]> $protocolAndAcceptedValues
+             */
             foreach ($protocolAndAcceptedValues as $protocol => $acceptedValues) {
                 if (!is_string($protocol)) {
                     throw new RuntimeException('The protocol must be a string.');
@@ -482,6 +504,9 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
         return $output;
     }
 
+    /**
+     * @param string[] $headers
+     */
     private function removeHeaders(ServerRequestInterface $request, array $headers): ServerRequestInterface
     {
         foreach ($headers as $header) {
@@ -491,7 +516,12 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
         return $request;
     }
 
-    private function getIpList(RequestInterface $request, array $ipHeaders): array
+    /**
+     * @param array<string[]|string> $ipHeaders
+     *
+     * @return array{0: string|null, 1: string|null, 2: string[]}
+     */
+    private function getIpList(ServerRequestInterface $request, array $ipHeaders): array
     {
         foreach ($ipHeaders as $ipHeader) {
             $type = null;
@@ -510,7 +540,11 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
     }
 
     /**
-     * @see getElementsByRfc7239
+     * @param string[] $forwards
+     *
+     * @return list<HostData>
+     *
+     * @see getElementsByRfc7239()
      */
     private function getFormattedIpList(array $forwards): array
     {
@@ -538,13 +572,16 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
      *
      * @link https://tools.ietf.org/html/rfc7239
      *
-     * @return array Proxy data elements.
+     * @param string[] $forwards
+     *
+     * @return list<HostData> Proxy data elements.
      */
     private function getElementsByRfc7239(array $forwards): array
     {
         $list = [];
 
         foreach ($forwards as $forward) {
+            /** @var array<string, string> $data */
             $data = HeaderValueHelper::getParameters($forward);
 
             if (!isset($data['for'])) {
@@ -600,6 +637,11 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
         return $list;
     }
 
+    /**
+     * @param string[] $urlHeaders
+     *
+     * @psalm-return non-empty-list<null|string>|null
+     */
     private function getUrl(RequestInterface $request, array $urlHeaders): ?array
     {
         foreach ($urlHeaders as $header) {

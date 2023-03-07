@@ -20,6 +20,8 @@ use function strtolower;
  * Basic network resolver updates an instance of server request with protocol from special headers.
  *
  * It can be used in if your server is behind a trusted load balancer or a proxy that is setting a special header.
+ *
+ * @psalm-type DefaultValue = non-empty-array<non-empty-string, non-empty-array<array-key, lowercase-string>>
  */
 final class BasicNetworkResolver implements MiddlewareInterface
 {
@@ -29,7 +31,7 @@ final class BasicNetworkResolver implements MiddlewareInterface
     ];
 
     /**
-     * @psalm-var array<string, array|callable>
+     * @psalm-var array<string, array<string, string[]>|DefaultValue|callable>
      */
     private array $protocolHeaders = [];
 
@@ -63,7 +65,7 @@ final class BasicNetworkResolver implements MiddlewareInterface
      * ```
      *
      * @param string $header The protocol header name.
-     * @param array|callable|null $values The protocol header values.
+     * @param array<array-key, string|string[]>|callable|null $values The protocol header values.
      *
      * @see DEFAULT_PROTOCOL_AND_ACCEPTABLE_VALUES
      */
@@ -157,6 +159,7 @@ final class BasicNetworkResolver implements MiddlewareInterface
             $headerValues = $request->getHeader($header);
 
             if (is_callable($data)) {
+                /** @var mixed $newScheme */
                 $newScheme = $data($headerValues, $header, $request);
 
                 if ($newScheme === null) {
@@ -189,7 +192,7 @@ final class BasicNetworkResolver implements MiddlewareInterface
         $uri = $request->getUri();
 
         if ($newScheme !== null && $newScheme !== $uri->getScheme()) {
-            $request = $request->withUri($uri->withScheme((string) $newScheme));
+            $request = $request->withUri($uri->withScheme($newScheme));
         }
 
         return $handler->handle($request);

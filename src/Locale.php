@@ -33,6 +33,10 @@ final class Locale implements MiddlewareInterface
     private string $sessionName = self::DEFAULT_LOCALE_NAME;
     private ?DateInterval $cookieDuration;
 
+    /**
+     * @param array<array-key, string> $locales
+     * @param string[] $ignoredRequests
+     */
     public function __construct(
         private TranslatorInterface $translator,
         private UrlGeneratorInterface $urlGenerator,
@@ -122,6 +126,9 @@ final class Locale implements MiddlewareInterface
         return $response;
     }
 
+    /**
+     * @return list{0: string|null, 1: string|null}
+     */
     private function getLocaleFromPath(string $path): array
     {
         $parts = [];
@@ -142,13 +149,18 @@ final class Locale implements MiddlewareInterface
         return [null, null];
     }
 
+    /**
+     * @return list{0: string|null, 1: string|null}
+     */
     private function getLocaleFromRequest(ServerRequestInterface $request): array
     {
+        /** @var array<string, string> $cookies */
         $cookies = $request->getCookieParams();
         if (isset($cookies[$this->sessionName])) {
             $this->logger->debug(sprintf("Locale '%s' found in cookies", $cookies[$this->sessionName]));
             return $this->parseLocale($cookies[$this->sessionName]);
         }
+        /** @var array<string, string> $queryParameters */
         $queryParameters = $request->getQueryParams();
         if (isset($queryParameters[$this->queryParameterName])) {
             $this->logger->debug(
@@ -164,6 +176,9 @@ final class Locale implements MiddlewareInterface
         return $locale === $this->defaultLocale || ($country !== null && $this->defaultLocale === "$locale-$country");
     }
 
+    /**
+     * @return list{0: string|null, 1: string|null}
+     */
     private function detectLocale(ServerRequestInterface $request): array
     {
         foreach ($request->getHeader(Header::ACCEPT_LANGUAGE) as $language) {
@@ -183,18 +198,27 @@ final class Locale implements MiddlewareInterface
         return $cookie->addToResponse($response);
     }
 
+    /**
+     * @param string $locale
+     *
+     * @return list{0: string, 1: string|null}
+     */
     private function parseLocale(string $locale): array
     {
-        if (str_contains($locale, '-')) {
-            return explode('-', $locale, 2);
+        $localeParts = [];
+        if (str_contains($locale, '-') || str_contains($locale, '_')) {
+            $localeParts = preg_split('/[-_]/', $locale, 2);
+        } elseif (
+            isset($this->locales[$locale]) &&
+            (str_contains($this->locales[$locale], '-') || str_contains($this->locales[$locale], '_'))
+        ) {
+            $localeParts = preg_split('/[-_]/', $this->locales[$locale], 2);
         }
 
-        if (str_contains($locale, '_')) {
-            return explode('_', $locale, 2);
+        if (!empty($localeParts) && count($localeParts) === 2) {
+            return $localeParts;
         }
-        if (isset($this->locales[$locale]) && str_contains($this->locales[$locale], '-')) {
-            return explode('-', $this->locales[$locale], 2);
-        }
+
         return [$locale, null];
     }
 
@@ -208,7 +232,11 @@ final class Locale implements MiddlewareInterface
         return false;
     }
 
-    public function withLocales(array $locales): self
+    /**
+     * @param array<array-key, string> $locales
+     *
+     * @return $this
+     */public function withLocales(array $locales): self
     {
         $new = clone $this;
         $new->locales = $locales;
@@ -250,7 +278,11 @@ final class Locale implements MiddlewareInterface
         return $new;
     }
 
-    public function withIgnoredRequests(array $ignoredRequests): self
+    /**
+     * @param string[] $ignoredRequests
+     *
+     * @return $this
+     */public function withIgnoredRequests(array $ignoredRequests): self
     {
         $new = clone $this;
         $new->ignoredRequests = $ignoredRequests;
