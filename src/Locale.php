@@ -203,14 +203,10 @@ final class Locale implements MiddlewareInterface
      */
     private function parseLocale(string $locale): array
     {
-        $localeParts = [];
-        if (str_contains($locale, '-') || str_contains($locale, '_')) {
-            $localeParts = preg_split('/[-_]/', $locale, 2);
-        } elseif (
-            isset($this->locales[$locale]) &&
-            (str_contains($this->locales[$locale], '-') || str_contains($this->locales[$locale], '_'))
-        ) {
-            $localeParts = preg_split('/[-_]/', $this->locales[$locale], 2);
+        $localeParts = preg_split('/[-_]/', $locale, 2, PREG_SPLIT_NO_EMPTY);
+
+        if (isset($this->locales[$locale]) && (empty($localeParts) || count($localeParts) !== 2)) {
+            $localeParts = preg_split('/[-_]/', $this->locales[$locale], 2, PREG_SPLIT_NO_EMPTY);
         }
 
         if (!empty($localeParts) && count($localeParts) === 2) {
