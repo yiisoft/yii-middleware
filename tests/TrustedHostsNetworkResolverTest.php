@@ -439,7 +439,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
 
     private function createCustomTrustedHostsNetworkResolver(): TrustedHostsNetworkResolver
     {
-        return new class() extends TrustedHostsNetworkResolver {
+        return new class () extends TrustedHostsNetworkResolver {
             public function __construct()
             {
                 parent::__construct(new Validator());
@@ -451,7 +451,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 array $hostDataListRemaining,
                 RequestInterface $request
             ): ?array {
-                return $hostData['host'] === 'unknown' ? ['ip' => '127.0.0.1']: $hostData;
+                return $hostData['host'] === 'unknown' ? ['ip' => '127.0.0.1'] : $hostData;
             }
         };
     }
