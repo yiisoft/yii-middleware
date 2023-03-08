@@ -127,7 +127,7 @@ final class Locale implements MiddlewareInterface
     }
 
     /**
-     * @return list{0:string|null, 1:string|null}
+     * @return array{0:string|null, 1:string|null}
      */
     private function getLocaleFromPath(string $path): array
     {
@@ -150,7 +150,7 @@ final class Locale implements MiddlewareInterface
     }
 
     /**
-     * @return list{0:string|null, 1:string|null}
+     * @return array{0:string|null, 1:string|null}
      */
     private function getLocaleFromRequest(ServerRequestInterface $request): array
     {
@@ -177,7 +177,7 @@ final class Locale implements MiddlewareInterface
     }
 
     /**
-     * @return list{0:string|null, 1:string|null}
+     * @return array{0:string|null, 1:string|null}
      */
     private function detectLocale(ServerRequestInterface $request): array
     {
@@ -199,7 +199,7 @@ final class Locale implements MiddlewareInterface
     }
 
     /**
-     * @return list{0:string, 1:string|null}
+     * @return array{0:string, 1:string|null}
      */
     private function parseLocale(string $locale): array
     {

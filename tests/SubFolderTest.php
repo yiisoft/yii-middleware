@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Yiisoft\Yii\Middleware\Tests\Middleware;
+namespace Yiisoft\Yii\Middleware\Tests;
 
 use HttpSoft\Message\Response;
 use HttpSoft\Message\ServerRequest;
