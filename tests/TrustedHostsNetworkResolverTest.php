@@ -44,6 +44,14 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 ],
                 '5.5.5.5',
             ],
+            'xForwardLevel4' => [
+                ['x-forwarded-for' => ['9.9.9.9', '5.5.5.5', '2.2.2.2']],
+                ['REMOTE_ADDR' => '127.0.0.1'],
+                [
+                    ['hosts' => ['172.16.0.1', '127.0.0.1'], 'ipHeaders' => []],
+                ],
+                '127.0.0.1',
+            ],
             'rfc7239Level1' => [
                 ['forwarded' => ['for=9.9.9.9', 'for=5.5.5.5', 'for=2.2.2.2']],
                 ['REMOTE_ADDR' => '127.0.0.1'],
@@ -66,7 +74,18 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 ],
                 '5.5.5.5',
             ],
-            'rfc7239LevelContainsInvalidIp' => [
+            'rfc7239Level3' => [
+                ['forwarded' => ['to=9.9.9.9', 'for=5.5.5.5', 'for=2.2.2.2']],
+                ['REMOTE_ADDR' => '127.0.0.1'],
+                [
+                    [
+                        'hosts' => ['8.8.8.8', '127.0.0.1', '2.2.2.2'],
+                        'ipHeaders' => [[TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded']],
+                    ],
+                ],
+                '5.5.5.5',
+            ],
+            'rfc7239Level4ContainsInvalidIp' => [
                 ['forwarded' => ['for=invalid9.9.9.9', 'for=5.5.5.5', 'for=2.2.2.2']],
                 ['REMOTE_ADDR' => '127.0.0.1'],
                 [
@@ -77,7 +96,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 ],
                 '5.5.5.5',
             ],
-            'rfc7239Level2HostAndProtocol' => [
+            'rfc7239Level5HostAndProtocol' => [
                 ['forwarded' => ['for=9.9.9.9', 'proto=https;for=5.5.5.5;host=test', 'for=2.2.2.2']],
                 ['REMOTE_ADDR' => '127.0.0.1'],
                 [
@@ -103,8 +122,8 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                         'hosts' => ['8.8.8.8', '127.0.0.1', '2.2.2.2'],
                         'ipHeaders' => [[TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded']],
                         'hostHeaders' => ['forwarded'],
-                        'protocolHeaders' => ['forwarded' => ['http' => 'http', 'https' => 'https']],
-                        'urlHeaders' => ['x-rewrite-url'],
+                        'protocolHeaders' => ['forwarded' => fn () => ['http' => 'http', 'https' => 'https']],
+                        'urlHeaders' => ['non-exit-header', 'x-rewrite-url'],
                     ],
                 ],
                 '5.5.5.5',
