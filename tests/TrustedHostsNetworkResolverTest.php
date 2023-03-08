@@ -7,6 +7,7 @@ namespace Yiisoft\Yii\Middleware\Tests;
 use InvalidArgumentException;
 use HttpSoft\Message\ServerRequest;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
 use Yiisoft\Http\Status;
@@ -73,6 +74,17 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                     ],
                 ],
                 '5.5.5.5',
+            ],
+            'rfc7239Level2ObfusicatedHost' => [
+                ['forwarded' => ['for=unknown', 'to=unknown']],
+                ['REMOTE_ADDR' => '127.0.0.1'],
+                [
+                    [
+                        'hosts' => ['8.8.8.8', '127.0.0.1', '2.2.2.2'],
+                        'ipHeaders' => [[TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded']],
+                    ],
+                ],
+                '127.0.0.1',
             ],
             'rfc7239Level3' => [
                 ['forwarded' => ['to=9.9.9.9', 'for=5.5.5.5', 'for=2.2.2.2']],
@@ -205,7 +217,9 @@ final class TrustedHostsNetworkResolverTest extends TestCase
     ): void {
         $request = $this->createRequestWithSchemaAndHeaders('http', $headers, $serverParams);
         $requestHandler = new MockRequestHandler();
-        $middleware = $this->createTrustedHostsNetworkResolver();
+        $middleware = in_array('for=unknown', $headers['forwarded'] ?? [], true) ?
+            $this->createCustomTrustedHostsNetworkResolver() :
+            $this->createTrustedHostsNetworkResolver();
 
         foreach ($trustedHosts as $data) {
             $middleware = $middleware->withAddedTrustedHosts(
@@ -421,5 +435,24 @@ final class TrustedHostsNetworkResolverTest extends TestCase
     private function createTrustedHostsNetworkResolver(): TrustedHostsNetworkResolver
     {
         return new TrustedHostsNetworkResolver(new Validator());
+    }
+
+    private function createCustomTrustedHostsNetworkResolver(): TrustedHostsNetworkResolver
+    {
+        return new class() extends TrustedHostsNetworkResolver {
+            public function __construct()
+            {
+                parent::__construct(new Validator());
+            }
+
+            protected function reverseObfuscate(
+                ?array $hostData,
+                array $hostDataListValidated,
+                array $hostDataListRemaining,
+                RequestInterface $request
+            ): ?array {
+                return $hostData['host'] === 'unknown' ? ['ip' => '127.0.0.1']: $hostData;
+            }
+        };
     }
 }
