@@ -53,6 +53,19 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 ],
                 '127.0.0.1',
             ],
+            'xForwardLevel5' => [
+                ['x-forwarded-for' => ['1234']],
+                ['REMOTE_ADDR' => '127.0.0.1'],
+                [
+                    ['hosts' => ['172.16.0.1', '127.0.0.1'], 'ipHeaders' => [], 'portHeaders' => ['x-forwarded-for']],
+                ],
+                '127.0.0.1',
+                '',
+                'http',
+                '/',
+                '',
+                1234
+            ],
             'rfc7239Level1' => [
                 ['forwarded' => ['for=9.9.9.9', 'for=5.5.5.5', 'for=2.2.2.2']],
                 ['REMOTE_ADDR' => '127.0.0.1'],

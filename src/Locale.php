@@ -20,6 +20,7 @@ use Yiisoft\Router\UrlGeneratorInterface;
 use Yiisoft\Session\SessionInterface;
 use Yiisoft\Strings\WildcardPattern;
 use Yiisoft\Translator\TranslatorInterface;
+use Yiisoft\Yii\Middleware\Exception\InvalidLocalesFormatException;
 
 final class Locale implements MiddlewareInterface
 {
@@ -57,6 +58,8 @@ final class Locale implements MiddlewareInterface
         if ($this->locales === []) {
             return $handler->handle($request);
         }
+
+        $this->checkLocales();
 
         $uri = $request->getUri();
         $path = $uri->getPath();
@@ -133,15 +136,15 @@ final class Locale implements MiddlewareInterface
     {
         $parts = [];
         foreach ($this->locales as $code => $locale) {
-            $lang = is_string($code) ? $code : $locale;
-            $parts[] = $lang;
+            $parts[] = $code;
+            $parts[] = $locale;
         }
 
         $pattern = implode('|', $parts);
         if (preg_match("#^/($pattern)\b(/?)#i", $path, $matches)) {
             $matchedLocale = $matches[1];
             [$locale, $country] = $this->parseLocale($matchedLocale);
-            if (isset($this->locales[$locale]) || in_array($matchedLocale, $this->locales, true)) {
+            if (isset($this->locales[$locale])) {
                 $this->logger->debug(sprintf("Locale '%s' found in URL", $locale));
                 return [$locale, $country];
             }
@@ -173,7 +176,7 @@ final class Locale implements MiddlewareInterface
 
     private function isDefaultLocale(string $locale, ?string $country): bool
     {
-        return $locale === $this->defaultLocale || ($country !== null && $this->defaultLocale === "$locale-$country");
+        return $locale === $this->defaultLocale || $this->locales[$locale] === $this->defaultLocale;
     }
 
     /**
@@ -199,18 +202,16 @@ final class Locale implements MiddlewareInterface
     }
 
     /**
-     * @return array{0:string, 1:string|null}
+     * @return array{0:string, 1?:string|null}
      */
     private function parseLocale(string $locale): array
     {
-        $localeParts = preg_split('/[-_]/', $locale, 2, PREG_SPLIT_NO_EMPTY);
-
-        if (isset($this->locales[$locale]) && (empty($localeParts) || count($localeParts) !== 2)) {
-            $localeParts = preg_split('/[-_]/', $this->locales[$locale], 2, PREG_SPLIT_NO_EMPTY);
+        if (str_contains($locale, '-')) {
+            return explode('-', $locale, 2);
         }
 
-        if (!empty($localeParts) && count($localeParts) === 2) {
-            return $localeParts;
+        if (str_contains($locale, '_')) {
+            return explode('_', $locale, 2);
         }
 
         return [$locale, null];
@@ -224,6 +225,18 @@ final class Locale implements MiddlewareInterface
             }
         }
         return false;
+    }
+
+    /**
+     * @throws InvalidLocalesFormatException
+     */
+    private function checkLocales(): void
+    {
+        foreach ($this->locales as $code => $locale) {
+            if (!is_string($code) || !is_string($locale)) {
+                throw new InvalidLocalesFormatException();
+            }
+        }
     }
 
     /**
