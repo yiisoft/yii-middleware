@@ -64,7 +64,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 'http',
                 '/',
                 '',
-                1234
+                1234,
             ],
             'rfc7239Level1' => [
                 ['forwarded' => ['for=9.9.9.9', 'for=5.5.5.5', 'for=2.2.2.2']],
