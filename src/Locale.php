@@ -195,8 +195,7 @@ final class Locale implements MiddlewareInterface
         return $cookie->addToResponse($response);
     }
 
-    /**
-     */
+
     private function parseLocale(string $locale): string
     {
         if (str_contains($locale, '-')) {
