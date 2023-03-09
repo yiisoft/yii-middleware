@@ -167,6 +167,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
         }
 
         $trustedHeaders ??= self::DEFAULT_TRUSTED_HEADERS;
+        /** @var array|ProtocolHeadersData $protocolHeaders */
         $protocolHeaders = $this->prepareProtocolHeaders($protocolHeaders);
 
         $this->checkTypeStringOrArray($hosts, self::DATA_KEY_HOSTS);
@@ -183,6 +184,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             }
         }
 
+        /** @var array<array-key, string> $ipHeaders */
         $new->trustedHosts[] = [
             self::DATA_KEY_HOSTS => $hosts,
             self::DATA_KEY_IP_HEADERS => $ipHeaders,
@@ -379,16 +381,16 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
                 $portHeader === $ipHeader
                 && $ipListType === self::IP_HEADER_TYPE_RFC7239
                 && isset($hostData['port'])
-                && $this->checkPort((string)$hostData['port'])
+                && $this->checkPort((string) $hostData['port'])
             ) {
-                $uri = $uri->withPort((int)$hostData['port']);
+                $uri = $uri->withPort((int) $hostData['port']);
                 break;
             }
 
             $port = $request->getHeaderLine($portHeader);
 
             if ($this->checkPort($port)) {
-                $uri = $uri->withPort((int)$port);
+                $uri = $uri->withPort((int) $port);
                 break;
             }
         }
@@ -496,7 +498,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
                     throw new RuntimeException('The protocol cannot be empty.');
                 }
 
-                $output[$header][$protocol] = array_map('\strtolower', (array)$acceptedValues);
+                $output[$header][$protocol] = array_map('\strtolower', (array) $acceptedValues);
             }
         }
 
@@ -615,7 +617,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
                     break;
                 }
 
-                $ipData['port'] = $obfuscatedHost ? $port : (int)$port;
+                $ipData['port'] = $obfuscatedHost ? $port : (int) $port;
             }
 
             // copy other properties
@@ -660,9 +662,12 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
     private function checkPort(string $port): bool
     {
-        return preg_match('/^\d{1,5}$/', $port) === 1 && (int)$port <= 65535;
+        return preg_match('/^\d{1,5}$/', $port) === 1 && (int) $port <= 65535;
     }
 
+    /**
+     * @psalm-assert array<non-empty-string> $array
+     */
     private function checkTypeStringOrArray(array $array, string $field): void
     {
         foreach ($array as $item) {
