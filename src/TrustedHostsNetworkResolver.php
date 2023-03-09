@@ -62,7 +62,7 @@ use function trim;
  *
  * @psalm-type HostData = array{ip?:string, host?: string, by?: string, port?: string|int, protocol?: string, httpHost?: string}
  * @psalm-type ProtocolHeadersData = array<string, array<non-empty-string, array<array-key, string>>|callable>
- * @psalm-type TrustedHostData = non-empty-array<self::DATA_KEY_*, non-empty-string[]>
+ * @psalm-type TrustedHostData = non-empty-array<self::DATA_KEY_*, array<string>>
  */
 class TrustedHostsNetworkResolver implements MiddlewareInterface
 {
