@@ -230,6 +230,11 @@ final class Locale implements MiddlewareInterface
         }
     }
 
+    /**
+     * @param array $locales List of supported locales in key-value format e.g. ['ru' => 'ru_RU', 'uz' => 'uz_UZ']
+     *
+     * @return $this
+     */
     public function withLocales(array $locales): self
     {
         $new = clone $this;
