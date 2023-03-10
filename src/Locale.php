@@ -35,6 +35,7 @@ final class Locale implements MiddlewareInterface
     private ?DateInterval $cookieDuration;
 
     /**
+     * @param array $locales List of supported locales in key-value format e.g. ['ru' => 'ru_RU', 'uz' => 'uz_UZ']
      * @param string[] $ignoredRequests
      */
     public function __construct(
@@ -58,7 +59,7 @@ final class Locale implements MiddlewareInterface
             return $handler->handle($request);
         }
 
-        $this->checkLocales();
+        $this->assertLocalesFormat();
 
         $uri = $request->getUri();
         $path = $uri->getPath();
@@ -220,7 +221,7 @@ final class Locale implements MiddlewareInterface
     /**
      * @throws InvalidLocalesFormatException
      */
-    private function checkLocales(): void
+    private function assertLocalesFormat(): void
     {
         foreach ($this->locales as $code => $locale) {
             if (!is_string($code) || !is_string($locale)) {

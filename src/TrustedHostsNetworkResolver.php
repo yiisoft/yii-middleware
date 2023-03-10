@@ -62,7 +62,15 @@ use function trim;
  *
  * @psalm-type HostData = array{ip?:string, host?: string, by?: string, port?: string|int, protocol?: string, httpHost?: string}
  * @psalm-type ProtocolHeadersData = array<string, array<non-empty-string, array<array-key, string>>|callable>
- * @psalm-type TrustedHostData = non-empty-array<self::DATA_KEY_*, array<string>>
+ * @psalm-type TrustedHostData = array{
+ *     'hosts': array<string>,
+ *     'ipHeaders': array<string>,
+ *     'urlHeaders': array<string>,
+ *     'portHeaders': array<string>,
+ *     'trustedHeaders': array<string>,
+ *     'protocolHeaders': ProtocolHeadersData,
+ *     'hostHeaders': array<string>
+ * }
  */
 class TrustedHostsNetworkResolver implements MiddlewareInterface
 {
@@ -167,7 +175,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
         }
 
         $trustedHeaders ??= self::DEFAULT_TRUSTED_HEADERS;
-        /** @var array|ProtocolHeadersData $protocolHeaders */
+        /** @psalm-var ProtocolHeadersData $protocolHeaders */
         $protocolHeaders = $this->prepareProtocolHeaders($protocolHeaders);
 
         $this->checkTypeStringOrArray($hosts, self::DATA_KEY_HOSTS);
@@ -184,7 +192,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             }
         }
 
-        /** @var array<array-key, string> $ipHeaders */
+        /** @psalm-var array<string> $ipHeaders */
         $new->trustedHosts[] = [
             self::DATA_KEY_HOSTS => $hosts,
             self::DATA_KEY_IP_HEADERS => $ipHeaders,
@@ -467,7 +475,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
         foreach ($protocolHeaders as $header => $protocolAndAcceptedValues) {
             if (!is_string($header)) {
-                throw new RuntimeException('The protocol header must be a string.');
+                throw new InvalidArgumentException('The protocol header must be a string.');
             }
             $header = strtolower($header);
 
@@ -477,11 +485,11 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             }
 
             if (!is_array($protocolAndAcceptedValues)) {
-                throw new RuntimeException('Accepted values is not an array nor callable.');
+                throw new InvalidArgumentException('Accepted values is not an array nor callable.');
             }
 
             if ($protocolAndAcceptedValues === []) {
-                throw new RuntimeException('Accepted values cannot be an empty array.');
+                throw new InvalidArgumentException('Accepted values cannot be an empty array.');
             }
 
             $output[$header] = [];
@@ -491,11 +499,11 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
              */
             foreach ($protocolAndAcceptedValues as $protocol => $acceptedValues) {
                 if (!is_string($protocol)) {
-                    throw new RuntimeException('The protocol must be a string.');
+                    throw new InvalidArgumentException('The protocol must be a string.');
                 }
 
                 if ($protocol === '') {
-                    throw new RuntimeException('The protocol cannot be empty.');
+                    throw new InvalidArgumentException('The protocol cannot be empty.');
                 }
 
                 $output[$header][$protocol] = array_map('\strtolower', (array) $acceptedValues);

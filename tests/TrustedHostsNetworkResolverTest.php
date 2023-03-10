@@ -324,28 +324,24 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                     'hosts' => ['127.0.0.1'],
                     'protocolHeaders' => ['x-forwarded-proto' => []],
                 ],
-                true,
             ],
             'protocolHeadersNumeric' => [
                 [
                     'hosts' => ['127.0.0.1'],
                     'protocolHeaders' => ['x-forwarded-proto' => 888],
                 ],
-                true,
             ],
             'protocolHeadersKeyItemNumeric' => [
                 [
                     'hosts' => ['127.0.0.1'],
                     'protocolHeaders' => ['x-forwarded-proto' => [888 => 'http']],
                 ],
-                true,
             ],
             'protocolHeadersKeyItemEmptyString' => [
                 [
                     'hosts' => ['127.0.0.1'],
                     'protocolHeaders' => ['x-forwarded-proto' => ['' => 'http']],
                 ],
-                true,
             ],
             'ipHeadersEmptyString' => [['ipHeaders' => [' ']]],
             'ipHeadersNumeric' => [['ipHeaders' => [888]]],

@@ -21,7 +21,7 @@ use function strtolower;
  *
  * It can be used in if your server is behind a trusted load balancer or a proxy that is setting a special header.
  *
- * @psalm-type DefaultValue = non-empty-array<non-empty-string, non-empty-array<array-key, lowercase-string>>
+ * @psalm-type DefaultValue = non-empty-array<non-empty-string, non-empty-array<array-key, string>>
  */
 final class BasicNetworkResolver implements MiddlewareInterface
 {
@@ -65,7 +65,8 @@ final class BasicNetworkResolver implements MiddlewareInterface
      * ```
      *
      * @param string $header The protocol header name.
-     * @param array<array-key, string|string[]>|callable|null $values The protocol header values.
+     * @param array|callable|null $values The protocol header values.
+     * @psalm-param array<array-key, string|string[]>|callable|null $values
      *
      * @see DEFAULT_PROTOCOL_AND_ACCEPTABLE_VALUES
      */
