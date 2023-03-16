@@ -20,8 +20,6 @@ use function strtolower;
  * Basic network resolver updates an instance of server request with protocol from special headers.
  *
  * It can be used in if your server is behind a trusted load balancer or a proxy that is setting a special header.
- *
- * @psalm-type DefaultValue = non-empty-array<non-empty-string, non-empty-array<array-key, string>>
  */
 final class BasicNetworkResolver implements MiddlewareInterface
 {
@@ -31,7 +29,7 @@ final class BasicNetworkResolver implements MiddlewareInterface
     ];
 
     /**
-     * @psalm-var array<string, array<string, string[]>|DefaultValue|callable>
+     * @psalm-var array<string, non-empty-array<non-empty-string, non-empty-array<array-key, string>>|callable>
      */
     private array $protocolHeaders = [];
 

@@ -20,7 +20,7 @@ final class InvalidLocalesFormatException extends Exception implements FriendlyE
             The specified locales are not in a valid format. Acceptable format is `key => value` array. For example:
             ```
             ['en' => 'en-US', 'uz' => 'uz-UZ'];
-            //or
+            // or
             ['en' => 'en_US', 'uz' => 'uz_UZ'];
             ```
         SOLUTION;
