@@ -26,6 +26,7 @@ final class IpFilter implements MiddlewareInterface
      * of the server parameters is processed. If the value is not `null`, then the attribute specified
      * must have a value, otherwise the request will be closed with forbidden.
      * @param array $ipRanges The IPv4 or IPv6 ranges that are allowed or forbidden.
+     *
      * @psalm-param array<array-key, string> $ipRanges
      */
     public function __construct(

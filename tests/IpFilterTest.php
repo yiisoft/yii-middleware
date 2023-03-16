@@ -40,6 +40,7 @@ final class IpFilterTest extends TestCase
 
     /**
      * @dataProvider ipNotAllowedDataProvider
+     *
      * @group t
      */
     public function testProcessReturnsAccessDeniedResponseWhenIpIsNotAllowed(array $serverParams): void

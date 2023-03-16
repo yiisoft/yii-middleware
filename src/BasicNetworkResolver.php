@@ -64,6 +64,7 @@ final class BasicNetworkResolver implements MiddlewareInterface
      *
      * @param string $header The protocol header name.
      * @param array|callable|null $values The protocol header values.
+     *
      * @psalm-param array<array-key, string|string[]>|callable|null $values
      *
      * @see DEFAULT_PROTOCOL_AND_ACCEPTABLE_VALUES
