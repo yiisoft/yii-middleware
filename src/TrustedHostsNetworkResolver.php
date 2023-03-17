@@ -63,13 +63,13 @@ use function trim;
  * @psalm-type HostData = array{ip?:string, host?: string, by?: string, port?: string|int, protocol?: string, httpHost?: string}
  * @psalm-type ProtocolHeadersData = array<string, array<non-empty-string, array<array-key, string>>|callable>
  * @psalm-type TrustedHostData = array{
- *     'hosts': array<string>,
- *     'ipHeaders': array<string>,
- *     'urlHeaders': array<string>,
- *     'portHeaders': array<string>,
- *     'trustedHeaders': array<string>,
+ *     'hosts': array<array-key, string>,
+ *     'ipHeaders': array<array-key, string>,
+ *     'urlHeaders': array<array-key, string>,
+ *     'portHeaders': array<array-key, string>,
+ *     'trustedHeaders': array<array-key, string>,
  *     'protocolHeaders': ProtocolHeadersData,
- *     'hostHeaders': array<string>
+ *     'hostHeaders': array<array-key, string>
  * }
  */
 class TrustedHostsNetworkResolver implements MiddlewareInterface
@@ -192,7 +192,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             }
         }
 
-        /** @psalm-var array<string> $ipHeaders */
+        /** @psalm-var array<array-key, string> $ipHeaders */
         $new->trustedHosts[] = [
             self::DATA_KEY_HOSTS => $hosts,
             self::DATA_KEY_IP_HEADERS => $ipHeaders,
