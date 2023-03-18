@@ -50,7 +50,7 @@ final class SubFolder implements MiddlewareInterface
                 throw new BadUriPrefixException('Wrong URI prefix value.');
             }
 
-            if (!empty($path) && !str_starts_with($path, $baseUrl)) {
+            if (!str_starts_with($path, $baseUrl)) {
                 throw new BadUriPrefixException('URI prefix does not match.');
             }
         }

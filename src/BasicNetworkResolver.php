@@ -41,7 +41,7 @@ final class BasicNetworkResolver implements MiddlewareInterface
      * It's not advisable to put insecure/untrusted headers here.
      *
      * Accepted types of values:
-     * - NULL (default): {{DEFAULT_PROTOCOL_AND_ACCEPTABLE_VALUES}}
+     * - NULL (default): {@see DEFAULT_PROTOCOL_AND_ACCEPTABLE_VALUES}
      * - callable: custom function for getting the protocol
      * ```php
      * ->withProtocolHeader(
@@ -66,8 +66,6 @@ final class BasicNetworkResolver implements MiddlewareInterface
      * @param array|callable|null $values The protocol header values.
      *
      * @psalm-param array<array-key, string|string[]>|callable|null $values
-     *
-     * @see DEFAULT_PROTOCOL_AND_ACCEPTABLE_VALUES
      */
     public function withAddedProtocolHeader(string $header, array|callable|null $values = null): self
     {
