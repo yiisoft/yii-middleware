@@ -86,8 +86,7 @@ final class BasicNetworkResolver implements MiddlewareInterface
             throw new RuntimeException('Accepted values cannot be an empty array.');
         }
 
-        $new->protocolHeaders[$header] = [];
-
+        $protocolHeader = [];
         foreach ($values as $protocol => $acceptedValues) {
             if (!is_string($protocol)) {
                 throw new RuntimeException('The protocol must be type of string.');
@@ -97,8 +96,15 @@ final class BasicNetworkResolver implements MiddlewareInterface
                 throw new RuntimeException('The protocol cannot be an empty string.');
             }
 
-            $new->protocolHeaders[$header][$protocol] = array_map('\strtolower', (array) $acceptedValues);
+            $acceptedValues = (array) $acceptedValues;
+            if (empty($acceptedValues)) {
+                throw new RuntimeException('Protocol accepted values cannot be an empty array.');
+            }
+
+            $protocolHeader[$protocol] = array_map('\strtolower', $acceptedValues);
         }
+
+        $new->protocolHeaders[$header] = $protocolHeader;
 
         return $new;
     }
