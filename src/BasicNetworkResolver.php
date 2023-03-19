@@ -83,7 +83,7 @@ final class BasicNetworkResolver implements MiddlewareInterface
         }
 
         if (empty($values)) {
-            throw new RuntimeException('Accepted values cannot be an empty array.');
+            throw new RuntimeException('Protocol header values cannot be an empty array.');
         }
 
         $protocolHeader = [];

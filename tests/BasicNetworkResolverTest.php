@@ -110,7 +110,8 @@ final class BasicNetworkResolverTest extends TestCase
     {
         return [
             'int-key' => [['https'], 'The protocol must be type of string.'],
-            'empty-array' => [[], 'Accepted values cannot be an empty array.'],
+            'empty-value' => [[], 'Protocol header values cannot be an empty array.'],
+            'empty-array' => [['http' => []], 'Protocol accepted values cannot be an empty array.'],
             'empty-string-key' => [['' => 'http'], 'The protocol cannot be an empty string.'],
         ];
     }
