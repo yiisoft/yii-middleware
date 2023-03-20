@@ -53,7 +53,7 @@ final class HttpCache implements MiddlewareInterface
      * Where `$request` is the {@see ServerRequestInterface} object that this filter is currently handling;
      * `$params` takes the value of {@see withParams()}. The callback should return a UNIX timestamp.
      *
-     * @see http://tools.ietf.org/html/rfc7232#section-2.2
+     * @see https://tools.ietf.org/html/rfc7232#section-2.2
      */
     public function withLastModified(callable $lastModified): self
     {
@@ -89,7 +89,7 @@ final class HttpCache implements MiddlewareInterface
      *
      * Weak ETags should be used if the content should be considered semantically equivalent, but not byte-equal.
      *
-     * @see http://tools.ietf.org/html/rfc7232#section-2.3
+     * @see https://tools.ietf.org/html/rfc7232#section-2.3
      */
     public function withWeakTag(): self
     {
@@ -115,7 +115,7 @@ final class HttpCache implements MiddlewareInterface
      *
      * @param string|null $header The value of the `Cache-Control` HTTP header. If null, the header will not be sent.
      *
-     * @see http://tools.ietf.org/html/rfc2616#section-14.9
+     * @see https://tools.ietf.org/html/rfc2616#section-14.9
      */
     public function withCacheControlHeader(?string $header): self
     {
@@ -190,7 +190,7 @@ final class HttpCache implements MiddlewareInterface
             );
 
             // HTTP_IF_NONE_MATCH takes precedence over HTTP_IF_MODIFIED_SINCE
-            // http://tools.ietf.org/html/rfc7232#section-3.3
+            // https://tools.ietf.org/html/rfc7232#section-3.3
             return $etag !== null && !empty($header) && in_array($etag, $header, true);
         }
 
