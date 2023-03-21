@@ -17,7 +17,7 @@
 [![psalm-level](https://shepherd.dev/github/yiisoft/yii-middleware/level.svg)](https://shepherd.dev/github/yiisoft/yii-middleware)
 
 The package provides middleware classes that implement [PSR 15](https://github.com/php-fig/http-server-middleware).
-For more information on how to use middleware in the [Yii Framework](http://www.yiiframework.com/),
+For more information on how to use middleware in the [Yii Framework](https://www.yiiframework.com/),
 see the [Yii middleware guide](https://github.com/yiisoft/docs/blob/master/guide/en/structure/middleware.md).
 
 ## Requirements
