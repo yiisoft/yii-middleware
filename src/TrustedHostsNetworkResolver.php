@@ -438,6 +438,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
      * If the return value is an array, it must contain at least the `ip` key.
      *
      * @psalm-param HostData|null $hostData
+     *
      * @psalm-return HostData|null
      *
      * @see getElementsByRfc7239()
