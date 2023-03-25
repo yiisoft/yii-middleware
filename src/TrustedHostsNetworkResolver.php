@@ -433,14 +433,12 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
      *
      * By default, it does not perform any transformation on the data. You can override this method.
      *
-     * @param HostData|null $hostData
-     * @param array $hostDataListValidated
-     * @param array $hostDataListRemaining
-     * @param RequestInterface $request
-     *
-     * @return HostData|null reverse obfuscated host data or null.
+     * @return array|null reverse obfuscated host data or null.
      * In case of null data is discarded and the process continues with the next portion of host data.
      * If the return value is an array, it must contain at least the `ip` key.
+     *
+     * @psalm-param HostData|null $hostData
+     * @psalm-return HostData|null
      *
      * @see getElementsByRfc7239()
      * @link https://tools.ietf.org/html/rfc7239#section-6.2
@@ -467,7 +465,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
     }
 
     /**
-     * @return ProtocolHeadersData
+     * @psalm-return ProtocolHeadersData
      */
     private function prepareProtocolHeaders(array $protocolHeaders): array
     {
@@ -551,7 +549,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
     /**
      * @param string[] $forwards
      *
-     * @return list<HostData>
+     * @psalm-return list<HostData>
      *
      * @see getElementsByRfc7239()
      */
@@ -583,7 +581,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
      *
      * @param string[] $forwards
      *
-     * @return list<HostData> Proxy data elements.
+     * @psalm-return list<HostData> Proxy data elements.
      */
     private function getElementsByRfc7239(array $forwards): array
     {
