@@ -46,6 +46,10 @@ final class SubFolder implements MiddlewareInterface
         $length = strlen($baseUrl);
 
         if ($this->prefix !== null) {
+            if (empty($this->prefix)) {
+                throw new BadUriPrefixException('URI prefix can\'t be empty.');
+            }
+
             if ($baseUrl[-1] === '/') {
                 throw new BadUriPrefixException('Wrong URI prefix value.');
             }

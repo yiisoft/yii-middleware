@@ -53,6 +53,17 @@ final class SubFolderTest extends TestCase
         $this->assertSame('/index.php', $this->getRequestPath());
     }
 
+    public function testEmptyPrefix(): void
+    {
+        $request = $this->createRequest('/', '/index.php');
+        $mw = $this->createMiddleware(prefix: '');
+
+        $this->expectException(BadUriPrefixException::class);
+        $this->expectExceptionMessage('URI prefix can\'t be empty.');
+
+        $this->process($mw, $request);
+    }
+
     public function testCustomPrefixWithTrailingSlash(): void
     {
         $request = $this->createRequest('/web/', '/public/index.php');
