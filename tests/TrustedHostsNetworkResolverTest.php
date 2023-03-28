@@ -72,12 +72,12 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 [
                     [
                         'hosts' => ['172.16.0.1', '127.0.0.1'],
-                        'protocolHeaders' => ['x-forwarded-proto' => ['http' => 'http', 'https' => 'https']]
+                        'protocolHeaders' => ['x-forwarded-proto' => ['http' => 'http', 'https' => 'https']],
                     ],
                 ],
                 '127.0.0.1',
                 '',
-                'https'
+                'https',
             ],
             'rfc7239Level1' => [
                 ['forwarded' => ['for=9.9.9.9', 'for=5.5.5.5', 'for=2.2.2.2']],
@@ -234,7 +234,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                     [
                         'hosts' => ['8.8.8.8', '127.0.0.1'],
                         'ipHeaders' => ['x-forwarded-for'],
-                        'trustedHeaders' => ['x-forwarded-for']
+                        'trustedHeaders' => ['x-forwarded-for'],
                     ],
                 ],
                 '2.2.2.2',
