@@ -267,7 +267,9 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
         }
 
         $trustedHeaders = array_merge(...$trustedHeaders);
-        $untrustedHeaders = array_diff(array_keys($request->getHeaders()), $trustedHeaders);
+        /** @psalm-var array<string, array<array-key,string>> $requestHeaders */
+        $requestHeaders = $request->getHeaders();
+        $untrustedHeaders = array_diff(array_keys($requestHeaders), $trustedHeaders);
         $request = $this->removeHeaders($request, $untrustedHeaders);
 
         [$ipListType, $ipHeader, $hostList] = $this->getIpList($request, $trustedHostData[self::DATA_KEY_IP_HEADERS]);
