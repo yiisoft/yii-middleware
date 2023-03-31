@@ -315,6 +315,11 @@ $middleware = $middleware->withAttributeIps($attribute);
 $middleware = $middleware->withValidator($validator);
 ```
 
+### `Yiisoft\Yii\Middleware\AllowAllCors`
+
+Adds CORS headers to the response.
+
+
 ## Testing
 
 ### Unit testing
