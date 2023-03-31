@@ -323,7 +323,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
     {
         $this->expectException($isRuntimeException ? RuntimeException::class : InvalidArgumentException::class);
 
-        ($this->createTrustedHostsNetworkResolver())
+        $this->createTrustedHostsNetworkResolver()
             ->withAddedTrustedHosts(
                 $data['hosts'] ?? [],
                 $data['ipHeaders'] ?? [],
@@ -339,7 +339,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
     {
         $request = $this->createRequestWithSchemaAndHeaders();
         $requestHandler = new MockRequestHandler();
-        $response = ($this->createTrustedHostsNetworkResolver())->withAttributeIps('ip')->process($request, $requestHandler);
+        $response = $this->createTrustedHostsNetworkResolver()->withAttributeIps('ip')->process($request, $requestHandler);
 
         $this->assertSame(Status::OK, $response->getStatusCode());
         $this->assertSame('', $requestHandler->processedRequest->getUri()->getHost());
@@ -351,7 +351,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
     {
         $this->expectException(RuntimeException::class);
 
-        ($this->createTrustedHostsNetworkResolver())->withAttributeIps('');
+        $this->createTrustedHostsNetworkResolver()->withAttributeIps('');
     }
 
     public function testImmutability(): void
