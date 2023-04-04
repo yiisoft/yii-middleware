@@ -147,6 +147,16 @@ final class LocaleTest extends TestCase
         $this->assertSame($uri, $this->getRequestPath());
     }
 
+    public function testLocaleWithSubtags(): void
+    {
+        $request = $this->createRequest($uri = '/en_us');
+        $middleware = $this->createMiddleware(['en_us' => 'en-US', 'en_gb' => 'en-GB']);
+
+        $this->process($middleware, $request);
+
+        $this->assertSame($uri, $this->getRequestPath());
+    }
+
     public function testSaveLocale(): void
     {
         $request = $this->createRequest($uri = '/uz');
@@ -193,7 +203,7 @@ final class LocaleTest extends TestCase
 
     public function testDetectLocale(): void
     {
-        $request = $this->createRequest($uri = '/', headers: [Header::ACCEPT_LANGUAGE => 'uz']);
+        $request = $this->createRequest($uri = '/', headers: [Header::ACCEPT_LANGUAGE => 'uz-UZ']);
         $middleware = $this->createMiddleware(['uz' => 'uz-UZ'])->withEnableDetectLocale(true);
 
         $response = $this->process($middleware, $request);
