@@ -68,7 +68,7 @@ final class Locale implements MiddlewareInterface
         $locale = $this->getLocaleFromPath($path);
 
         if ($locale !== null) {
-            $this->translator->setLocale($locale);
+            $this->translator->setLocale($this->locales[$locale]);
             $this->urlGenerator->setDefaultArgument($this->queryParameterName, $locale);
 
             $response = $handler->handle($request);
@@ -91,7 +91,7 @@ final class Locale implements MiddlewareInterface
             return $handler->handle($request);
         }
 
-        $this->translator->setLocale($locale);
+        $this->translator->setLocale($this->locales[$locale]);
         $this->urlGenerator->setDefaultArgument($this->queryParameterName, $locale);
 
         if ($request->getMethod() === Method::GET) {
@@ -144,10 +144,12 @@ final class Locale implements MiddlewareInterface
         $pattern = implode('|', $parts);
         if (preg_match("#^/($pattern)\b(/?)#i", $path, $matches)) {
             $matchedLocale = $matches[1];
-            $locale = $this->parseLocale($matchedLocale);
-            if (isset($this->locales[$locale])) {
-                $this->logger->debug(sprintf("Locale '%s' found in URL", $locale));
-                return $locale;
+            if (!isset($this->locales[$matchedLocale])) {
+                $matchedLocale = $this->parseLocale($matchedLocale);
+            }
+            if (isset($this->locales[$matchedLocale])) {
+                $this->logger->debug(sprintf("Locale '%s' found in URL", $matchedLocale));
+                return $matchedLocale;
             }
         }
         return null;
@@ -180,7 +182,12 @@ final class Locale implements MiddlewareInterface
     private function detectLocale(ServerRequestInterface $request): ?string
     {
         foreach ($request->getHeader(Header::ACCEPT_LANGUAGE) as $language) {
-            return $this->parseLocale($language);
+            if (!isset($this->locales[$language])) {
+                $language = $this->parseLocale($language);
+            }
+            if (isset($this->locales[$language])) {
+                return $language;
+            }
         }
         return null;
     }
