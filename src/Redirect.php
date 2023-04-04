@@ -20,6 +20,9 @@ final class Redirect implements MiddlewareInterface
 {
     private ?string $uri = null;
     private ?string $route = null;
+    /**
+     * @var array<string, scalar|\Stringable|null> $parameters
+     */
     private array $parameters = [];
     private int $statusCode = Status::MOVED_PERMANENTLY;
 
@@ -47,7 +50,7 @@ final class Redirect implements MiddlewareInterface
      * If a redirect URL has been set {@see toUrl()}, the route data will be ignored, since the URL is a priority.
      *
      * @param string $name The route name for redirection.
-     * @param array $parameters The route parameters for redirection.
+     * @param array<string, scalar|\Stringable|null> $parameters $parameters The route parameters for redirection.
      */
     public function toRoute(string $name, array $parameters = []): self
     {

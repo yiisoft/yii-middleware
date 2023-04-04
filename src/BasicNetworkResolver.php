@@ -29,7 +29,7 @@ final class BasicNetworkResolver implements MiddlewareInterface
     ];
 
     /**
-     * @psalm-var array<string, array|callable>
+     * @psalm-var array<string, non-empty-array<non-empty-string, non-empty-array<array-key, string>>|callable>
      */
     private array $protocolHeaders = [];
 
@@ -41,7 +41,7 @@ final class BasicNetworkResolver implements MiddlewareInterface
      * It's not advisable to put insecure/untrusted headers here.
      *
      * Accepted types of values:
-     * - NULL (default): {{DEFAULT_PROTOCOL_AND_ACCEPTABLE_VALUES}}
+     * - NULL (default): {@see DEFAULT_PROTOCOL_AND_ACCEPTABLE_VALUES}
      * - callable: custom function for getting the protocol
      * ```php
      * ->withProtocolHeader(
@@ -65,7 +65,7 @@ final class BasicNetworkResolver implements MiddlewareInterface
      * @param string $header The protocol header name.
      * @param array|callable|null $values The protocol header values.
      *
-     * @see DEFAULT_PROTOCOL_AND_ACCEPTABLE_VALUES
+     * @psalm-param array<array-key, string|string[]>|callable|null $values
      */
     public function withAddedProtocolHeader(string $header, array|callable|null $values = null): self
     {
@@ -83,11 +83,10 @@ final class BasicNetworkResolver implements MiddlewareInterface
         }
 
         if (empty($values)) {
-            throw new RuntimeException('Accepted values cannot be an empty array.');
+            throw new RuntimeException('Protocol header values cannot be an empty array.');
         }
 
-        $new->protocolHeaders[$header] = [];
-
+        $protocolHeader = [];
         foreach ($values as $protocol => $acceptedValues) {
             if (!is_string($protocol)) {
                 throw new RuntimeException('The protocol must be type of string.');
@@ -97,8 +96,15 @@ final class BasicNetworkResolver implements MiddlewareInterface
                 throw new RuntimeException('The protocol cannot be an empty string.');
             }
 
-            $new->protocolHeaders[$header][$protocol] = array_map('\strtolower', (array) $acceptedValues);
+            $acceptedValues = (array) $acceptedValues;
+            if (empty($acceptedValues)) {
+                throw new RuntimeException('Protocol accepted values cannot be an empty array.');
+            }
+
+            $protocolHeader[$protocol] = array_map('\strtolower', $acceptedValues);
         }
+
+        $new->protocolHeaders[$header] = $protocolHeader;
 
         return $new;
     }
@@ -157,6 +163,7 @@ final class BasicNetworkResolver implements MiddlewareInterface
             $headerValues = $request->getHeader($header);
 
             if (is_callable($data)) {
+                /** @var mixed $newScheme */
                 $newScheme = $data($headerValues, $header, $request);
 
                 if ($newScheme === null) {
@@ -189,7 +196,7 @@ final class BasicNetworkResolver implements MiddlewareInterface
         $uri = $request->getUri();
 
         if ($newScheme !== null && $newScheme !== $uri->getScheme()) {
-            $request = $request->withUri($uri->withScheme((string) $newScheme));
+            $request = $request->withUri($uri->withScheme($newScheme));
         }
 
         return $handler->handle($request);

@@ -20,6 +20,7 @@ use Yiisoft\Router\UrlGeneratorInterface;
 use Yiisoft\Session\SessionInterface;
 use Yiisoft\Strings\WildcardPattern;
 use Yiisoft\Translator\TranslatorInterface;
+use Yiisoft\Yii\Middleware\Exception\InvalidLocalesFormatException;
 
 final class Locale implements MiddlewareInterface
 {
@@ -33,6 +34,10 @@ final class Locale implements MiddlewareInterface
     private string $sessionName = self::DEFAULT_LOCALE_NAME;
     private ?DateInterval $cookieDuration;
 
+    /**
+     * @param array $locales List of supported locales in key-value format e.g. ['ru' => 'ru_RU', 'uz' => 'uz_UZ']
+     * @param string[] $ignoredRequests
+     */
     public function __construct(
         private TranslatorInterface $translator,
         private UrlGeneratorInterface $urlGenerator,
@@ -54,11 +59,13 @@ final class Locale implements MiddlewareInterface
             return $handler->handle($request);
         }
 
+        $this->assertLocalesFormat();
+
         $uri = $request->getUri();
         $path = $uri->getPath();
         $query = $uri->getQuery();
 
-        [$locale, $country] = $this->getLocaleFromPath($path);
+        $locale = $this->getLocaleFromPath($path);
 
         if ($locale !== null) {
             $this->translator->setLocale($locale);
@@ -66,19 +73,19 @@ final class Locale implements MiddlewareInterface
 
             $response = $handler->handle($request);
             $newPath = null;
-            if ($this->isDefaultLocale($locale, $country) && $request->getMethod() === Method::GET) {
+            if ($this->isDefaultLocale($locale) && $request->getMethod() === Method::GET) {
                 $length = strlen($locale);
                 $newPath = substr($path, $length + 1);
             }
             return $this->applyLocaleFromPath($locale, $response, $query, $newPath);
         }
         if ($this->enableSaveLocale) {
-            [$locale, $country] = $this->getLocaleFromRequest($request);
+            $locale = $this->getLocaleFromRequest($request);
         }
         if ($locale === null && $this->enableDetectLocale) {
-            [$locale, $country] = $this->detectLocale($request);
+            $locale = $this->detectLocale($request);
         }
-        if ($locale === null || $this->isDefaultLocale($locale, $country) || $this->isRequestIgnored($request)) {
+        if ($locale === null || $this->isDefaultLocale($locale) || $this->isRequestIgnored($request)) {
             $this->urlGenerator->setDefaultArgument($this->queryParameterName, null);
             $request = $request->withUri($uri->withPath('/' . $this->defaultLocale . $path));
             return $handler->handle($request);
@@ -122,33 +129,39 @@ final class Locale implements MiddlewareInterface
         return $response;
     }
 
-    private function getLocaleFromPath(string $path): array
+    private function getLocaleFromPath(string $path): ?string
     {
         $parts = [];
+        /**
+         * @var string $code
+         * @var string $locale
+         */
         foreach ($this->locales as $code => $locale) {
-            $lang = is_string($code) ? $code : $locale;
-            $parts[] = $lang;
+            $parts[] = $code;
+            $parts[] = $locale;
         }
 
         $pattern = implode('|', $parts);
         if (preg_match("#^/($pattern)\b(/?)#i", $path, $matches)) {
-            $locale = $matches[1];
-            [$locale, $country] = $this->parseLocale($locale);
+            $matchedLocale = $matches[1];
+            $locale = $this->parseLocale($matchedLocale);
             if (isset($this->locales[$locale])) {
                 $this->logger->debug(sprintf("Locale '%s' found in URL", $locale));
-                return [$locale, $country];
+                return $locale;
             }
         }
-        return [null, null];
+        return null;
     }
 
-    private function getLocaleFromRequest(ServerRequestInterface $request): array
+    private function getLocaleFromRequest(ServerRequestInterface $request): ?string
     {
+        /** @var array<string, string> $cookies */
         $cookies = $request->getCookieParams();
         if (isset($cookies[$this->sessionName])) {
             $this->logger->debug(sprintf("Locale '%s' found in cookies", $cookies[$this->sessionName]));
             return $this->parseLocale($cookies[$this->sessionName]);
         }
+        /** @var array<string, string> $queryParameters */
         $queryParameters = $request->getQueryParams();
         if (isset($queryParameters[$this->queryParameterName])) {
             $this->logger->debug(
@@ -156,20 +169,20 @@ final class Locale implements MiddlewareInterface
             );
             return $this->parseLocale($queryParameters[$this->queryParameterName]);
         }
-        return [null, null];
+        return null;
     }
 
-    private function isDefaultLocale(string $locale, ?string $country): bool
+    private function isDefaultLocale(string $locale): bool
     {
-        return $locale === $this->defaultLocale || ($country !== null && $this->defaultLocale === "$locale-$country");
+        return $locale === $this->defaultLocale || $this->locales[$locale] === $this->defaultLocale;
     }
 
-    private function detectLocale(ServerRequestInterface $request): array
+    private function detectLocale(ServerRequestInterface $request): ?string
     {
         foreach ($request->getHeader(Header::ACCEPT_LANGUAGE) as $language) {
             return $this->parseLocale($language);
         }
-        return [null, null];
+        return null;
     }
 
     private function saveLocale(string $locale, ResponseInterface $response): ResponseInterface
@@ -183,19 +196,15 @@ final class Locale implements MiddlewareInterface
         return $cookie->addToResponse($response);
     }
 
-    private function parseLocale(string $locale): array
+    private function parseLocale(string $locale): string
     {
         if (str_contains($locale, '-')) {
-            return explode('-', $locale, 2);
+            [$locale] = explode('-', $locale, 2);
+        } elseif (str_contains($locale, '_')) {
+            [$locale] = explode('_', $locale, 2);
         }
 
-        if (str_contains($locale, '_')) {
-            return explode('_', $locale, 2);
-        }
-        if (isset($this->locales[$locale]) && str_contains($this->locales[$locale], '-')) {
-            return explode('-', $this->locales[$locale], 2);
-        }
-        return [$locale, null];
+        return $locale;
     }
 
     private function isRequestIgnored(ServerRequestInterface $request): bool
@@ -208,6 +217,23 @@ final class Locale implements MiddlewareInterface
         return false;
     }
 
+    /**
+     * @throws InvalidLocalesFormatException
+     */
+    private function assertLocalesFormat(): void
+    {
+        foreach ($this->locales as $code => $locale) {
+            if (!is_string($code) || !is_string($locale)) {
+                throw new InvalidLocalesFormatException();
+            }
+        }
+    }
+
+    /**
+     * @param array $locales List of supported locales in key-value format e.g. ['ru' => 'ru_RU', 'uz' => 'uz_UZ']
+     *
+     * @return $this
+     */
     public function withLocales(array $locales): self
     {
         $new = clone $this;
@@ -250,6 +276,11 @@ final class Locale implements MiddlewareInterface
         return $new;
     }
 
+    /**
+     * @param string[] $ignoredRequests
+     *
+     * @return $this
+     */
     public function withIgnoredRequests(array $ignoredRequests): self
     {
         $new = clone $this;

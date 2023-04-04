@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Yiisoft\Yii\Middleware\Tests\Middleware;
+namespace Yiisoft\Yii\Middleware\Tests;
 
 use HttpSoft\Message\Response;
 use HttpSoft\Message\ServerRequest;
@@ -51,6 +51,17 @@ final class SubFolderTest extends TestCase
         $this->assertSame('/default/web', $this->aliases->get('@baseUrl'));
         $this->assertSame('/custom_public', $this->urlGeneratorUriPrefix);
         $this->assertSame('/index.php', $this->getRequestPath());
+    }
+
+    public function testEmptyPrefix(): void
+    {
+        $request = $this->createRequest('/', '/index.php');
+        $mw = $this->createMiddleware(prefix: '');
+
+        $this->expectException(BadUriPrefixException::class);
+        $this->expectExceptionMessage('URI prefix can\'t be empty.');
+
+        $this->process($mw, $request);
     }
 
     public function testCustomPrefixWithTrailingSlash(): void
