@@ -225,6 +225,8 @@ final class Locale implements MiddlewareInterface
     }
 
     /**
+     * @psalm-assert array<string, string> $this->locales
+     *
      * @throws InvalidLocalesFormatException
      */
     private function assertLocalesFormat(): void
