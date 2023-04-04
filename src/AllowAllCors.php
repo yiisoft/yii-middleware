@@ -11,7 +11,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Yiisoft\Http\Header;
 
 /**
- * AllowAllCors adds CORS headers to the response.
+ * `AllowAllCors` adds CORS headers to the response.
  */
 final class AllowAllCors implements MiddlewareInterface
 {

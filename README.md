@@ -319,7 +319,6 @@ $middleware = $middleware->withValidator($validator);
 
 Adds CORS headers to the response.
 
-
 ## Testing
 
 ### Unit testing
