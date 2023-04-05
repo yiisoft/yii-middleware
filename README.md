@@ -219,7 +219,9 @@ $middleware = $middleware->withStatus(303);
 
 ### `SubFolder`
 
-Supports routing when `webroot` is not the same folder as public.
+Supports routing when `webroot` is not the same folder as public. By default, detects `webroot` from server params.
+If you want the application to run on the specified path, use the prefix instead:
+> This middleware should be placed before `Route` middleware.
 
 ```php
 use Yiisoft\Yii\Middleware\SubFolder;
@@ -315,7 +317,49 @@ $middleware = $middleware->withAttributeIps($attribute);
 $middleware = $middleware->withValidator($validator);
 ```
 
-### `Yiisoft\Yii\Middleware\AllowAllCors`
+### `Locale`
+
+Supports locale-based routing and configures services such as translator, url generator, etc.
+> This middleware should be placed before `Route` middleware.
+
+```php
+use Yiisoft\Yii\Middleware\Locale;
+// Available locales.
+$locales = ['en' => 'en-US', 'ru' => 'ru-RU', 'uz' => 'uz-UZ']
+/**
+ * Specify supported locales.
+ * 
+ * @var Locale $middleware
+ */
+$middleware = $middleware->withLocales($locales);
+
+/**
+ * Specify requests that should be ignored.
+ */
+$middleware = $middleware->withIgnoredRequests(['/api**']);
+
+$response = $middleware->process($request);
+```
+
+Additionally, you can specify the following options:
+
+```php
+use Yiisoft\Yii\Middleware\Locale;
+
+/**
+ * Enable detection option to detect locale from `Accept-Language` header.
+ *
+ * @var Locale $middleware
+ */
+$middleware = $middleware->withEnableDetectLocale(true);
+
+/**
+* Enable saving option to save current locale in cookies.
+ */
+$middleware = $middleware->withEnableSaveLocale(true);
+```
+
+### `AllowAllCors`
 
 Adds CORS headers to the response.
 
