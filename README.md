@@ -220,7 +220,8 @@ $middleware = $middleware->withStatus(303);
 ### `SubFolder`
 
 Supports routing when `webroot` is not the same folder as public. By default, detects `webroot` from server params.
-> This middleware should be placed before `Route` middleware.
+
+> Info: This middleware should be placed before `Route` middleware.
 
 If you want the application to run on the specified path, use the prefix instead:
 
@@ -320,8 +321,9 @@ $middleware = $middleware->withValidator($validator);
 
 ### `Locale`
 
-Supports locale-based routing and configures services such as translator, url generator, etc.
-> This middleware should be placed before `Route` middleware.
+Supports locale-based routing and configures services such as translator, URL generator, etc.
+
+> Info: This middleware should be placed before `Route` middleware.
 
 ```php
 use Yiisoft\Yii\Middleware\Locale;
