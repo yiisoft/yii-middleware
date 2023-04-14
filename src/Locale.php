@@ -42,13 +42,11 @@ final class Locale implements MiddlewareInterface
         private TranslatorInterface $translator,
         private UrlGeneratorInterface $urlGenerator,
         private SessionInterface $session,
-        private Aliases $aliases,
         private LoggerInterface $logger,
         private ResponseFactoryInterface $responseFactory,
         private array $locales = [],
         private array $ignoredRequests = [],
         private bool $cookieSecure = false,
-        private string $baseUrlAlias = '@baseUrl',
     ) {
         $this->cookieDuration = new DateInterval('P30D');
     }
@@ -95,8 +93,7 @@ final class Locale implements MiddlewareInterface
         $this->urlGenerator->setDefaultArgument($this->queryParameterName, $locale);
 
         if ($request->getMethod() === Method::GET) {
-            $location = rtrim($this->aliases->get($this->baseUrlAlias), '/') . '/'
-                . $locale . $path . ($query !== '' ? '?' . $query : '');
+            $location = $this->getBaseUrl() . '/'. $locale . $path . ($query !== '' ? '?' . $query : '');
             return $this->responseFactory
                 ->createResponse(Status::FOUND)
                 ->withHeader(Header::LOCATION, $location);
@@ -117,8 +114,7 @@ final class Locale implements MiddlewareInterface
         }
 
         if ($newPath !== null) {
-            $location = rtrim($this->aliases->get($this->baseUrlAlias), '/')
-                . $newPath . ($query !== '' ? '?' . $query : '');
+            $location = $this->getBaseUrl() . $newPath . ($query !== '' ? '?' . $query : '');
             $response = $this->responseFactory
                 ->createResponse(Status::FOUND)
                 ->withHeader(Header::LOCATION, $location);
@@ -236,6 +232,11 @@ final class Locale implements MiddlewareInterface
                 throw new InvalidLocalesFormatException();
             }
         }
+    }
+
+    private function getBaseUrl(): string
+    {
+        return rtrim($this->urlGenerator->getUriPrefix(), '/');
     }
 
     /**
