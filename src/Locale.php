@@ -11,7 +11,6 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Log\LoggerInterface;
-use Yiisoft\Aliases\Aliases;
 use Yiisoft\Cookies\Cookie;
 use Yiisoft\Http\Header;
 use Yiisoft\Http\Method;
@@ -93,7 +92,7 @@ final class Locale implements MiddlewareInterface
         $this->urlGenerator->setDefaultArgument($this->queryParameterName, $locale);
 
         if ($request->getMethod() === Method::GET) {
-            $location = $this->getBaseUrl() . '/'. $locale . $path . ($query !== '' ? '?' . $query : '');
+            $location = $this->getBaseUrl() . '/' . $locale . $path . ($query !== '' ? '?' . $query : '');
             return $this->responseFactory
                 ->createResponse(Status::FOUND)
                 ->withHeader(Header::LOCATION, $location);
