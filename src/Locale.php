@@ -303,11 +303,4 @@ final class Locale implements MiddlewareInterface
         $new->cookieSecure = $secure;
         return $new;
     }
-
-    public function withBaseUrlAlias(string $baseUrlAlias): self
-    {
-        $new = clone $this;
-        $new->baseUrlAlias = $baseUrlAlias;
-        return $new;
-    }
 }
