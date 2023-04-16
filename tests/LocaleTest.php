@@ -11,7 +11,6 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Yiisoft\Aliases\Aliases;
 use Yiisoft\Http\Header;
 use Yiisoft\Http\Method;
 use Yiisoft\Http\Status;
@@ -25,15 +24,14 @@ use Yiisoft\Yii\Middleware\Locale;
 final class LocaleTest extends TestCase
 {
     private ?string $locale;
+    private string $prefix = '';
     private array $session = [];
-    private Aliases $aliases;
     private ?ServerRequestInterface $lastRequest;
 
     public function setUp(): void
     {
         $this->locale = null;
         $this->lastRequest = null;
-        $this->aliases = new Aliases(['@baseUrl' => '/']);
     }
 
     public function testImmutability(): void
@@ -48,7 +46,6 @@ final class LocaleTest extends TestCase
         $this->assertNotSame($localeMiddleware->withQueryParameterName('lang'), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withSessionName('lang'), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withIgnoredRequests(['/auth**']), $localeMiddleware);
-        $this->assertNotSame($localeMiddleware->withBaseUrlAlias('@baseUrl'), $localeMiddleware);
     }
 
     public function testInvalidLocalesFormat(): void
@@ -289,7 +286,7 @@ final class LocaleTest extends TestCase
         $urlGenerator
             ->method('setUriPrefix')
             ->willReturnCallback(function ($prefix) {
-                $this->locale = $prefix;
+                $this->prefix = $prefix;
             });
 
         $urlGenerator
@@ -300,7 +297,7 @@ final class LocaleTest extends TestCase
 
         $urlGenerator
             ->method('getUriPrefix')
-            ->willReturnReference($this->locale);
+            ->willReturnReference($this->prefix);
 
         $session = $this->createMock(SessionInterface::class);
         $session->method('set')
@@ -315,7 +312,6 @@ final class LocaleTest extends TestCase
             $translator,
             $urlGenerator,
             $session,
-            $this->aliases,
             new SimpleLogger(),
             new ResponseFactory(),
             $locales,

@@ -11,7 +11,6 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Log\LoggerInterface;
-use Yiisoft\Aliases\Aliases;
 use Yiisoft\Cookies\Cookie;
 use Yiisoft\Http\Header;
 use Yiisoft\Http\Method;
@@ -42,13 +41,11 @@ final class Locale implements MiddlewareInterface
         private TranslatorInterface $translator,
         private UrlGeneratorInterface $urlGenerator,
         private SessionInterface $session,
-        private Aliases $aliases,
         private LoggerInterface $logger,
         private ResponseFactoryInterface $responseFactory,
         private array $locales = [],
         private array $ignoredRequests = [],
         private bool $cookieSecure = false,
-        private string $baseUrlAlias = '@baseUrl',
     ) {
         $this->cookieDuration = new DateInterval('P30D');
     }
@@ -95,8 +92,7 @@ final class Locale implements MiddlewareInterface
         $this->urlGenerator->setDefaultArgument($this->queryParameterName, $locale);
 
         if ($request->getMethod() === Method::GET) {
-            $location = rtrim($this->aliases->get($this->baseUrlAlias), '/') . '/'
-                . $locale . $path . ($query !== '' ? '?' . $query : '');
+            $location = $this->getBaseUrl() . '/' . $locale . $path . ($query !== '' ? '?' . $query : '');
             return $this->responseFactory
                 ->createResponse(Status::FOUND)
                 ->withHeader(Header::LOCATION, $location);
@@ -117,8 +113,7 @@ final class Locale implements MiddlewareInterface
         }
 
         if ($newPath !== null) {
-            $location = rtrim($this->aliases->get($this->baseUrlAlias), '/')
-                . $newPath . ($query !== '' ? '?' . $query : '');
+            $location = $this->getBaseUrl() . $newPath . ($query !== '' ? '?' . $query : '');
             $response = $this->responseFactory
                 ->createResponse(Status::FOUND)
                 ->withHeader(Header::LOCATION, $location);
@@ -238,6 +233,11 @@ final class Locale implements MiddlewareInterface
         }
     }
 
+    private function getBaseUrl(): string
+    {
+        return rtrim($this->urlGenerator->getUriPrefix(), '/');
+    }
+
     /**
      * @param array $locales List of supported locales in key-value format e.g. ['ru' => 'ru_RU', 'uz' => 'uz_UZ']
      *
@@ -301,13 +301,6 @@ final class Locale implements MiddlewareInterface
     {
         $new = clone $this;
         $new->cookieSecure = $secure;
-        return $new;
-    }
-
-    public function withBaseUrlAlias(string $baseUrlAlias): self
-    {
-        $new = clone $this;
-        $new->baseUrlAlias = $baseUrlAlias;
         return $new;
     }
 }
