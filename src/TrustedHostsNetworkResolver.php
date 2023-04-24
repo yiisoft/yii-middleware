@@ -391,16 +391,19 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
                 $portHeader === $ipHeader
                 && $ipListType === self::IP_HEADER_TYPE_RFC7239
                 && isset($hostData['port'])
-                && $this->checkPort((string) $hostData['port'])
             ) {
-                $uri = $uri->withPort((int) $hostData['port']);
-                break;
+                try {
+                    $uri = $uri->withPort((string) $hostData['port']);
+                } catch (InvalidArgumentException) {
+                    break;
+                }
             }
 
             $port = $request->getHeaderLine($portHeader);
 
-            if ($this->checkPort($port)) {
-                $uri = $uri->withPort((int) $port);
+            try {
+                $uri = $uri->withPort($port);
+            } catch (InvalidArgumentException) {
                 break;
             }
         }
@@ -671,7 +674,13 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
     private function checkPort(string $port): bool
     {
-        return preg_match('/^\d{1,5}$/', $port) === 1 && (int) $port <= 65535;
+        if (preg_match('/^\d{1,5}$/', $port) !== 1) {
+            return false;
+        }
+
+        $intPort = (int) $port;
+
+        return $intPort >= 1 && $intPort <= 65535;
     }
 
     /**

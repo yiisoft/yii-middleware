@@ -227,9 +227,13 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 'test=test',
                 123,
             ],
-            'rfc7239, level 8, another host, another protocol, url, wrong port' => [
+            'rfc7239, level 8, another host, another protocol, url, ports (greater than max by 1, long, min allowed)' => [
                 [
-                    'forwarded' => ['for="9.9.9.9:abs"', 'proto=https;for="5.5.5.5:123456";host=test', 'for=2.2.2.2'],
+                    'forwarded' => [
+                        'for="9.9.9.9:65536"',
+                        'proto=https;for="5.5.5.5:123456";host=test',
+                        'for="2.2.2.2:1"',
+                    ],
                     'x-rewrite-url' => ['/test?test=test'],
                     'x-forwarded-host' => ['test.another'],
                     'x-forwarded-proto' => ['on'],
@@ -253,7 +257,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 'http',
                 '/test',
                 'test=test',
-                null,
+                1,
             ],
             'trustedHeaders' => [
                 ['x-forwarded-for' => ['9.9.9.9', '5.5.5.5', '2.2.2.2'], 'foo' => 'bar'],
