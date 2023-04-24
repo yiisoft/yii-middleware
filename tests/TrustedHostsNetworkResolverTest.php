@@ -227,6 +227,34 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 'test=test',
                 123,
             ],
+            'rfc7239, level 8, another host, another protocol, url, wrong port' => [
+                [
+                    'forwarded' => ['for="9.9.9.9:abs"', 'proto=https;for="5.5.5.5:123456";host=test', 'for=2.2.2.2'],
+                    'x-rewrite-url' => ['/test?test=test'],
+                    'x-forwarded-host' => ['test.another'],
+                    'x-forwarded-proto' => ['on'],
+                ],
+                ['REMOTE_ADDR' => '127.0.0.1'],
+                [
+                    [
+                        'hosts' => ['8.8.8.8', '127.0.0.1', '2.2.2.2'],
+                        'ipHeaders' => [[TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded']],
+                        'hostHeaders' => ['x-forwarded-host', 'forwarded'],
+                        'protocolHeaders' => [
+                            'x-forwarded-proto' => ['http' => 'http'],
+                            'forwarded' => ['http' => 'http', 'https' => 'https'],
+                        ],
+                        'urlHeaders' => ['x-rewrite-url'],
+                        'portHeaders' => ['x-forwarded-port', 'forwarded'],
+                    ],
+                ],
+                '2.2.2.2',
+                'test.another',
+                'http',
+                '/test',
+                'test=test',
+                null,
+            ],
             'trustedHeaders' => [
                 ['x-forwarded-for' => ['9.9.9.9', '5.5.5.5', '2.2.2.2'], 'foo' => 'bar'],
                 ['REMOTE_ADDR' => '127.0.0.1'],
@@ -415,9 +443,9 @@ final class TrustedHostsNetworkResolverTest extends TestCase
     /**
      * @dataProvider addedTrustedHostsInvalidParameterDataProvider
      */
-    public function testAddedTrustedHostsInvalidParameter(array $data, bool $isRuntimeException = false): void
+    public function testAddedTrustedHostsInvalidParameter(array $data): void
     {
-        $this->expectException($isRuntimeException ? RuntimeException::class : InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
 
         $this->createTrustedHostsNetworkResolver()
             ->withAddedTrustedHosts(
