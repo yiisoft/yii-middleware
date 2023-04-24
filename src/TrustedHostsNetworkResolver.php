@@ -671,6 +671,11 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
     private function checkPort(string $port): bool
     {
+        /**
+         * @infection-ignore-all
+         * - PregMatchRemoveCaret.
+         * - PregMatchRemoveDollar.
+         */
         if (preg_match('/^\d{1,5}$/', $port) !== 1) {
             return false;
         }
