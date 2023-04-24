@@ -391,19 +391,16 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
                 $portHeader === $ipHeader
                 && $ipListType === self::IP_HEADER_TYPE_RFC7239
                 && isset($hostData['port'])
+                && $this->checkPort((string) $hostData['port'])
             ) {
-                try {
-                    $uri = $uri->withPort((string) $hostData['port']);
-                } catch (InvalidArgumentException) {
-                    break;
-                }
+                $uri = $uri->withPort((int) $hostData['port']);
+                break;
             }
 
             $port = $request->getHeaderLine($portHeader);
 
-            try {
-                $uri = $uri->withPort($port);
-            } catch (InvalidArgumentException) {
+            if ($this->checkPort($port)) {
+                $uri = $uri->withPort((int) $port);
                 break;
             }
         }
