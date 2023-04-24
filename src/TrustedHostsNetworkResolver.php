@@ -675,6 +675,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             return false;
         }
 
+        /** @infection-ignore-all CastInt */
         $intPort = (int) $port;
 
         return $intPort >= 1 && $intPort <= 65535;
