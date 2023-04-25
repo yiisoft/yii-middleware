@@ -144,11 +144,11 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 $obfuscatedHostsTrustedHosts,
                 '127.0.0.1',
             ],
-//            'rfc7239, level 2, obfuscated host, starts witn underscore' => [
-//                ['forwarded' => ['for=_hidden', 'for=_SEVKISEK']],
-//                $obfuscatedHostsTrustedHosts,
-//                '127.0.0.1',
-//            ],
+            //            'rfc7239, level 2, obfuscated host, starts witn underscore' => [
+            //                ['forwarded' => ['for=_hidden', 'for=_SEVKISEK']],
+            //                $obfuscatedHostsTrustedHosts,
+            //                '127.0.0.1',
+            //            ],
             'rfc7239Level3' => [
                 ['forwarded' => ['to=9.9.9.9', 'for=5.5.5.5', 'for=2.2.2.2']],
                 [
@@ -424,11 +424,11 @@ final class TrustedHostsNetworkResolverTest extends TestCase
         return [
             [
                 ['hosts' => []],
-                'Empty hosts are not allowed.'
+                'Empty hosts are not allowed.',
             ],
             [
                 ['ipHeaders' => ['x-forwarded-for', 1]],
-                'IP header must have either string or array type.'
+                'IP header must have either string or array type.',
             ],
             [
                 ['ipHeaders' => [['a', 'b', 'c']]],
@@ -455,8 +455,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
     public function testWithAddedTrustedHostsAndWrongArguments(
         array $trustedHostsData,
         string $expectedExceptionMessage,
-    ): void
-    {
+    ): void {
         $middleware = $this->createTrustedHostsNetworkResolver();
 
         $this->expectException(InvalidArgumentException::class);
