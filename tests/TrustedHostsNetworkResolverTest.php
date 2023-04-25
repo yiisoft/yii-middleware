@@ -19,12 +19,24 @@ final class TrustedHostsNetworkResolverTest extends TestCase
 {
     public function trustedDataProvider(): array
     {
+        $serverParams = ['REMOTE_ADDR' => '127.0.0.1'];
+
+        $urlHeaders = ['forwarded' => ['for=9.9.9.9', 'proto=https;for=5.5.5.5;host=test', 'for=2.2.2.2']];
+        $urlTrustedHosts = [
+            [
+                'hosts' => ['8.8.8.8', '127.0.0.1', '2.2.2.2'],
+                'ipHeaders' => [[TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded']],
+                'hostHeaders' => ['forwarded'],
+                'protocolHeaders' => ['forwarded' => fn () => ['http' => 'http', 'https' => 'https']],
+                'urlHeaders' => ['non-existing-header', 'x-rewrite-url'],
+            ],
+        ];
+
         $wrongPortsHeaders = [
             'x-rewrite-url' => ['/test?test=test'],
             'x-forwarded-host' => ['test.another'],
             'x-forwarded-proto' => ['on'],
         ];
-        $wrongPortsServerParams = ['REMOTE_ADDR' => '127.0.0.1'];
         $wrongPortsTrustedHosts = [
             [
                 'hosts' => ['8.8.8.8', '127.0.0.1', '2.2.2.2'],
@@ -172,26 +184,41 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 'test',
                 'https',
             ],
-            'rfc7239Level6HostAndProtocolAndUrl' => [
-                [
-                    'forwarded' => ['for=9.9.9.9', 'proto=https;for=5.5.5.5;host=test', 'for=2.2.2.2'],
+            'rfc7239, level 6, host, protocol, url with query parameters' => [
+                array_merge($urlHeaders, [
                     'x-rewrite-url' => ['/test?test=test'],
-                ],
-                ['REMOTE_ADDR' => '127.0.0.1'],
-                [
-                    [
-                        'hosts' => ['8.8.8.8', '127.0.0.1', '2.2.2.2'],
-                        'ipHeaders' => [[TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded']],
-                        'hostHeaders' => ['forwarded'],
-                        'protocolHeaders' => ['forwarded' => fn () => ['http' => 'http', 'https' => 'https']],
-                        'urlHeaders' => ['non-exit-header', 'x-rewrite-url'],
-                    ],
-                ],
+                ]),
+                $serverParams,
+                $urlTrustedHosts,
                 '5.5.5.5',
                 'test',
                 'https',
                 '/test',
                 'test=test',
+            ],
+            'rfc7239, level 6, host, protocol, url without query parameters' => [
+                array_merge($urlHeaders, [
+                    'x-rewrite-url' => ['/test'],
+                ]),
+                $serverParams,
+                $urlTrustedHosts,
+                '5.5.5.5',
+                'test',
+                'https',
+                '/test',
+                '',
+            ],
+            'rfc7239, level 6, host, protocol, url with badly formed query parameters' => [
+                array_merge($urlHeaders, [
+                    'x-rewrite-url' => ['/test?param1=val1?param2=val2'],
+                ]),
+                $serverParams,
+                $urlTrustedHosts,
+                '5.5.5.5',
+                'test',
+                'https',
+                '/test',
+                'param1=val1?param2=val2',
             ],
             'rfc7239Level7AnotherHost&AnotherProtocol&Url' => [
                 [
@@ -219,11 +246,11 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 '/test',
                 'test=test',
             ],
-            'rfc7239Level8AnotherHost&AnotherProtocol&Url&Port' => [
+            'rfc7239, level 8, another host, another protocol, url, ports (string, valid, missing)' => [
                 array_merge($wrongPortsHeaders, [
                     'forwarded' => ['for="9.9.9.9:abs"', 'proto=https;for="5.5.5.5:123";host=test', 'for=2.2.2.2'],
                 ]),
-                $wrongPortsServerParams,
+                $serverParams,
                 $wrongPortsTrustedHosts,
                 '5.5.5.5',
                 'test.another',
@@ -240,7 +267,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                         'for="2.2.2.2:1"',
                     ],
                 ]),
-                $wrongPortsServerParams,
+                $serverParams,
                 $wrongPortsTrustedHosts,
                 '2.2.2.2',
                 'test.another',
@@ -257,7 +284,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                         'for="2.2.2.2:65535"',
                     ],
                 ]),
-                $wrongPortsServerParams,
+                $serverParams,
                 $wrongPortsTrustedHosts,
                 '2.2.2.2',
                 'test.another',

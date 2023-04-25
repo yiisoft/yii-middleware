@@ -661,9 +661,16 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
             $url = $request->getHeaderLine($header);
 
-            if (str_starts_with($url, '/')) {
-                return array_pad(explode('?', $url, 2), 2, null);
+            if (!str_starts_with($url, '/')) {
+                continue;
             }
+
+            $urlParts = explode('?', $url, 2);
+            if (!isset($urlParts[1])) {
+                $urlParts[] = null;
+            }
+
+            return $urlParts;
         }
 
         return null;

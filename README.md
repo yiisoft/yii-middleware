@@ -264,7 +264,7 @@ $response = $middleware->process($request, $handler);
 
 ### `TrustedHostsNetworkResolver`
 
-Adds and resolvers trusted hosts and related headers.
+Adds and resolves trusted hosts with related headers.
 
 The header lists are evaluated in the order they were specified. If you specify multiple headers by type
 (e.g. IP headers), you must ensure that the irrelevant header is removed e.g. web server application,
