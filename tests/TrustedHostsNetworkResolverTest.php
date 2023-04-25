@@ -34,6 +34,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 'hostHeaders' => ['forwarded'],
                 'protocolHeaders' => ['forwarded' => fn () => ['http' => 'http', 'https' => 'https']],
                 'urlHeaders' => ['non-existing-header', 'x-rewrite-url'],
+                'trustedHeaders' => ['forwarded', 'x-rewrite-url'],
             ],
         ];
 
@@ -53,6 +54,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 ],
                 'urlHeaders' => ['x-rewrite-url'],
                 'portHeaders' => ['x-forwarded-port', 'forwarded'],
+                'trustedHeaders' => ['x-rewrite-url', 'x-forwarded-host', 'x-forwarded-proto', 'forwarded'],
             ],
         ];
 
@@ -116,6 +118,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                     [
                         'hosts' => ['8.8.8.8', '127.0.0.1'],
                         'ipHeaders' => [[TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded']],
+                        'trustedHeaders' => ['forwarded'],
                     ],
                 ],
                 '2.2.2.2',
@@ -126,6 +129,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                     [
                         'hosts' => ['8.8.8.8', '127.0.0.1', '2.2.2.2'],
                         'ipHeaders' => [[TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded']],
+                        'trustedHeaders' => ['forwarded'],
                     ],
                 ],
                 '5.5.5.5',
@@ -151,6 +155,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                     [
                         'hosts' => ['8.8.8.8', '127.0.0.1', '2.2.2.2'],
                         'ipHeaders' => [[TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded']],
+                        'trustedHeaders' => ['forwarded'],
                     ],
                 ],
                 '5.5.5.5',
@@ -161,6 +166,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                     [
                         'hosts' => ['8.8.8.8', '127.0.0.1', '2.2.2.2'],
                         'ipHeaders' => [[TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded']],
+                        'trustedHeaders' => ['forwarded'],
                     ],
                 ],
                 '5.5.5.5',
@@ -176,6 +182,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                             'x-forwarded-proto' => ['http' => 'http'],
                             'forwarded' => ['http' => 'http', 'https' => 'https'],
                         ],
+                        'trustedHeaders' => ['forwarded'],
                     ],
                 ],
                 '5.5.5.5',
@@ -232,6 +239,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                             'forwarded' => ['http' => 'http', 'https' => 'https'],
                         ],
                         'urlHeaders' => ['x-rewrite-url'],
+                        'trustedHeaders' => ['forwarded', 'x-rewrite-url', 'x-forwarded-host', 'x-forwarded-proto'],
                     ],
                 ],
                 '5.5.5.5',
@@ -295,13 +303,31 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 ],
                 '2.2.2.2',
             ],
-            'trusted headers, custom' => [
-                ['custom-x-forwarded-for' => ['9.9.9.9', '5.5.5.5', '2.2.2.2'], 'foo' => 'bar'],
+            'trusted headers, custom, multiple, trust custom' => [
+                [
+                    'x-forwarded-for' => ['9.9.9.9', '5.5.5.5', '2.2.2.2'],
+                    'custom-x-forwarded-for' => ['7.7.7.7', '4.4.4.4', '1.1.1.1'],
+                    'foo' => 'bar',
+                ],
                 [
                     [
                         'hosts' => ['8.8.8.8', '127.0.0.1'],
-                        'ipHeaders' => ['custom-x-forwarded-for'],
+                        'ipHeaders' => ['x-forwarded-for', 'custom-x-forwarded-for'],
                         'trustedHeaders' => ['custom-x-forwarded-for'],
+                    ],
+                ],
+                '1.1.1.1',
+            ],
+            'trusted headers, custom, multiple, trust default' => [
+                [
+                    'custom-x-forwarded-for' => ['7.7.7.7', '4.4.4.4', '1.1.1.1'],
+                    'x-forwarded-for' => ['9.9.9.9', '5.5.5.5', '2.2.2.2'],
+                    'foo' => 'bar',
+                ],
+                [
+                    [
+                        'hosts' => ['8.8.8.8', '127.0.0.1'],
+                        'ipHeaders' => ['x-forwarded-for', 'custom-x-forwarded-for'],
                     ],
                 ],
                 '2.2.2.2',
@@ -352,7 +378,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
         $this->assertSame($expectedPort, $requestHandler->processedRequest->getUri()->getPort());
     }
 
-    public function notTrustedDataProvider(): array
+    public function dataProcessNotTrusted(): array
     {
         return [
             'none' => [
@@ -371,9 +397,9 @@ final class TrustedHostsNetworkResolverTest extends TestCase
     }
 
     /**
-     * @dataProvider notTrustedDataProvider
+     * @dataProvider dataProcessNotTrusted
      */
-    public function testNotTrusted(array $headers, array $trustedHostsData): void
+    public function testProcessNotTrusted(array $headers, array $trustedHostsData): void
     {
         $middleware = $this->createTrustedHostsNetworkResolver();
 
