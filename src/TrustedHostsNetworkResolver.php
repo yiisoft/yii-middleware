@@ -19,7 +19,6 @@ use Yiisoft\Validator\Rule\Ip;
 use Yiisoft\Validator\ValidatorInterface;
 
 use function array_diff;
-use function array_pad;
 use function array_reverse;
 use function array_shift;
 use function array_unshift;
