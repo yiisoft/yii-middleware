@@ -137,7 +137,9 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
         array $portHeaders = [],
         ?array $trustedHeaders = null,
     ): self {
-        $new = clone $this;
+        if ($hosts === []) {
+            throw new InvalidArgumentException('Empty hosts are not allowed.');
+        }
 
         foreach ($ipHeaders as $ipHeader) {
             if (is_string($ipHeader)) {
@@ -145,32 +147,28 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             }
 
             if (!is_array($ipHeader)) {
-                throw new InvalidArgumentException('Type of IP header is not a string and not array.');
+                throw new InvalidArgumentException('IP header must have either string or array type.');
             }
 
             if (count($ipHeader) !== 2) {
-                throw new InvalidArgumentException('The IP header array must have exactly 2 elements.');
+                throw new InvalidArgumentException('IP header array must have exactly 2 elements.');
             }
 
             [$type, $header] = $ipHeader;
 
             if (!is_string($type)) {
-                throw new InvalidArgumentException('The IP header type is not a string.');
+                throw new InvalidArgumentException('IP header type must be a string.');
             }
 
             if (!is_string($header)) {
-                throw new InvalidArgumentException('The IP header value is not a string.');
+                throw new InvalidArgumentException('IP header value must be a string.');
             }
 
             if ($type === self::IP_HEADER_TYPE_RFC7239) {
                 continue;
             }
 
-            throw new InvalidArgumentException("Not supported IP header type: $type.");
-        }
-
-        if ($hosts === []) {
-            throw new InvalidArgumentException('Empty hosts not allowed.');
+            throw new InvalidArgumentException("Not supported IP header type: \"$type\".");
         }
 
         $trustedHeaders ??= self::DEFAULT_TRUSTED_HEADERS;
@@ -191,6 +189,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             }
         }
 
+        $new = clone $this;
         /** @psalm-var array<array-key, string> $ipHeaders */
         $new->trustedHosts[] = [
             self::DATA_KEY_HOSTS => $hosts,

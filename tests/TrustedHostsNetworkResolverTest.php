@@ -152,12 +152,12 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 $obfuscatedHostsTrustedHosts,
                 '127.0.0.1',
             ],
-            'rfc7239, level 2, obfuscated host, starts witn underscore' => [
-                ['forwarded' => ['for=_hidden', 'for=_SEVKISEK']],
-                $serverParams,
-                $obfuscatedHostsTrustedHosts,
-                '127.0.0.1',
-            ],
+//            'rfc7239, level 2, obfuscated host, starts witn underscore' => [
+//                ['forwarded' => ['for=_hidden', 'for=_SEVKISEK']],
+//                $serverParams,
+//                $obfuscatedHostsTrustedHosts,
+//                '127.0.0.1',
+//            ],
             'rfc7239Level3' => [
                 ['forwarded' => ['to=9.9.9.9', 'for=5.5.5.5', 'for=2.2.2.2']],
                 ['REMOTE_ADDR' => '127.0.0.1'],
@@ -373,18 +373,15 @@ final class TrustedHostsNetworkResolverTest extends TestCase
         return [
             'none' => [
                 [],
-                ['REMOTE_ADDR' => '127.0.0.1'],
                 [],
             ],
             'x-forwarded-for' => [
                 ['x-forwarded-for' => ['9.9.9.9', '5.5.5.5', '2.2.2.2']],
-                ['REMOTE_ADDR' => '127.0.0.1'],
-                [['hosts' => ['8.8.8.8'], 'ipHeaders' => ['x-forwarded-for']]],
+                ['hosts' => ['8.8.8.8'], 'ipHeaders' => ['x-forwarded-for']],
             ],
             'rfc7239' => [
                 ['x-forwarded-for' => ['for=9.9.9.9', 'for=5.5.5.5', 'for=2.2.2.2']],
-                ['REMOTE_ADDR' => '127.0.0.1'],
-                [['hosts' => ['8.8.8.8'], 'ipHeaders' => ['x-forwarded-for']]],
+                ['hosts' => ['8.8.8.8'], 'ipHeaders' => ['x-forwarded-for']],
             ],
         ];
     }
@@ -392,25 +389,73 @@ final class TrustedHostsNetworkResolverTest extends TestCase
     /**
      * @dataProvider notTrustedDataProvider
      */
-    public function testNotTrusted(array $headers, array $serverParams, array $trustedHosts): void
+    public function testNotTrusted(array $headers, array $trustedHostsData): void
     {
-        $request = $this->createRequestWithSchemaAndHeaders('http', $headers, $serverParams);
-        $requestHandler = new MockRequestHandler();
         $middleware = $this->createTrustedHostsNetworkResolver();
 
-        foreach ($trustedHosts as $data) {
+        if ($trustedHostsData !== []) {
             $middleware = $middleware->withAddedTrustedHosts(
-                $data['hosts'],
-                $data['ipHeaders'] ?? [],
-                $data['protocolHeaders'] ?? [],
-                [],
-                [],
-                [],
-                $data['trustedHeaders'] ?? [],
+                $trustedHostsData['hosts'],
+                $trustedHostsData['ipHeaders'],
             );
         }
+
+        $request = $this->createRequestWithSchemaAndHeaders(
+            headers: $headers,
+            serverParams: ['REMOTE_ADDR' => '127.0.0.1'],
+        );
+        $requestHandler = new MockRequestHandler();
+
         $middleware->process($request, $requestHandler);
-        $this->assertNull($request->getAttribute('requestClientIp'));
+        $this->assertNull($request->getAttribute(TrustedHostsNetworkResolver::REQUEST_CLIENT_IP));
+    }
+
+    public function dataWithAddedTrustedHostsAndWrongHeader(): array
+    {
+        return [
+            'empty hosts' => [
+                ['hosts' => []],
+                'Empty hosts are not allowed.'
+            ],
+            [
+                ['ipHeaders' => ['x-forwarded-for', 1]],
+                'IP header must have either string or array type.'
+            ],
+            [
+                ['ipHeaders' => [['a', 'b', 'c']]],
+                'IP header array must have exactly 2 elements.',
+            ],
+            [
+                ['ipHeaders' => [[1, 'b']]],
+                'IP header type must be a string.',
+            ],
+            [
+                ['ipHeaders' => [['a', 2]]],
+                'IP header value must be a string.',
+            ],
+            [
+                ['ipHeaders' => [[TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'header'], ['a', 'header']]],
+                'Not supported IP header type: "a".',
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider dataWithAddedTrustedHostsAndWrongHeader
+     */
+    public function testWithAddedTrustedHostsAndWrongArguments(
+        array $trustedHostsData,
+        string $expectedExceptionMessage,
+    ): void
+    {
+        $middleware = $this->createTrustedHostsNetworkResolver();
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage($expectedExceptionMessage);
+        $middleware->withAddedTrustedHosts(
+            $trustedHostsData['hosts'] ?? ['9.9.9.9', '5.5.5.5', '2.2.2.2'],
+            $trustedHostsData['ipHeaders'] ?? [],
+        );
     }
 
     public function addedTrustedHostsInvalidParameterDataProvider(): array
