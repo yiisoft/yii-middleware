@@ -21,6 +21,13 @@ final class TrustedHostsNetworkResolverTest extends TestCase
     {
         $serverParams = ['REMOTE_ADDR' => '127.0.0.1'];
 
+        $obfuscatedHostsTrustedHosts = [
+            [
+                'hosts' => ['8.8.8.8', '127.0.0.1', '2.2.2.2'],
+                'ipHeaders' => [[TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded']],
+            ],
+        ];
+
         $urlHeaders = ['forwarded' => ['for=9.9.9.9', 'proto=https;for=5.5.5.5;host=test', 'for=2.2.2.2']];
         $urlTrustedHosts = [
             [
@@ -133,15 +140,22 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 ],
                 '5.5.5.5',
             ],
-            'rfc7239Level2ObfusicatedHost' => [
+            'rfc7239, level 2, obfuscated host, unknown' => [
                 ['forwarded' => ['for=unknown', 'to=unknown']],
-                ['REMOTE_ADDR' => '127.0.0.1'],
-                [
-                    [
-                        'hosts' => ['8.8.8.8', '127.0.0.1', '2.2.2.2'],
-                        'ipHeaders' => [[TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded']],
-                    ],
-                ],
+                $serverParams,
+                $obfuscatedHostsTrustedHosts,
+                '127.0.0.1',
+            ],
+            'rfc7239, level 2, obfuscated host, unknown, with port' => [
+                ['forwarded' => ['for=unknown:1']],
+                $serverParams,
+                $obfuscatedHostsTrustedHosts,
+                '127.0.0.1',
+            ],
+            'rfc7239, level 2, obfuscated host, starts witn underscore' => [
+                ['forwarded' => ['for=_hidden', 'for=_SEVKISEK']],
+                $serverParams,
+                $obfuscatedHostsTrustedHosts,
                 '127.0.0.1',
             ],
             'rfc7239Level3' => [

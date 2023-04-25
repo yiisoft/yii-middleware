@@ -591,8 +591,12 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
         $list = [];
 
         foreach ($forwards as $forward) {
-            /** @var array<string, string> $data */
-            $data = HeaderValueHelper::getParameters($forward);
+            try {
+                /** @psalm-var array<string, string> $data */
+                $data = HeaderValueHelper::getParameters($forward);
+            } catch (InvalidArgumentException) {
+                break;
+            }
 
             if (!isset($data['for'])) {
                 // Invalid item, the following items will be dropped
