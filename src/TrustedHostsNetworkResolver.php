@@ -185,7 +185,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             $host = str_replace('*', 'wildcard', $host); // wildcard is allowed in host
 
             if (filter_var($host, FILTER_VALIDATE_DOMAIN) === false) {
-                throw new InvalidArgumentException("\"$host\" host is not a domain and not an IP address.");
+                throw new InvalidArgumentException("\"$host\" host must be either a domain or an IP address.");
             }
         }
 

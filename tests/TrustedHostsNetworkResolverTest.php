@@ -17,10 +17,8 @@ use Yiisoft\Yii\Middleware\Tests\TestAsset\MockRequestHandler;
 
 final class TrustedHostsNetworkResolverTest extends TestCase
 {
-    public function trustedDataProvider(): array
+    public function dataProcessTrusted(): array
     {
-        $serverParams = ['REMOTE_ADDR' => '127.0.0.1'];
-
         $obfuscatedHostsTrustedHosts = [
             [
                 'hosts' => ['8.8.8.8', '127.0.0.1', '2.2.2.2'],
@@ -61,7 +59,6 @@ final class TrustedHostsNetworkResolverTest extends TestCase
         return [
             'xForwardLevel1' => [
                 ['x-forwarded-for' => ['9.9.9.9', '5.5.5.5', '2.2.2.2']],
-                ['REMOTE_ADDR' => '127.0.0.1'],
                 [
                     ['hosts' => ['8.8.8.8', '127.0.0.1'], 'ipHeaders' => ['x-forwarded-for']],
                 ],
@@ -69,7 +66,6 @@ final class TrustedHostsNetworkResolverTest extends TestCase
             ],
             'xForwardLevel2' => [
                 ['x-forwarded-for' => ['9.9.9.9', '5.5.5.5', '2.2.2.2']],
-                ['REMOTE_ADDR' => '127.0.0.1'],
                 [
                     ['hosts' => ['8.8.8.8', '127.0.0.1', '2.2.2.2'], 'ipHeaders' => ['x-forwarded-for']],
                 ],
@@ -77,7 +73,6 @@ final class TrustedHostsNetworkResolverTest extends TestCase
             ],
             'xForwardLevel3' => [
                 ['x-forwarded-for' => ['9.9.9.9', '5.5.5.5', '2.2.2.2']],
-                ['REMOTE_ADDR' => '127.0.0.1'],
                 [
                     ['hosts' => ['8.8.8.8', '127.0.0.1', '2.2.2.2'], 'ipHeaders' => ['x-forwarded-for']],
                     ['hosts' => ['172.16.0.1', '127.0.0.1'], 'ipHeaders' => ['x-forwarded-for']],
@@ -86,7 +81,6 @@ final class TrustedHostsNetworkResolverTest extends TestCase
             ],
             'xForwardLevel4' => [
                 ['x-forwarded-for' => ['9.9.9.9', '5.5.5.5', '2.2.2.2']],
-                ['REMOTE_ADDR' => '127.0.0.1'],
                 [
                     ['hosts' => ['172.16.0.1', '127.0.0.1'], 'ipHeaders' => []],
                 ],
@@ -94,7 +88,6 @@ final class TrustedHostsNetworkResolverTest extends TestCase
             ],
             'xForwardLevel5' => [
                 ['x-forwarded-for' => ['1234']],
-                ['REMOTE_ADDR' => '127.0.0.1'],
                 [
                     ['hosts' => ['172.16.0.1', '127.0.0.1'], 'ipHeaders' => [], 'portHeaders' => ['x-forwarded-for']],
                 ],
@@ -107,7 +100,6 @@ final class TrustedHostsNetworkResolverTest extends TestCase
             ],
             'xForwardLevel6' => [
                 ['x-forwarded-proto' => ['https']],
-                ['REMOTE_ADDR' => '127.0.0.1'],
                 [
                     [
                         'hosts' => ['172.16.0.1', '127.0.0.1'],
@@ -120,7 +112,6 @@ final class TrustedHostsNetworkResolverTest extends TestCase
             ],
             'rfc7239Level1' => [
                 ['forwarded' => ['for=9.9.9.9', 'for=5.5.5.5', 'for=2.2.2.2']],
-                ['REMOTE_ADDR' => '127.0.0.1'],
                 [
                     [
                         'hosts' => ['8.8.8.8', '127.0.0.1'],
@@ -131,7 +122,6 @@ final class TrustedHostsNetworkResolverTest extends TestCase
             ],
             'rfc7239Level2' => [
                 ['forwarded' => ['for=9.9.9.9', 'for=5.5.5.5', 'for=2.2.2.2']],
-                ['REMOTE_ADDR' => '127.0.0.1'],
                 [
                     [
                         'hosts' => ['8.8.8.8', '127.0.0.1', '2.2.2.2'],
@@ -142,25 +132,21 @@ final class TrustedHostsNetworkResolverTest extends TestCase
             ],
             'rfc7239, level 2, obfuscated host, unknown' => [
                 ['forwarded' => ['for=unknown', 'to=unknown']],
-                $serverParams,
                 $obfuscatedHostsTrustedHosts,
                 '127.0.0.1',
             ],
             'rfc7239, level 2, obfuscated host, unknown, with port' => [
                 ['forwarded' => ['for=unknown:1']],
-                $serverParams,
                 $obfuscatedHostsTrustedHosts,
                 '127.0.0.1',
             ],
 //            'rfc7239, level 2, obfuscated host, starts witn underscore' => [
 //                ['forwarded' => ['for=_hidden', 'for=_SEVKISEK']],
-//                $serverParams,
 //                $obfuscatedHostsTrustedHosts,
 //                '127.0.0.1',
 //            ],
             'rfc7239Level3' => [
                 ['forwarded' => ['to=9.9.9.9', 'for=5.5.5.5', 'for=2.2.2.2']],
-                ['REMOTE_ADDR' => '127.0.0.1'],
                 [
                     [
                         'hosts' => ['8.8.8.8', '127.0.0.1', '2.2.2.2'],
@@ -171,7 +157,6 @@ final class TrustedHostsNetworkResolverTest extends TestCase
             ],
             'rfc7239Level4ContainsInvalidIp' => [
                 ['forwarded' => ['for=invalid9.9.9.9', 'for=5.5.5.5', 'for=2.2.2.2']],
-                ['REMOTE_ADDR' => '127.0.0.1'],
                 [
                     [
                         'hosts' => ['8.8.8.8', '127.0.0.1', '2.2.2.2'],
@@ -182,7 +167,6 @@ final class TrustedHostsNetworkResolverTest extends TestCase
             ],
             'rfc7239Level5HostAndProtocol' => [
                 ['forwarded' => ['for=9.9.9.9', 'proto=https;for=5.5.5.5;host=test', 'for=2.2.2.2']],
-                ['REMOTE_ADDR' => '127.0.0.1'],
                 [
                     [
                         'hosts' => ['8.8.8.8', '127.0.0.1', '2.2.2.2'],
@@ -202,7 +186,6 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 array_merge($urlHeaders, [
                     'x-rewrite-url' => ['/test?test=test'],
                 ]),
-                $serverParams,
                 $urlTrustedHosts,
                 '5.5.5.5',
                 'test',
@@ -214,7 +197,6 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 array_merge($urlHeaders, [
                     'x-rewrite-url' => ['/test'],
                 ]),
-                $serverParams,
                 $urlTrustedHosts,
                 '5.5.5.5',
                 'test',
@@ -226,7 +208,6 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 array_merge($urlHeaders, [
                     'x-rewrite-url' => ['/test?param1=val1?param2=val2'],
                 ]),
-                $serverParams,
                 $urlTrustedHosts,
                 '5.5.5.5',
                 'test',
@@ -241,7 +222,6 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                     'x-forwarded-host' => ['test.another'],
                     'x-forwarded-proto' => ['on'],
                 ],
-                ['REMOTE_ADDR' => '127.0.0.1'],
                 [
                     [
                         'hosts' => ['8.8.8.8', '127.0.0.1', '2.2.2.2'],
@@ -264,7 +244,6 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 array_merge($wrongPortsHeaders, [
                     'forwarded' => ['for="9.9.9.9:abs"', 'proto=https;for="5.5.5.5:123";host=test', 'for=2.2.2.2'],
                 ]),
-                $serverParams,
                 $wrongPortsTrustedHosts,
                 '5.5.5.5',
                 'test.another',
@@ -281,7 +260,6 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                         'for="2.2.2.2:1"',
                     ],
                 ]),
-                $serverParams,
                 $wrongPortsTrustedHosts,
                 '2.2.2.2',
                 'test.another',
@@ -298,7 +276,6 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                         'for="2.2.2.2:65535"',
                     ],
                 ]),
-                $serverParams,
                 $wrongPortsTrustedHosts,
                 '2.2.2.2',
                 'test.another',
@@ -307,9 +284,8 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 'test=test',
                 65535,
             ],
-            'trustedHeaders' => [
+            'trusted headers' => [
                 ['x-forwarded-for' => ['9.9.9.9', '5.5.5.5', '2.2.2.2'], 'foo' => 'bar'],
-                ['REMOTE_ADDR' => '127.0.0.1'],
                 [
                     [
                         'hosts' => ['8.8.8.8', '127.0.0.1'],
@@ -319,15 +295,25 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 ],
                 '2.2.2.2',
             ],
+            'trusted headers, custom' => [
+                ['custom-x-forwarded-for' => ['9.9.9.9', '5.5.5.5', '2.2.2.2'], 'foo' => 'bar'],
+                [
+                    [
+                        'hosts' => ['8.8.8.8', '127.0.0.1'],
+                        'ipHeaders' => ['custom-x-forwarded-for'],
+                        'trustedHeaders' => ['custom-x-forwarded-for'],
+                    ],
+                ],
+                '2.2.2.2',
+            ],
         ];
     }
 
     /**
-     * @dataProvider trustedDataProvider
+     * @dataProvider dataProcessTrusted
      */
-    public function testTrusted(
+    public function testProcessTrusted(
         array $headers,
-        array $serverParams,
         array $trustedHosts,
         string $expectedClientIp,
         ?string $expectedHttpHost = null,
@@ -336,22 +322,17 @@ final class TrustedHostsNetworkResolverTest extends TestCase
         string $expectedQuery = '',
         ?int $expectedPort = null
     ): void {
-        $request = $this->createRequestWithSchemaAndHeaders('http', $headers, $serverParams);
+        $request = $this->createRequestWithSchemaAndHeaders(
+            headers: $headers,
+            serverParams: ['REMOTE_ADDR' => '127.0.0.1'],
+        );
         $requestHandler = new MockRequestHandler();
         $middleware = in_array('for=unknown', $headers['forwarded'] ?? [], true) ?
             $this->createCustomTrustedHostsNetworkResolver() :
             $this->createTrustedHostsNetworkResolver();
 
         foreach ($trustedHosts as $data) {
-            $middleware = $middleware->withAddedTrustedHosts(
-                $data['hosts'],
-                $data['ipHeaders'] ?? [],
-                $data['protocolHeaders'] ?? [],
-                $data['hostHeaders'] ?? [],
-                $data['urlHeaders'] ?? [],
-                $data['portHeaders'] ?? [],
-                $data['trustedHeaders'] ?? null
-            );
+            $middleware = $middleware->withAddedTrustedHosts(...$data);
         }
 
         $response = $middleware->process($request, $requestHandler);
@@ -361,7 +342,10 @@ final class TrustedHostsNetworkResolverTest extends TestCase
         }
 
         $this->assertSame(Status::OK, $response->getStatusCode());
-        $this->assertSame($expectedClientIp, $requestHandler->processedRequest->getAttribute('requestClientIp'));
+        $this->assertSame(
+            $expectedClientIp,
+            $requestHandler->processedRequest->getAttribute(TrustedHostsNetworkResolver::REQUEST_CLIENT_IP),
+        );
         $this->assertSame($expectedHttpScheme, $requestHandler->processedRequest->getUri()->getScheme());
         $this->assertSame($expectedPath, $requestHandler->processedRequest->getUri()->getPath());
         $this->assertSame($expectedQuery, $requestHandler->processedRequest->getUri()->getQuery());
@@ -394,10 +378,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
         $middleware = $this->createTrustedHostsNetworkResolver();
 
         if ($trustedHostsData !== []) {
-            $middleware = $middleware->withAddedTrustedHosts(
-                $trustedHostsData['hosts'],
-                $trustedHostsData['ipHeaders'],
-            );
+            $middleware = $middleware->withAddedTrustedHosts(...$trustedHostsData);
         }
 
         $request = $this->createRequestWithSchemaAndHeaders(
@@ -407,13 +388,15 @@ final class TrustedHostsNetworkResolverTest extends TestCase
         $requestHandler = new MockRequestHandler();
 
         $middleware->process($request, $requestHandler);
-        $this->assertNull($request->getAttribute(TrustedHostsNetworkResolver::REQUEST_CLIENT_IP));
+        $this->assertNull(
+            $requestHandler->processedRequest->getAttribute(TrustedHostsNetworkResolver::REQUEST_CLIENT_IP)
+        );
     }
 
     public function dataWithAddedTrustedHostsAndWrongHeader(): array
     {
         return [
-            'empty hosts' => [
+            [
                 ['hosts' => []],
                 'Empty hosts are not allowed.'
             ],
