@@ -469,8 +469,9 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
         foreach ($protocolHeaders as $header => $protocolAndAcceptedValues) {
             if (!is_string($header)) {
-                throw new InvalidArgumentException('The protocol header must be a string.');
+                throw new InvalidArgumentException('The protocol header array key must be a string.');
             }
+
             $header = strtolower($header);
 
             if (is_callable($protocolAndAcceptedValues)) {
@@ -479,17 +480,19 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             }
 
             if (!is_array($protocolAndAcceptedValues)) {
-                throw new InvalidArgumentException('Accepted values is not an array nor callable.');
+                throw new InvalidArgumentException(
+                    'Accepted values for protocol headers must be either an array or a callable.',
+                );
             }
 
             if ($protocolAndAcceptedValues === []) {
-                throw new InvalidArgumentException('Accepted values cannot be an empty array.');
+                throw new InvalidArgumentException('Accepted values for protocol headers cannot be an empty array.');
             }
 
             $output[$header] = [];
 
             /**
-             * @var array<string|string[]> $protocolAndAcceptedValues
+             * @psalm-var array<string|string[]> $protocolAndAcceptedValues
              */
             foreach ($protocolAndAcceptedValues as $protocol => $acceptedValues) {
                 if (!is_string($protocol)) {
@@ -497,7 +500,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
                 }
 
                 if ($protocol === '') {
-                    throw new InvalidArgumentException('The protocol cannot be empty.');
+                    throw new InvalidArgumentException('The protocol must be non-empty string.');
                 }
 
                 $output[$header][$protocol] = array_map('\strtolower', (array) $acceptedValues);
@@ -697,11 +700,11 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
     {
         foreach ($array as $item) {
             if (!is_string($item)) {
-                throw new InvalidArgumentException("Each host \"$arrayName\" item must be string.");
+                throw new InvalidArgumentException("Each \"$arrayName\" item must be string.");
             }
 
             if (trim($item) === '') {
-                throw new InvalidArgumentException("Each host \"$arrayName\" item must be non-empty string.");
+                throw new InvalidArgumentException("Each \"$arrayName\" item must be non-empty string.");
             }
         }
     }

@@ -419,156 +419,180 @@ final class TrustedHostsNetworkResolverTest extends TestCase
         );
     }
 
-    public function dataWithAddedTrustedHostsAndWrongHeader(): array
+    public function dataWithAddedTrustedHostsAndWrongArguments(): array
     {
-        return [
+        $hostWithWrongStructure = str_repeat('1', 68);
+        $data = [
+            // hosts
+
             [
                 ['hosts' => []],
                 'Empty hosts are not allowed.',
             ],
             [
-                ['ipHeaders' => ['x-forwarded-for', 1]],
+                ['hosts' => ['1.1.1.1', $hostWithWrongStructure, '2.2.2.2']],
+                "\"$hostWithWrongStructure\" host must be either a domain or an IP address.",
+            ],
+
+            // ipHeaders
+
+            [
+                [
+                    'ipHeaders' => [
+                        [TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'header1'],
+                        'x-forwarded-for',
+                        1,
+                        [TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'header2'],
+                    ],
+                ],
                 'IP header must have either string or array type.',
             ],
             [
-                ['ipHeaders' => [['a', 'b', 'c']]],
+                [
+                    'ipHeaders' => [
+                        [TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'header1'],
+                        [TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239],
+                        [TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'header2'],
+                    ],
+                ],
                 'IP header array must have exactly 2 elements.',
             ],
             [
-                ['ipHeaders' => [[1, 'b']]],
+                [
+                    'ipHeaders' => [
+                        [TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'header1'],
+                        ['a', 'b', 'c'],
+                        [TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'header2'],
+                    ],
+                ],
+                'IP header array must have exactly 2 elements.',
+            ],
+            [
+                [
+                    'ipHeaders' => [
+                        [TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'header1'],
+                        [1, 'b'],
+                        [TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'header2'],
+                    ],
+                ],
                 'IP header type must be a string.',
             ],
             [
-                ['ipHeaders' => [['a', 2]]],
+                [
+                    'ipHeaders' => [
+                        [TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'header1'],
+                        [TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 1],
+                        [TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'header2'],
+                    ],
+                ],
                 'IP header value must be a string.',
             ],
             [
-                ['ipHeaders' => [[TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'header'], ['a', 'header']]],
+                [
+                    'ipHeaders' => [
+                        [TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'header1'],
+                        ['a', 'header2'],
+                        [TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'header3'],
+                    ],
+                ],
                 'Not supported IP header type: "a".',
             ],
+
+            // protocolHeaders
+
+            [
+                [
+                    'protocolHeaders' => [
+                        'x-forwarded-proto' => ['http' => 'http'],
+                        'header',
+                        'forwarded' => ['http' => 'http', 'https' => 'https'],
+                    ],
+                ],
+                'The protocol header array key must be a string.',
+            ],
+            [
+                [
+                    'protocolHeaders' => [
+                        'x-forwarded-proto' => ['http' => 'http'],
+                        'header' => [],
+                        'forwarded' => ['http' => 'http', 'https' => 'https'],
+                    ],
+                ],
+                'Accepted values for protocol headers cannot be an empty array.',
+            ],
+            [
+                [
+                    'protocolHeaders' => [
+                        'x-forwarded-proto' => ['http' => 'http'],
+                        'header' => 1,
+                        'forwarded' => ['http' => 'http', 'https' => 'https'],
+                    ],
+                ],
+                'Accepted values for protocol headers must be either an array or a callable.',
+            ],
+            [
+                [
+                    'protocolHeaders' => [
+                        'x-forwarded-proto' => ['http' => 'http'],
+                        'header' => ['http' => 'http', 1 => 'http', 'https' => 'https'],
+                        'forwarded' => ['http' => 'http', 'https' => 'https'],
+                    ],
+                ],
+                'The protocol must be a string.',
+            ],
+            [
+                [
+                    'protocolHeaders' => [
+                        'x-forwarded-proto' => ['http' => 'http'],
+                        'header' => ['http' => 'http', '' => 'http', 'https' => 'https'],
+                        'forwarded' => ['http' => 'http', 'https' => 'https'],
+                    ],
+                ],
+                'The protocol must be non-empty string.',
+            ],
         ];
+        foreach (['hosts', 'hostHeaders', 'urlHeaders', 'portHeaders', 'trustedHeaders'] as $argumentName) {
+            $data[] = [
+                [$argumentName => ['a', 2, 'c']],
+                "Each \"$argumentName\" item must be string.",
+            ];
+            $data[] = [
+                [$argumentName => ['a', '', 'c']],
+                "Each \"$argumentName\" item must be non-empty string.",
+            ];
+            $data[] = [
+                [$argumentName => ['a', ' ', 'c']],
+                "Each \"$argumentName\" item must be non-empty string.",
+            ];
+        }
+
+        return $data;
     }
 
     /**
-     * @dataProvider dataWithAddedTrustedHostsAndWrongHeader
+     * @dataProvider dataWithAddedTrustedHostsAndWrongArguments
      */
     public function testWithAddedTrustedHostsAndWrongArguments(
-        array $trustedHostsData,
+        array $arguments,
         string $expectedExceptionMessage,
     ): void {
+        $arguments['hosts'] ??= ['9.9.9.9', '5.5.5.5', '2.2.2.2'];
         $middleware = $this->createTrustedHostsNetworkResolver();
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage($expectedExceptionMessage);
-        $middleware->withAddedTrustedHosts(
-            $trustedHostsData['hosts'] ?? ['9.9.9.9', '5.5.5.5', '2.2.2.2'],
-            $trustedHostsData['ipHeaders'] ?? [],
-        );
-    }
 
-    public function addedTrustedHostsInvalidParameterDataProvider(): array
-    {
-        return [
-            'hostsEmpty' => [['hosts' => []]],
-            'hostsEmptyString' => [['hosts' => ['']]],
-            'hostsNumeric' => [['hosts' => [888]]],
-            'hostsSpaces' => [['hosts' => ['    ']]],
-            'hostsNotDomain' => [['hosts' => ['11111111111111111111111111111111111111111111111111111111111111111111']]],
-            'urlHeadersEmpty' => [['urlHeaders' => ['']]],
-            'urlHeadersNumeric' => [['urlHeaders' => [888]]],
-            'urlHeadersSpaces' => [['urlHeaders' => ['   ']]],
-            'trustedHeadersEmpty' => [['trustedHeaders' => ['']]],
-            'trustedHeadersNumeric' => [['trustedHeaders' => [888]]],
-            'trustedHeadersSpaces' => [['trustedHeaders' => ['   ']]],
-            'protocolHeadersEmptyArray' => [
-                [
-                    'hosts' => ['127.0.0.1'],
-                    'protocolHeaders' => ['x-forwarded-proto' => []],
-                ],
-            ],
-            'protocolHeadersNumericValue' => [
-                [
-                    'hosts' => ['127.0.0.1'],
-                    'protocolHeaders' => ['x-forwarded-proto' => 888],
-                ],
-            ],
-            'protocolHeadersWithoutAcceptedData' => [
-                [
-                    'hosts' => ['127.0.0.1'],
-                    'protocolHeaders' => ['x-forwarded-proto'],
-                ],
-            ],
-            'protocolHeadersKeyItemNumeric' => [
-                [
-                    'hosts' => ['127.0.0.1'],
-                    'protocolHeaders' => ['x-forwarded-proto' => [888 => 'http']],
-                ],
-            ],
-            'protocolHeadersKeyItemEmptyString' => [
-                [
-                    'hosts' => ['127.0.0.1'],
-                    'protocolHeaders' => ['x-forwarded-proto' => ['' => 'http']],
-                ],
-            ],
-            'ipHeadersEmptyString' => [['ipHeaders' => [' ']]],
-            'ipHeadersNumeric' => [['ipHeaders' => [888]]],
-            'ipHeadersNotSupportedIpHeaderType' => [['ipHeaders' => [['---', 'aaa']]]],
-            'ipHeadersInvalidIpHeaderType' => [
-                [
-                    'ipHeaders' => [
-                        [
-                            888,
-                            'aaa',
-                        ],
-                    ],
-                ],
-            ],
-            'ipHeadersInvalidIpHeaderValue' => [
-                [
-                    'ipHeaders' => [
-                        [
-                            TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239,
-                            888,
-                        ],
-                    ],
-                ],
-            ],
-            'ipHeadersOnlyIpHeaderTypeWithoutIpHeaderValue' => [
-                [
-                    'ipHeaders' => [
-                        [
-                            TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239,
-                        ],
-                    ],
-                ],
-            ],
-        ];
-    }
-
-    /**
-     * @dataProvider addedTrustedHostsInvalidParameterDataProvider
-     */
-    public function testAddedTrustedHostsInvalidParameter(array $data): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-
-        $this->createTrustedHostsNetworkResolver()
-            ->withAddedTrustedHosts(
-                $data['hosts'] ?? [],
-                $data['ipHeaders'] ?? [],
-                $data['protocolHeaders'] ?? [],
-                $data['hostHeaders'] ?? [],
-                $data['urlHeaders'] ?? [],
-                $data['portHeaders'] ?? [],
-                $data['trustedHeaders'] ?? null
-            );
+        $middleware->withAddedTrustedHosts(...$arguments);
     }
 
     public function testProcessWithAttributeIpsAndWithoutActualHost(): void
     {
         $request = $this->createRequestWithSchemaAndHeaders();
         $requestHandler = new MockRequestHandler();
-        $response = $this->createTrustedHostsNetworkResolver()->withAttributeIps('ip')->process($request, $requestHandler);
+        $response = $this
+            ->createTrustedHostsNetworkResolver()
+            ->withAttributeIps('ip')
+            ->process($request, $requestHandler);
 
         $this->assertSame(Status::OK, $response->getStatusCode());
         $this->assertSame('', $requestHandler->processedRequest->getUri()->getHost());
@@ -576,7 +600,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
         $this->assertNull($requestHandler->processedRequest->getAttribute('requestClientIp', 'default'));
     }
 
-    public function testAttributeIpsInvalidWhenEmptyString(): void
+    public function testWithAttributeIpsAndEmptyString(): void
     {
         $this->expectException(RuntimeException::class);
 
