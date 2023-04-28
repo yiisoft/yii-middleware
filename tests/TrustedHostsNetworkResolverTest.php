@@ -59,21 +59,21 @@ final class TrustedHostsNetworkResolverTest extends TestCase
         ];
 
         return [
-            'xForwardLevel1' => [
+            'xForward, level 1' => [
                 ['x-forwarded-for' => ['9.9.9.9', '5.5.5.5', '2.2.2.2']],
                 [
                     ['hosts' => ['8.8.8.8', '127.0.0.1'], 'ipHeaders' => ['x-forwarded-for']],
                 ],
                 '2.2.2.2',
             ],
-            'xForwardLevel2' => [
+            'xForward, level 2' => [
                 ['x-forwarded-for' => ['9.9.9.9', '5.5.5.5', '2.2.2.2']],
                 [
                     ['hosts' => ['8.8.8.8', '127.0.0.1', '2.2.2.2'], 'ipHeaders' => ['x-forwarded-for']],
                 ],
                 '5.5.5.5',
             ],
-            'xForwardLevel3' => [
+            'xForward, level 3' => [
                 ['x-forwarded-for' => ['9.9.9.9', '5.5.5.5', '2.2.2.2']],
                 [
                     ['hosts' => ['8.8.8.8', '127.0.0.1', '2.2.2.2'], 'ipHeaders' => ['x-forwarded-for']],
@@ -81,14 +81,14 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 ],
                 '5.5.5.5',
             ],
-            'xForwardLevel4' => [
+            'xForward, level 4' => [
                 ['x-forwarded-for' => ['9.9.9.9', '5.5.5.5', '2.2.2.2']],
                 [
                     ['hosts' => ['172.16.0.1', '127.0.0.1'], 'ipHeaders' => []],
                 ],
                 '127.0.0.1',
             ],
-            'xForwardLevel5' => [
+            'xForward, level 5' => [
                 ['x-forwarded-for' => ['1234']],
                 [
                     ['hosts' => ['172.16.0.1', '127.0.0.1'], 'ipHeaders' => [], 'portHeaders' => ['x-forwarded-for']],
@@ -100,7 +100,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 '',
                 1234,
             ],
-            'xForwardLevel6' => [
+            'xForward, level 6' => [
                 ['x-forwarded-proto' => ['https']],
                 [
                     [
@@ -112,7 +112,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 '',
                 'https',
             ],
-            'rfc7239Level1' => [
+            'rfc7239, level 1' => [
                 ['forwarded' => ['for=9.9.9.9', 'for=5.5.5.5', 'for=2.2.2.2']],
                 [
                     [
@@ -123,7 +123,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 ],
                 '2.2.2.2',
             ],
-            'rfc7239Level2' => [
+            'rfc7239, level 2' => [
                 ['forwarded' => ['for=9.9.9.9', 'for=5.5.5.5', 'for=2.2.2.2']],
                 [
                     [
@@ -149,7 +149,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
             //                $obfuscatedHostsTrustedHosts,
             //                '127.0.0.1',
             //            ],
-            'rfc7239Level3' => [
+            'rfc7239, level 3' => [
                 ['forwarded' => ['to=9.9.9.9', 'for=5.5.5.5', 'for=2.2.2.2']],
                 [
                     [
@@ -160,7 +160,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 ],
                 '5.5.5.5',
             ],
-            'rfc7239Level4ContainsInvalidIp' => [
+            'rfc7239, level 4, contains invalid IP' => [
                 ['forwarded' => ['for=invalid9.9.9.9', 'for=5.5.5.5', 'for=2.2.2.2']],
                 [
                     [
@@ -171,7 +171,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 ],
                 '5.5.5.5',
             ],
-            'rfc7239Level5HostAndProtocol' => [
+            'rfc7239, level 5, host, protocol' => [
                 ['forwarded' => ['for=9.9.9.9', 'proto=https;for=5.5.5.5;host=test', 'for=2.2.2.2']],
                 [
                     [
@@ -183,6 +183,27 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                             'forwarded' => ['http' => 'http', 'https' => 'https'],
                         ],
                         'trustedHeaders' => ['forwarded'],
+                    ],
+                ],
+                '5.5.5.5',
+                'test',
+                'https',
+            ],
+            'rfc7239, level 5, host, protocol, multiple headers' => [
+                [
+                    'forwarded' => ['for=9.9.9.9', 'proto=https;for=5.5.5.5;host=test', 'for=2.2.2.2'],
+                    'forwarded-custom' => ['for=7.7.7.7', 'proto=https;for=4.4.4.4;host=test', 'for=1.1.1.1']
+                ],
+                [
+                    [
+                        'hosts' => ['8.8.8.8', '127.0.0.1', '2.2.2.2'],
+                        'ipHeaders' => [[TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded']],
+                        'hostHeaders' => ['x-forwarded-host', 'forwarded', 'forwarded-custom'],
+                        'protocolHeaders' => [
+                            'x-forwarded-proto' => ['http' => 'http'],
+                            'forwarded' => ['http' => 'http', 'https' => 'https'],
+                        ],
+                        'trustedHeaders' => ['forwarded', 'forwarded-custom'],
                     ],
                 ],
                 '5.5.5.5',
@@ -222,7 +243,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 '/test',
                 'param1=val1?param2=val2',
             ],
-            'rfc7239Level7AnotherHost&AnotherProtocol&Url' => [
+            'rfc7239, level 7, another host, another protocol, url' => [
                 [
                     'forwarded' => ['for=9.9.9.9', 'proto=https;for=5.5.5.5;host=test', 'for=2.2.2.2'],
                     'x-rewrite-url' => ['/test?test=test'],

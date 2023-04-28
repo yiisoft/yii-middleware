@@ -42,7 +42,7 @@ use function trim;
  * $trustedHostsNetworkResolver->withAddedTrustedHosts(
  *   // List of secure hosts including $_SERVER['REMOTE_ADDR'], can specify IPv4, IPv6, domains and aliases {@see Ip}.
  *   ['1.1.1.1', '2.2.2.1/3', '2001::/32', 'localhost'].
- *   // IP list headers. For advanced handling headers {@see TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239}.
+ *   // IP list headers. For advanced handling of headers {@see TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239}.
  *   // Headers containing multiple sub-elements (e.g. RFC 7239) must also be listed for other relevant types
  *   // (e.g. host headers), otherwise they will only be used as an IP list.
  *   ['x-forwarded-for', [TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded']]
@@ -64,11 +64,11 @@ use function trim;
  * @psalm-type TrustedHostData = array{
  *     'hosts': array<array-key, string>,
  *     'ipHeaders': array<array-key, string>,
+ *     'protocolHeaders': ProtocolHeadersData,
+ *     'hostHeaders': array<array-key, string>,
  *     'urlHeaders': array<array-key, string>,
  *     'portHeaders': array<array-key, string>,
- *     'trustedHeaders': array<array-key, string>,
- *     'protocolHeaders': ProtocolHeadersData,
- *     'hostHeaders': array<array-key, string>
+ *     'trustedHeaders': array<array-key, string>
  * }
  */
 class TrustedHostsNetworkResolver implements MiddlewareInterface
@@ -274,7 +274,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             $hostList = $this->getFormattedIpList($hostList);
         }
 
-        array_unshift($hostList, ['ip' => $actualHost]); // server's ip to first position
+        array_unshift($hostList, ['ip' => $actualHost]); // Move server's IP to the first position
         $hostDataList = [];
 
         do {

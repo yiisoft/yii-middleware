@@ -279,20 +279,20 @@ otherwise spoof clients can be use this vulnerability.
 
 $middleware = $middleware->withAddedTrustedHosts(
     // List of secure hosts including `$_SERVER['REMOTE_ADDR']`, can specify IPv4, IPv6, domains and aliases.
-    ['1.1.1.1', '2.2.2.1/3', '2001::/32', 'localhost'],
+    hosts: ['1.1.1.1', '2.2.2.1/3', '2001::/32', 'localhost'],
     // Headers containing IP lists. Headers containing multiple sub-elements (e.g. RFC 7239) must for
     // other relevant types (e.g. host headers), otherwise they will only be used as an IP list.
-    ['x-forwarded-for', [TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded']],
+    ipHeaders: ['x-forwarded-for', [TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded']],
     // Protocol headers with accepted protocols and values. Matching of values is case-insensitive.
-    ['x-forwarded-proto' => ['https' => 'on']],
+    protocolHeaders: ['x-forwarded-proto' => ['https' => 'on']],
     // List of headers containing HTTP host.
-    ['forwarded', 'x-forwarded-for'],
+    hostHeaders: ['forwarded', 'x-forwarded-for'],
     // List of headers containing HTTP URL.
-    ['x-rewrite-url'],
+    urlHeaders: ['x-rewrite-url'],
     // List of headers containing port number.
-    ['x-rewrite-port'],
+    portHeaders:['x-rewrite-port'],
     // List of trusted headers. Removed from the request, if in checking process are classified as untrusted by hosts.
-    ['x-forwarded-for', 'forwarded'],
+    trustedHeaders: ['x-forwarded-for', 'forwarded'],
 );
 // Disable previous settings:
 $middleware = $middleware->withoutTrustedHosts();
