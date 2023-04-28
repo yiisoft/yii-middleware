@@ -175,11 +175,11 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
         /** @psalm-var ProtocolHeadersData $protocolHeaders */
         $protocolHeaders = $this->prepareProtocolHeaders($protocolHeaders);
 
-        $this->checkTypeStringOrArray($hosts, self::DATA_KEY_HOSTS);
-        $this->checkTypeStringOrArray($trustedHeaders, self::DATA_KEY_TRUSTED_HEADERS);
-        $this->checkTypeStringOrArray($hostHeaders, self::DATA_KEY_HOST_HEADERS);
-        $this->checkTypeStringOrArray($urlHeaders, self::DATA_KEY_URL_HEADERS);
-        $this->checkTypeStringOrArray($portHeaders, self::DATA_KEY_PORT_HEADERS);
+        $this->requireListOfNonEmptyStrings($hosts, self::DATA_KEY_HOSTS);
+        $this->requireListOfNonEmptyStrings($trustedHeaders, self::DATA_KEY_TRUSTED_HEADERS);
+        $this->requireListOfNonEmptyStrings($hostHeaders, self::DATA_KEY_HOST_HEADERS);
+        $this->requireListOfNonEmptyStrings($urlHeaders, self::DATA_KEY_URL_HEADERS);
+        $this->requireListOfNonEmptyStrings($portHeaders, self::DATA_KEY_PORT_HEADERS);
 
         foreach ($hosts as $host) {
             $host = str_replace('*', 'wildcard', $host); // wildcard is allowed in host
@@ -249,12 +249,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             // collect all trusted headers
             $trustedHeaders[] = $data[self::DATA_KEY_TRUSTED_HEADERS];
 
-            if ($trustedHostData !== null) {
-                // trusted hosts already found
-                continue;
-            }
-
-            if ($this->isValidHost($actualHost, $data[self::DATA_KEY_HOSTS])) {
+            if ($trustedHostData === null && $this->isValidHost($actualHost, $data[self::DATA_KEY_HOSTS])) {
                 $trustedHostData = $data;
             }
         }
@@ -518,7 +513,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
     private function removeHeaders(ServerRequestInterface $request, array $headers): ServerRequestInterface
     {
         foreach ($headers as $header) {
-            $request = $request->withoutAttribute($header);
+            $request = $request->withoutHeader($header);
         }
 
         return $request;
@@ -698,15 +693,15 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
     /**
      * @psalm-assert array<non-empty-string> $array
      */
-    private function checkTypeStringOrArray(array $array, string $field): void
+    private function requireListOfNonEmptyStrings(array $array, string $arrayName): void
     {
         foreach ($array as $item) {
             if (!is_string($item)) {
-                throw new InvalidArgumentException("$field must be string type");
+                throw new InvalidArgumentException("Each host \"$arrayName\" item must be string.");
             }
 
             if (trim($item) === '') {
-                throw new InvalidArgumentException("$field cannot be empty strings");
+                throw new InvalidArgumentException("Each host \"$arrayName\" item must be non-empty string.");
             }
         }
     }
