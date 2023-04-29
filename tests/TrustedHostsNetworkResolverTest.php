@@ -144,11 +144,6 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 $obfuscatedHostsTrustedHosts,
                 '127.0.0.1',
             ],
-            //            'rfc7239, level 2, obfuscated host, starts witn underscore' => [
-            //                ['forwarded' => ['for=_hidden', 'for=_SEVKISEK']],
-            //                $obfuscatedHostsTrustedHosts,
-            //                '127.0.0.1',
-            //            ],
             'rfc7239, level 3' => [
                 ['forwarded' => ['to=9.9.9.9', 'for=5.5.5.5', 'for=2.2.2.2']],
                 [
