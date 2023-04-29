@@ -187,7 +187,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
             'rfc7239, level 5, host, protocol, multiple headers' => [
                 [
                     'forwarded' => ['for=9.9.9.9', 'proto=https;for=5.5.5.5;host=test', 'for=2.2.2.2'],
-                    'forwarded-custom' => ['for=7.7.7.7', 'proto=https;for=4.4.4.4;host=test', 'for=1.1.1.1']
+                    'forwarded-custom' => ['for=7.7.7.7', 'proto=https;for=4.4.4.4;host=test', 'for=1.1.1.1'],
                 ],
                 [
                     [
