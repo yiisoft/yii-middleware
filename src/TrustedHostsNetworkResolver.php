@@ -19,7 +19,6 @@ use Yiisoft\Validator\Rule\Ip;
 use Yiisoft\Validator\ValidatorInterface;
 
 use function array_diff;
-use function array_pad;
 use function array_reverse;
 use function array_shift;
 use function array_unshift;
@@ -43,7 +42,7 @@ use function trim;
  * $trustedHostsNetworkResolver->withAddedTrustedHosts(
  *   // List of secure hosts including $_SERVER['REMOTE_ADDR'], can specify IPv4, IPv6, domains and aliases {@see Ip}.
  *   ['1.1.1.1', '2.2.2.1/3', '2001::/32', 'localhost'].
- *   // IP list headers. For advanced handling headers {@see TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239}.
+ *   // IP list headers. For advanced handling of headers {@see TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239}.
  *   // Headers containing multiple sub-elements (e.g. RFC 7239) must also be listed for other relevant types
  *   // (e.g. host headers), otherwise they will only be used as an IP list.
  *   ['x-forwarded-for', [TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded']]
@@ -65,11 +64,11 @@ use function trim;
  * @psalm-type TrustedHostData = array{
  *     'hosts': array<array-key, string>,
  *     'ipHeaders': array<array-key, string>,
+ *     'protocolHeaders': ProtocolHeadersData,
+ *     'hostHeaders': array<array-key, string>,
  *     'urlHeaders': array<array-key, string>,
  *     'portHeaders': array<array-key, string>,
- *     'trustedHeaders': array<array-key, string>,
- *     'protocolHeaders': ProtocolHeadersData,
- *     'hostHeaders': array<array-key, string>
+ *     'trustedHeaders': array<array-key, string>
  * }
  */
 class TrustedHostsNetworkResolver implements MiddlewareInterface
@@ -138,7 +137,9 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
         array $portHeaders = [],
         ?array $trustedHeaders = null,
     ): self {
-        $new = clone $this;
+        if ($hosts === []) {
+            throw new InvalidArgumentException('Empty hosts are not allowed.');
+        }
 
         foreach ($ipHeaders as $ipHeader) {
             if (is_string($ipHeader)) {
@@ -146,52 +147,49 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             }
 
             if (!is_array($ipHeader)) {
-                throw new InvalidArgumentException('Type of IP header is not a string and not array.');
+                throw new InvalidArgumentException('IP header must have either string or array type.');
             }
 
             if (count($ipHeader) !== 2) {
-                throw new InvalidArgumentException('The IP header array must have exactly 2 elements.');
+                throw new InvalidArgumentException('IP header array must have exactly 2 elements.');
             }
 
             [$type, $header] = $ipHeader;
 
             if (!is_string($type)) {
-                throw new InvalidArgumentException('The IP header type is not a string.');
+                throw new InvalidArgumentException('IP header type must be a string.');
             }
 
             if (!is_string($header)) {
-                throw new InvalidArgumentException('The IP header value is not a string.');
+                throw new InvalidArgumentException('IP header value must be a string.');
             }
 
             if ($type === self::IP_HEADER_TYPE_RFC7239) {
                 continue;
             }
 
-            throw new InvalidArgumentException("Not supported IP header type: $type.");
-        }
-
-        if ($hosts === []) {
-            throw new InvalidArgumentException('Empty hosts not allowed.');
+            throw new InvalidArgumentException("Not supported IP header type: \"$type\".");
         }
 
         $trustedHeaders ??= self::DEFAULT_TRUSTED_HEADERS;
         /** @psalm-var ProtocolHeadersData $protocolHeaders */
         $protocolHeaders = $this->prepareProtocolHeaders($protocolHeaders);
 
-        $this->checkTypeStringOrArray($hosts, self::DATA_KEY_HOSTS);
-        $this->checkTypeStringOrArray($trustedHeaders, self::DATA_KEY_TRUSTED_HEADERS);
-        $this->checkTypeStringOrArray($hostHeaders, self::DATA_KEY_HOST_HEADERS);
-        $this->checkTypeStringOrArray($urlHeaders, self::DATA_KEY_URL_HEADERS);
-        $this->checkTypeStringOrArray($portHeaders, self::DATA_KEY_PORT_HEADERS);
+        $this->requireListOfNonEmptyStrings($hosts, self::DATA_KEY_HOSTS);
+        $this->requireListOfNonEmptyStrings($trustedHeaders, self::DATA_KEY_TRUSTED_HEADERS);
+        $this->requireListOfNonEmptyStrings($hostHeaders, self::DATA_KEY_HOST_HEADERS);
+        $this->requireListOfNonEmptyStrings($urlHeaders, self::DATA_KEY_URL_HEADERS);
+        $this->requireListOfNonEmptyStrings($portHeaders, self::DATA_KEY_PORT_HEADERS);
 
         foreach ($hosts as $host) {
             $host = str_replace('*', 'wildcard', $host); // wildcard is allowed in host
 
             if (filter_var($host, FILTER_VALIDATE_DOMAIN) === false) {
-                throw new InvalidArgumentException("\"$host\" host is not a domain and not an IP address.");
+                throw new InvalidArgumentException("\"$host\" host must be either a domain or an IP address.");
             }
         }
 
+        $new = clone $this;
         /** @psalm-var array<array-key, string> $ipHeaders */
         $new->trustedHosts[] = [
             self::DATA_KEY_HOSTS => $hosts,
@@ -251,12 +249,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             // collect all trusted headers
             $trustedHeaders[] = $data[self::DATA_KEY_TRUSTED_HEADERS];
 
-            if ($trustedHostData !== null) {
-                // trusted hosts already found
-                continue;
-            }
-
-            if ($this->isValidHost($actualHost, $data[self::DATA_KEY_HOSTS])) {
+            if ($trustedHostData === null && $this->isValidHost($actualHost, $data[self::DATA_KEY_HOSTS])) {
                 $trustedHostData = $data;
             }
         }
@@ -281,7 +274,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             $hostList = $this->getFormattedIpList($hostList);
         }
 
-        array_unshift($hostList, ['ip' => $actualHost]); // server's ip to first position
+        array_unshift($hostList, ['ip' => $actualHost]); // Move server's IP to the first position
         $hostDataList = [];
 
         do {
@@ -476,8 +469,9 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
         foreach ($protocolHeaders as $header => $protocolAndAcceptedValues) {
             if (!is_string($header)) {
-                throw new InvalidArgumentException('The protocol header must be a string.');
+                throw new InvalidArgumentException('The protocol header array key must be a string.');
             }
+
             $header = strtolower($header);
 
             if (is_callable($protocolAndAcceptedValues)) {
@@ -486,17 +480,19 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             }
 
             if (!is_array($protocolAndAcceptedValues)) {
-                throw new InvalidArgumentException('Accepted values is not an array nor callable.');
+                throw new InvalidArgumentException(
+                    'Accepted values for protocol headers must be either an array or a callable.',
+                );
             }
 
             if ($protocolAndAcceptedValues === []) {
-                throw new InvalidArgumentException('Accepted values cannot be an empty array.');
+                throw new InvalidArgumentException('Accepted values for protocol headers cannot be an empty array.');
             }
 
             $output[$header] = [];
 
             /**
-             * @var array<string|string[]> $protocolAndAcceptedValues
+             * @psalm-var array<string|string[]> $protocolAndAcceptedValues
              */
             foreach ($protocolAndAcceptedValues as $protocol => $acceptedValues) {
                 if (!is_string($protocol)) {
@@ -504,7 +500,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
                 }
 
                 if ($protocol === '') {
-                    throw new InvalidArgumentException('The protocol cannot be empty.');
+                    throw new InvalidArgumentException('The protocol must be non-empty string.');
                 }
 
                 $output[$header][$protocol] = array_map('\strtolower', (array) $acceptedValues);
@@ -520,7 +516,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
     private function removeHeaders(ServerRequestInterface $request, array $headers): ServerRequestInterface
     {
         foreach ($headers as $header) {
-            $request = $request->withoutAttribute($header);
+            $request = $request->withoutHeader($header);
         }
 
         return $request;
@@ -591,8 +587,12 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
         $list = [];
 
         foreach ($forwards as $forward) {
-            /** @var array<string, string> $data */
-            $data = HeaderValueHelper::getParameters($forward);
+            try {
+                /** @psalm-var array<string, string> $data */
+                $data = HeaderValueHelper::getParameters($forward);
+            } catch (InvalidArgumentException) {
+                break;
+            }
 
             if (!isset($data['for'])) {
                 // Invalid item, the following items will be dropped
@@ -661,9 +661,16 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
             $url = $request->getHeaderLine($header);
 
-            if (str_starts_with($url, '/')) {
-                return array_pad(explode('?', $url, 2), 2, null);
+            if (!str_starts_with($url, '/')) {
+                continue;
             }
+
+            $urlParts = explode('?', $url, 2);
+            if (!isset($urlParts[1])) {
+                $urlParts[] = null;
+            }
+
+            return $urlParts;
         }
 
         return null;
@@ -671,21 +678,33 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
     private function checkPort(string $port): bool
     {
-        return preg_match('/^\d{1,5}$/', $port) === 1 && (int) $port <= 65535;
+        /**
+         * @infection-ignore-all
+         * - PregMatchRemoveCaret.
+         * - PregMatchRemoveDollar.
+         */
+        if (preg_match('/^\d{1,5}$/', $port) !== 1) {
+            return false;
+        }
+
+        /** @infection-ignore-all CastInt */
+        $intPort = (int) $port;
+
+        return $intPort >= 1 && $intPort <= 65535;
     }
 
     /**
      * @psalm-assert array<non-empty-string> $array
      */
-    private function checkTypeStringOrArray(array $array, string $field): void
+    private function requireListOfNonEmptyStrings(array $array, string $arrayName): void
     {
         foreach ($array as $item) {
             if (!is_string($item)) {
-                throw new InvalidArgumentException("$field must be string type");
+                throw new InvalidArgumentException("Each \"$arrayName\" item must be string.");
             }
 
             if (trim($item) === '') {
-                throw new InvalidArgumentException("$field cannot be empty strings");
+                throw new InvalidArgumentException("Each \"$arrayName\" item must be non-empty string.");
             }
         }
     }
