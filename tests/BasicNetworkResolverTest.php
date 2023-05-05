@@ -97,9 +97,7 @@ final class BasicNetworkResolverTest extends TestCase
                 'http',
                 ['x-forwarded-proto' => 'test any-https **'],
                 [
-                    'x-forwarded-proto' => static function (array $values): string {
-                        return stripos($values[0], 'https') !== false ? 'https' : 'http';
-                    },
+                    'x-forwarded-proto' => static fn(array $values): string => stripos($values[0], 'https') !== false ? 'https' : 'http',
                 ],
                 'https',
             ],
