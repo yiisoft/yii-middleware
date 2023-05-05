@@ -12,8 +12,6 @@ use stdClass;
 use Yiisoft\Yii\Middleware\BasicNetworkResolver;
 use Yiisoft\Yii\Middleware\Tests\TestAsset\MockRequestHandler;
 
-use function stripos;
-
 final class BasicNetworkResolverTest extends TestCase
 {
     public function testImmutability(): void
