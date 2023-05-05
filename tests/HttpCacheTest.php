@@ -15,9 +15,6 @@ use Yiisoft\Yii\Middleware\HttpCache;
 
 use function gmdate;
 use function time;
-use function base64_encode;
-use function rtrim;
-use function sha1;
 
 final class HttpCacheTest extends TestCase
 {
