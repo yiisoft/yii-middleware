@@ -54,11 +54,9 @@ final class HttpCacheTest extends TestCase
 
         $etag = 'test-etag';
         $middleware = $this->createMiddlewareWithETag($etag);
-
         $headers = [
             'If-None-Match' => $etag,
         ];
-
         $response = $middleware->process(
             $this->createServerRequest(Method::GET, $headers),
             $this->createRequestHandler(),
@@ -74,7 +72,6 @@ final class HttpCacheTest extends TestCase
         $headers = [
             'If-None-Match' => $etagHeaderValue,
         ];
-
         $response = $middleware->process(
             $this->createServerRequest(Method::GET, $headers),
             $this->createRequestHandler(),
@@ -82,6 +79,22 @@ final class HttpCacheTest extends TestCase
 
         $this->assertSame(Status::NOT_MODIFIED, $response->getStatusCode());
         $this->assertEmpty((string) $response->getBody());
+    }
+
+    public function testModifiedResultWithWeakEtag(): void
+    {
+        $etag = 'test-etag';
+        $middleware = $this->createMiddlewareWithETag($etag)->withWeakEtag();
+        $headers = [
+            'If-None-Match' => $etag,
+        ];
+        $response = $middleware->process(
+            $this->createServerRequest(Method::GET, $headers),
+            $this->createRequestHandler(),
+        );
+
+        $this->assertSame(Status::OK, $response->getStatusCode());
+        $this->assertSame($response->getHeaderLine('Etag'), 'W/"IMPoQ2/Us52fJk3jpOZtEACPlVA"');
     }
 
     public function testNotModifiedResultWithLastModified(): void
