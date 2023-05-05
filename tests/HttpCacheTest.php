@@ -48,8 +48,10 @@ final class HttpCacheTest extends TestCase
         $this->assertSame(Status::OK, $response->getStatusCode());
     }
 
-    public function testModifiedResultWithEtag(): void
+    public function testResultWithEtag(): void
     {
+        // Modified result
+
         $etag = 'test-etag';
         $middleware = $this->createMiddlewareWithETag($etag);
 
@@ -63,7 +65,23 @@ final class HttpCacheTest extends TestCase
         );
 
         $this->assertSame(Status::OK, $response->getStatusCode());
-        $this->assertSame($response->getHeaderLine('Etag'), $this->generateEtag($etag));
+
+        $etagHeaderValue = '"IMPoQ2/Us52fJk3jpOZtEACPlVA"';
+        $this->assertSame($response->getHeaderLine('Etag'), $etagHeaderValue);
+
+        // Not modified result
+
+        $headers = [
+            'If-None-Match' => $etagHeaderValue,
+        ];
+
+        $response = $middleware->process(
+            $this->createServerRequest(Method::GET, $headers),
+            $this->createRequestHandler(),
+        );
+
+        $this->assertSame(Status::NOT_MODIFIED, $response->getStatusCode());
+        $this->assertEmpty((string) $response->getBody());
     }
 
     public function testNotModifiedResultWithLastModified(): void
@@ -83,24 +101,6 @@ final class HttpCacheTest extends TestCase
         $this->assertSame(Status::NOT_MODIFIED, $response->getStatusCode());
         $this->assertEmpty((string) $response->getBody());
         $this->assertSame(gmdate('D, d M Y H:i:s', $time - 1) . ' GMT', $response->getHeaderLine('Last-Modified'));
-    }
-
-    public function testNotModifiedResultWithEtag(): void
-    {
-        $etag = 'test-etag';
-        $middleware = $this->createMiddlewareWithETag($etag);
-
-        $headers = [
-            'If-None-Match' => $this->generateEtag($etag),
-        ];
-
-        $response = $middleware->process(
-            $this->createServerRequest(Method::GET, $headers),
-            $this->createRequestHandler(),
-        );
-
-        $this->assertSame(Status::NOT_MODIFIED, $response->getStatusCode());
-        $this->assertEmpty((string) $response->getBody());
     }
 
     public function testEmptyIfNoneMatchAndIfModifiedSinceHeaders(): void
@@ -157,11 +157,5 @@ final class HttpCacheTest extends TestCase
         }
 
         return $request;
-    }
-
-    private function generateEtag(string $seed, ?string $weakEtag = null): string
-    {
-        $etag = '"' . rtrim(base64_encode(sha1($seed, true)), '=') . '"';
-        return $weakEtag ? 'W/' . $etag : $etag;
     }
 }
