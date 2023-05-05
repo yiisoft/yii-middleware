@@ -109,6 +109,16 @@ final class BasicNetworkResolverTest extends TestCase
                 ],
                 'http',
             ],
+            'multiple protocol headers' => [
+                'http',
+                ['x-forwarded-proto-2' => ['https']],
+                [
+                    'x-forwarded-proto-1' => ['http' => 'http'],
+                    'x-forwarded-proto-2' => ['https' => 'https'],
+                    'x-forwarded-proto-3' => ['http' => 'http'],
+                ],
+                'https',
+            ],
         ];
     }
 
