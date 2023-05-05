@@ -91,7 +91,7 @@ final class HttpCache implements MiddlewareInterface
      *
      * @see https://tools.ietf.org/html/rfc7232#section-2.3
      */
-    public function withWeakETag(): self
+    public function withWeakEtag(): self
     {
         $new = clone $this;
         $new->weakEtag = true;

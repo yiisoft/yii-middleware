@@ -122,7 +122,7 @@ final class HttpCacheTest extends TestCase
 
         $this->assertNotSame($middleware, $middleware->withLastModified(static fn () => 3600));
         $this->assertNotSame($middleware, $middleware->withEtagSeed(static fn () => 'test-etag'));
-        $this->assertNotSame($middleware, $middleware->withWeakETag());
+        $this->assertNotSame($middleware, $middleware->withWeakEtag());
         $this->assertNotSame($middleware, $middleware->withParams(['key' => 'value']));
         $this->assertNotSame($middleware, $middleware->withCacheControlHeader('public, max-age=3600'));
     }
