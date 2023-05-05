@@ -40,13 +40,11 @@ final class IpFilter implements MiddlewareInterface
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         if ($this->clientIpAttribute !== null) {
-            /** @var mixed $clientIp */
             $clientIp = $request->getAttribute($this->clientIpAttribute);
         }
 
         /** @psalm-var array{REMOTE_ADDR?: mixed} $serverParams */
         $serverParams = $request->getServerParams();
-        /** @var mixed $clientIp */
         $clientIp ??= $serverParams['REMOTE_ADDR'] ?? null;
 
         $result = $this->validator->validate(

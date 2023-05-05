@@ -163,7 +163,6 @@ final class BasicNetworkResolver implements MiddlewareInterface
             $headerValues = $request->getHeader($header);
 
             if (is_callable($data)) {
-                /** @var mixed $newScheme */
                 $newScheme = $data($headerValues, $header, $request);
 
                 if ($newScheme === null) {
