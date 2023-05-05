@@ -93,16 +93,6 @@ final class BasicNetworkResolverTest extends TestCase
                 ['x-forwarded-proto' => ['http' => 'http']],
                 'http',
             ],
-            'httpToHttpsWithCallback' => [
-                'http',
-                ['x-forwarded-proto' => 'test any-https **'],
-                [
-                    'x-forwarded-proto' => static function (array $values): string {
-                        return stripos($values[0], 'https') !== false ? 'https' : 'http';
-                    },
-                ],
-                'https',
-            ],
             'multiple protocol headers' => [
                 'http',
                 ['x-forwarded-proto-2' => ['https']],
@@ -124,6 +114,21 @@ final class BasicNetworkResolverTest extends TestCase
                     'x-forwarded-proto-2' => static fn () => null,
                     'x-forwarded-proto-3' => ['https' => 'https'],
                     'x-forwarded-proto-4' => ['http' => 'http'],
+                ],
+                'https',
+            ],
+            'multiple request and protocol headers, callback returning scheme' => [
+                'http',
+                [
+                    'x-forwarded-proto-2' => ['https'],
+                    'x-forwarded-proto-3' => ['http'],
+                ],
+                [
+                    'x-forwarded-proto-1' => ['http' => 'http'],
+                    'x-forwarded-proto-2' => static function (array $values): string {
+                        return str_contains($values[0], 'https') ? 'https' : 'http';
+                    },
+                    'x-forwarded-proto-3' => ['http' => 'http'],
                 ],
                 'https',
             ],
