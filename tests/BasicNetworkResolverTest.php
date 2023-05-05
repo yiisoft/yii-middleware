@@ -97,17 +97,11 @@ final class BasicNetworkResolverTest extends TestCase
                 'http',
                 ['x-forwarded-proto' => 'test any-https **'],
                 [
-                    'x-forwarded-proto' => static fn(array $values): string => stripos($values[0], 'https') !== false ? 'https' : 'http',
+                    'x-forwarded-proto' => static function (array $values): string {
+                        return stripos($values[0], 'https') !== false ? 'https' : 'http';
+                    },
                 ],
                 'https',
-            ],
-            'httpWithCallbackNull' => [
-                'http',
-                ['x-forwarded-proto' => 'test any-https **'],
-                [
-                    'x-forwarded-proto' => fn (array $values, string $header, ServerRequestInterface $request) => null,
-                ],
-                'http',
             ],
             'multiple protocol headers' => [
                 'http',
@@ -116,6 +110,20 @@ final class BasicNetworkResolverTest extends TestCase
                     'x-forwarded-proto-1' => ['http' => 'http'],
                     'x-forwarded-proto-2' => ['https' => 'https'],
                     'x-forwarded-proto-3' => ['http' => 'http'],
+                ],
+                'https',
+            ],
+            'multiple request and protocol headers, callback returning null' => [
+                'http',
+                [
+                    'x-forwarded-proto-2' => ['http'],
+                    'x-forwarded-proto-3' => ['https'],
+                ],
+                [
+                    'x-forwarded-proto-1' => ['http' => 'http'],
+                    'x-forwarded-proto-2' => static fn () => null,
+                    'x-forwarded-proto-3' => ['https' => 'https'],
+                    'x-forwarded-proto-4' => ['http' => 'http'],
                 ],
                 'https',
             ],
