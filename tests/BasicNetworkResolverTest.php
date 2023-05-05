@@ -101,6 +101,19 @@ final class BasicNetworkResolverTest extends TestCase
                 ],
                 'https',
             ],
+            'multiple request and protocol headers' => [
+                'http',
+                [
+                    'x-forwarded-proto-2' => ['https'],
+                    'x-forwarded-proto-3' => ['http'],
+                ],
+                [
+                    'x-forwarded-proto-1' => ['http' => 'http'],
+                    'x-forwarded-proto-2' => ['https' => 'https'],
+                    'x-forwarded-proto-3' => ['http' => 'http'],
+                ],
+                'https',
+            ],
             'multiple request and protocol headers, callback returning null' => [
                 'http',
                 [
