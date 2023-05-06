@@ -36,25 +36,30 @@ use function strtolower;
 use function trim;
 
 /**
- * Trusted hosts network resolver.
+ * Trusted hosts network resolver can set IP, protocol, host, URL, and port based on trusted headers such as
+ * `Forward` or `X-Forwarded-Host` coming from trusted hosts you define. Usually these are load balancers.
+ *
+ * Make sure that the trusted host always overwrites or removes user-defined headers
+ * to avoid security issues.
  *
  * ```php
  * $trustedHostsNetworkResolver->withAddedTrustedHosts(
- *   // List of secure hosts including $_SERVER['REMOTE_ADDR'], can specify IPv4, IPv6, domains and aliases {@see Ip}.
+ *   // List of secure hosts including `$_SERVER['REMOTE_ADDR']`.
+ *   // You can specify IPv4, IPv6, domains, and aliases. See {@see Ip}.
  *   ['1.1.1.1', '2.2.2.1/3', '2001::/32', 'localhost'].
  *   // IP list headers. For advanced handling of headers {@see TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239}.
- *   // Headers containing multiple sub-elements (e.g. RFC 7239) must also be listed for other relevant types
- *   // (e.g. host headers), otherwise they will only be used as an IP list.
+ *   // Headers containing many sub-elements (e.g. RFC 7239) must also be listed for other relevant types
+ *   // (such as host headers), otherwise they will only be used as an IP list.
  *   ['x-forwarded-for', [TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded']]
- *   // Protocol headers with accepted protocols and values. Matching of values is case-insensitive.
+ *   // Protocol headers with accepted protocols and corresponding header values. Matching is case-insensitive.
  *   ['front-end-https' => ['https' => 'on']],
- *   // Host headers
+ *   // List of headers containing HTTP host.
  *   ['forwarded', 'x-forwarded-for']
- *   // URL headers
+ *   // List of headers containing HTTP URL.
  *   ['x-rewrite-url'],
- *   // Port headers
+ *   // List of headers containing port number.
  *   ['x-rewrite-port'],
- *   // Trusted headers. It is a good idea to list all relevant headers.
+ *   // List of trusted headers. For untrusted hosts, middleware removes these from the request.
  *   ['x-forwarded-for', 'forwarded', ...],
  * );
  * ```
@@ -73,9 +78,21 @@ use function trim;
  */
 class TrustedHostsNetworkResolver implements MiddlewareInterface
 {
+    /**
+     * Name of the request attribute holding IP address obtained from a trusted header.
+     */
     public const REQUEST_CLIENT_IP = 'requestClientIp';
+
+    /**
+     * Indicates that middleware should obtain IP from `Forwarded` header.
+     *
+     * @link https://www.rfc-editor.org/rfc/rfc7239.html
+     */
     public const IP_HEADER_TYPE_RFC7239 = 'rfc7239';
 
+    /**
+     * List of headers to trust for any trusted host.
+     */
     public const DEFAULT_TRUSTED_HEADERS = [
         // common:
         'x-forwarded-for',
@@ -113,23 +130,25 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
      * Returns a new instance with the added trusted hosts and related headers.
      *
      * The header lists are evaluated in the order they were specified.
-     * If you specify multiple headers by type (e.g. IP headers), you must ensure that the irrelevant header is removed
-     * e.g. web server application, otherwise spoof clients can be use this vulnerability.
      *
-     * @param string[] $hosts List of trusted hosts IP addresses. If {@see isValidHost()} method is extended,
-     * then can use domain names with reverse DNS resolving e.g. yiiframework.com, * .yiiframework.com.
-     * @param array $ipHeaders List of headers containing IP lists.
+     * Make sure that the trusted host always overwrites or removes user-defined headers
+     * to avoid security issues.
+     *
+     * @param string[] $hosts List of trusted host IP addresses. The {@see isValidHost()} method could be overwritten in
+     * a subclass to allow using domain names with reverse DNS resolving, for example `yiiframework.com`,
+     * `*.yiiframework.com`.
+     * @param array $ipHeaders List of headers containing IP.
      * @param array $protocolHeaders List of headers containing protocol. e.g.
-     * ['x-forwarded-for' => ['http' => 'http', 'https' => ['on', 'https']]].
+     * `['x-forwarded-for' => ['http' => 'http', 'https' => ['on', 'https']]]`.
      * @param string[] $hostHeaders List of headers containing HTTP host.
      * @param string[] $urlHeaders List of headers containing HTTP URL.
      * @param string[] $portHeaders List of headers containing port number.
-     * @param string[]|null $trustedHeaders List of trusted headers. Removed from the request, if in checking process
-     * are classified as untrusted by hosts.
+     * @param string[]|null $trustedHeaders List of trusted headers. For untrusted hosts, middleware removes these from
+     * the request.
      */
     public function withAddedTrustedHosts(
         array $hosts,
-        // Defining default headers is not secure!
+        // Defining default headers isn't secure!
         array $ipHeaders = [],
         array $protocolHeaders = [],
         array $hostHeaders = [],
@@ -215,7 +234,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
     }
 
     /**
-     * Returns a new instance with the specified request's attribute name to which trusted path data is added.
+     * Returns a new instance with the specified request's attribute name to which middleware writes trusted path data.
      *
      * @param string|null $attribute The request attribute name.
      *
@@ -238,7 +257,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
         $actualHost = $request->getServerParams()['REMOTE_ADDR'] ?? null;
 
         if ($actualHost === null) {
-            // Validation is not possible.
+            // Validation isn't possible.
             return $this->handleNotTrusted($request, $handler);
         }
 
@@ -246,7 +265,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
         $trustedHeaders = [];
 
         foreach ($this->trustedHosts as $data) {
-            // collect all trusted headers
+            // Collect all trusted headers.
             $trustedHeaders[] = $data[self::DATA_KEY_TRUSTED_HEADERS];
 
             if ($trustedHostData === null && $this->isValidHost($actualHost, $data[self::DATA_KEY_HOSTS])) {
@@ -266,7 +285,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
         $request = $this->removeHeaders($request, $untrustedHeaders);
 
         [$ipListType, $ipHeader, $hostList] = $this->getIpList($request, $trustedHostData[self::DATA_KEY_IP_HEADERS]);
-        $hostList = array_reverse($hostList); // the first item should be the closest to the server
+        $hostList = array_reverse($hostList); // The first item should be the closest to the server.
 
         if ($ipListType === self::IP_HEADER_TYPE_RFC7239) {
             $hostList = $this->getElementsByRfc7239($hostList);
@@ -274,7 +293,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             $hostList = $this->getFormattedIpList($hostList);
         }
 
-        array_unshift($hostList, ['ip' => $actualHost]); // Move server's IP to the first position
+        array_unshift($hostList, ['ip' => $actualHost]); // Move server's IP to the first position.
         $hostDataList = [];
 
         do {
@@ -294,14 +313,14 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             $ip = $hostData['ip'];
 
             if (!$this->isValidHost($ip, ['any'])) {
-                // invalid IP
+                // Invalid IP.
                 break;
             }
 
             $hostDataList[] = $hostData;
 
             if (!$this->isValidHost($ip, $trustedHostData[self::DATA_KEY_HOSTS])) {
-                // not trusted host
+                // Not trusted host.
                 break;
             }
         } while (count($hostList) > 0);
@@ -311,7 +330,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
         }
 
         $uri = $request->getUri();
-        // find HTTP host
+        // Find HTTP host.
         foreach ($trustedHostData[self::DATA_KEY_HOST_HEADERS] as $hostHeader) {
             if (!$request->hasHeader($hostHeader)) {
                 continue;
@@ -334,7 +353,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             }
         }
 
-        // find protocol
+        // Find protocol.
         /** @psalm-var ProtocolHeadersData $protocolHeadersData */
         $protocolHeadersData = $trustedHostData[self::DATA_KEY_PROTOCOL_HEADERS];
         foreach ($protocolHeadersData as $protocolHeader => $protocols) {
@@ -374,7 +393,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             }
         }
 
-        // find port
+        // Find port.
         foreach ($trustedHostData[self::DATA_KEY_PORT_HEADERS] as $portHeader) {
             if (!$request->hasHeader($portHeader)) {
                 continue;
@@ -406,7 +425,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
     /**
      * Validate host by range.
      *
-     * This method can be extendable by overwriting e.g. with reverse DNS verification.
+     * You can overwrite this method in a subclass to support reverse DNS verification.
      *
      * @param string[] $ranges
      * @param Closure(string, string[]): Result $validator
@@ -423,13 +442,13 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
     /**
      * Reverse obfuscating host data
      *
-     * RFC 7239 allows to use obfuscated host data. In this case, either specifying the
+     * RFC 7239 allows using obfuscated host data. In this case, either specifying the
      * IP address or dropping the proxy endpoint is required to determine validated route.
      *
-     * By default, it does not perform any transformation on the data. You can override this method.
+     * By default, it doesn't perform any transformation on the data. You can override this method.
      *
      * @return array|null reverse obfuscated host data or null.
-     * In case of null data is discarded and the process continues with the next portion of host data.
+     * In case of `null` data is discarded, and the process continues with the next portion of host data.
      * If the return value is an array, it must contain at least the `ip` key.
      *
      * @psalm-param HostData|null $hostData
@@ -574,7 +593,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
      * - `protocol`: protocol received by proxy (only if presented)
      * - `httpHost`: HTTP host received by proxy (only if presented)
      *
-     * The list starts with the server and the last item is the client itself.
+     * The list starts with the server, and the last item is the client itself.
      *
      * @link https://tools.ietf.org/html/rfc7239
      *
@@ -595,15 +614,15 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             }
 
             if (!isset($data['for'])) {
-                // Invalid item, the following items will be dropped
+                // Invalid item, the following items will be dropped.
                 break;
             }
 
-            $pattern = '/^(?<host>' . IpHelper::IPV4_PATTERN . '|unknown|_[\w\.-]+|[[]'
-                . IpHelper::IPV6_PATTERN . '[]])(?::(?<port>[\w\.-]+))?$/';
+            $pattern = '/^(?<host>' . IpHelper::IPV4_PATTERN . '|unknown|_[\w.-]+|[[]'
+                . IpHelper::IPV6_PATTERN . '[]])(?::(?<port>[\w.-]+))?$/';
 
             if (preg_match($pattern, $data['for'], $matches) === 0) {
-                // Invalid item, the following items will be dropped
+                // Invalid item, the following items will be dropped.
                 break;
             }
 
@@ -612,7 +631,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             $obfuscatedHost = $host === 'unknown' || str_starts_with($host, '_');
 
             if (!$obfuscatedHost) {
-                // IPv4 & IPv6
+                // IPv4 & IPv6.
                 $ipData['ip'] = str_starts_with($host, '[') ? trim($host /* IPv6 */, '[]') : $host;
             }
 
@@ -622,14 +641,14 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
                 $port = $matches['port'];
 
                 if (!$obfuscatedHost && !$this->checkPort($port)) {
-                    // Invalid port, the following items will be dropped
+                    // Invalid port, the following items will be dropped.
                     break;
                 }
 
                 $ipData['port'] = $obfuscatedHost ? $port : (int) $port;
             }
 
-            // copy other properties
+            // Copy other properties.
             foreach (['proto' => 'protocol', 'host' => 'httpHost', 'by' => 'by'] as $source => $destination) {
                 if (isset($data[$source])) {
                     $ipData[$destination] = $data[$source];
@@ -637,7 +656,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             }
 
             if (isset($ipData['httpHost']) && filter_var($ipData['httpHost'], FILTER_VALIDATE_DOMAIN) === false) {
-                // remove not valid HTTP host
+                // Remove not valid HTTP host.
                 unset($ipData['httpHost']);
             }
 

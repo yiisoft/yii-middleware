@@ -9,23 +9,23 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
 use stdClass;
-use Yiisoft\Yii\Middleware\BasicNetworkResolver;
+use Yiisoft\Yii\Middleware\TrustedHeaderProtocolResolver;
 use Yiisoft\Yii\Middleware\Tests\TestAsset\MockRequestHandler;
 
-final class BasicNetworkResolverTest extends TestCase
+final class TrustedHeaderProtocolResolverTest extends TestCase
 {
     public function testImmutability(): void
     {
-        $middleware = new BasicNetworkResolver();
+        $middleware = new TrustedHeaderProtocolResolver();
         $this->assertNotSame($middleware, $middleware->withAddedProtocolHeader('test'));
 
-        $middleware = new BasicNetworkResolver();
+        $middleware = new TrustedHeaderProtocolResolver();
         $this->assertNotSame($middleware, $middleware->withoutProtocolHeader('test'));
 
-        $middleware = new BasicNetworkResolver();
+        $middleware = new TrustedHeaderProtocolResolver();
         $this->assertNotSame($middleware, $middleware->withoutProtocolHeaders(['test1', 'test2']));
 
-        $middleware = new BasicNetworkResolver();
+        $middleware = new TrustedHeaderProtocolResolver();
         $this->assertNotSame($middleware, $middleware->withoutProtocolHeaders([]));
     }
 
@@ -153,7 +153,7 @@ final class BasicNetworkResolverTest extends TestCase
     {
         $request = $this->createRequestWithSchemaAndHeaders($scheme, $headers);
         $requestHandler = new MockRequestHandler();
-        $middleware = new BasicNetworkResolver();
+        $middleware = new TrustedHeaderProtocolResolver();
 
         if ($protocolHeaders !== null) {
             foreach ($protocolHeaders as $header => $values) {
@@ -186,7 +186,7 @@ final class BasicNetworkResolverTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage($errorMessage);
 
-        (new BasicNetworkResolver())->withAddedProtocolHeader('x-forwarded-proto', $schemeValues);
+        (new TrustedHeaderProtocolResolver())->withAddedProtocolHeader('x-forwarded-proto', $schemeValues);
     }
 
     public function schemeCallableFailureDataProvider(): array
@@ -217,7 +217,7 @@ final class BasicNetworkResolverTest extends TestCase
             ->method('getHeader')
             ->willReturn($scheme);
 
-        $middleware = (new BasicNetworkResolver())
+        $middleware = (new TrustedHeaderProtocolResolver())
             ->withAddedProtocolHeader('x-forwarded-proto', static fn () => $scheme)
         ;
 
@@ -237,7 +237,7 @@ final class BasicNetworkResolverTest extends TestCase
 
         $requestHandler = new MockRequestHandler();
 
-        $middleware = (new BasicNetworkResolver())
+        $middleware = (new TrustedHeaderProtocolResolver())
             ->withAddedProtocolHeader('x-forwarded-proto')
             ->withoutProtocolHeaders();
 
@@ -259,7 +259,7 @@ final class BasicNetworkResolverTest extends TestCase
 
         $requestHandler = new MockRequestHandler();
 
-        $middleware = (new BasicNetworkResolver())
+        $middleware = (new TrustedHeaderProtocolResolver())
             ->withAddedProtocolHeader('x-forwarded-proto')
             ->withAddedProtocolHeader('x-forwarded-proto-2')
             ->withoutProtocolHeaders(['x-forwarded-proto', 'X-FORWARDED-PROTO-2'])
@@ -283,7 +283,7 @@ final class BasicNetworkResolverTest extends TestCase
 
         $requestHandler = new MockRequestHandler();
 
-        $middleware = (new BasicNetworkResolver())
+        $middleware = (new TrustedHeaderProtocolResolver())
             ->withAddedProtocolHeader('x-forwarded-proto')
             ->withAddedProtocolHeader('x-forwarded-proto-2')
             ->withoutProtocolHeader('x-forwarded-proto')
