@@ -252,8 +252,6 @@ final class Locale implements MiddlewareInterface
      * Return new instance with supported locales specified.
      *
      * @param array $locales List of supported locales in key-value format such as `['ru' => 'ru_RU', 'uz' => 'uz_UZ']`.
-     *
-     * @return self
      */
     public function withSupportedLocales(array $locales): self
     {
@@ -266,7 +264,6 @@ final class Locale implements MiddlewareInterface
      * Return new instance with default locale specified.
      *
      * @param string $defaultLocale Default locale.
-     * @return self
      */
     public function withDefaultLocale(string $defaultLocale): self
     {
@@ -279,7 +276,6 @@ final class Locale implements MiddlewareInterface
      * Return new instance with the name of the query string parameter to look for locale.
      *
      * @param string $queryParameterName Name of the query string parameter.
-     * @return self
      */
     public function withQueryParameterName(string $queryParameterName): self
     {
@@ -292,7 +288,6 @@ final class Locale implements MiddlewareInterface
      * Return new instance with the name of session parameter to store found locale.
      *
      * @param string $sessionName Name of session parameter.
-     * @return self
      */
     public function withSessionName(string $sessionName): self
     {
@@ -305,7 +300,6 @@ final class Locale implements MiddlewareInterface
      * Return new instance with enabled or disabled saving of locale.
      *
      * @param bool $enabled If middleware should save locale into session and cookies.
-     * @return self
      */
     public function withSaveLocale(bool $enabled): self
     {
@@ -318,7 +312,6 @@ final class Locale implements MiddlewareInterface
      * Return new instance with enabled or disabled detection of locale based on `Accept-Language` header.
      *
      * @param bool $enabled Whether middleware should detect locale.
-     * @return self
      */
     public function withDetectLocale(bool $enabled): self
     {
@@ -331,8 +324,6 @@ final class Locale implements MiddlewareInterface
      * Return new instance with {@see WildcardPattern patterns} for ignoring requests with URLs matching.
      *
      * @param string[] $patterns Patterns.
-     *
-     * @return self
      */
     public function withIgnoredRequestUrlPatterns(array $patterns): self
     {
@@ -345,7 +336,6 @@ final class Locale implements MiddlewareInterface
      * Return new instance with enabled or disabled secure cookies.
      *
      * @param bool $secure If middleware should flag locale cookie as "secure."
-     * @return self
      */
     public function withSecureCookie(bool $secure): self
     {
