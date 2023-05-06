@@ -19,7 +19,7 @@ use function strtolower;
 /**
  * Basic network resolver updates an instance of server request with protocol from special headers.
  *
- * It can be used in if your server is behind a trusted load balancer or a proxy that is setting a special header.
+ * It can be used if your server is behind a trusted load balancer or a proxy that is setting a special header.
  */
 final class BasicNetworkResolver implements MiddlewareInterface
 {
@@ -163,7 +163,6 @@ final class BasicNetworkResolver implements MiddlewareInterface
             $headerValues = $request->getHeader($header);
 
             if (is_callable($data)) {
-                /** @var mixed $newScheme */
                 $newScheme = $data($headerValues, $header, $request);
 
                 if ($newScheme === null) {

@@ -15,9 +15,6 @@ use Yiisoft\Yii\Middleware\HttpCache;
 
 use function gmdate;
 use function time;
-use function base64_encode;
-use function rtrim;
-use function sha1;
 
 final class HttpCacheTest extends TestCase
 {
@@ -48,22 +45,53 @@ final class HttpCacheTest extends TestCase
         $this->assertSame(Status::OK, $response->getStatusCode());
     }
 
-    public function testModifiedResultWithEtag(): void
+    public function testResultWithEtag(): void
     {
+        // Modified result
+
         $etag = 'test-etag';
         $middleware = $this->createMiddlewareWithETag($etag);
-
         $headers = [
             'If-None-Match' => $etag,
         ];
-
         $response = $middleware->process(
             $this->createServerRequest(Method::GET, $headers),
             $this->createRequestHandler(),
         );
 
         $this->assertSame(Status::OK, $response->getStatusCode());
-        $this->assertSame($response->getHeaderLine('Etag'), $this->generateEtag($etag));
+
+        $etagHeaderValue = '"IMPoQ2/Us52fJk3jpOZtEACPlVA"';
+        $this->assertSame($response->getHeaderLine('Etag'), $etagHeaderValue);
+
+        // Not modified result
+
+        $headers = [
+            'If-None-Match' => $etagHeaderValue,
+        ];
+        $response = $middleware->process(
+            $this->createServerRequest(Method::GET, $headers),
+            $this->createRequestHandler(),
+        );
+
+        $this->assertSame(Status::NOT_MODIFIED, $response->getStatusCode());
+        $this->assertEmpty((string) $response->getBody());
+    }
+
+    public function testModifiedResultWithWeakEtag(): void
+    {
+        $etag = 'test-etag';
+        $middleware = $this->createMiddlewareWithETag($etag)->withWeakEtag();
+        $headers = [
+            'If-None-Match' => $etag,
+        ];
+        $response = $middleware->process(
+            $this->createServerRequest(Method::GET, $headers),
+            $this->createRequestHandler(),
+        );
+
+        $this->assertSame(Status::OK, $response->getStatusCode());
+        $this->assertSame($response->getHeaderLine('Etag'), 'W/"IMPoQ2/Us52fJk3jpOZtEACPlVA"');
     }
 
     public function testNotModifiedResultWithLastModified(): void
@@ -85,24 +113,6 @@ final class HttpCacheTest extends TestCase
         $this->assertSame(gmdate('D, d M Y H:i:s', $time - 1) . ' GMT', $response->getHeaderLine('Last-Modified'));
     }
 
-    public function testNotModifiedResultWithEtag(): void
-    {
-        $etag = 'test-etag';
-        $middleware = $this->createMiddlewareWithETag($etag);
-
-        $headers = [
-            'If-None-Match' => $this->generateEtag($etag),
-        ];
-
-        $response = $middleware->process(
-            $this->createServerRequest(Method::GET, $headers),
-            $this->createRequestHandler(),
-        );
-
-        $this->assertSame(Status::NOT_MODIFIED, $response->getStatusCode());
-        $this->assertEmpty((string) $response->getBody());
-    }
-
     public function testEmptyIfNoneMatchAndIfModifiedSinceHeaders(): void
     {
         $middleware = (new HttpCache())
@@ -122,7 +132,7 @@ final class HttpCacheTest extends TestCase
 
         $this->assertNotSame($middleware, $middleware->withLastModified(static fn () => 3600));
         $this->assertNotSame($middleware, $middleware->withEtagSeed(static fn () => 'test-etag'));
-        $this->assertNotSame($middleware, $middleware->withWeakTag());
+        $this->assertNotSame($middleware, $middleware->withWeakEtag());
         $this->assertNotSame($middleware, $middleware->withParams(['key' => 'value']));
         $this->assertNotSame($middleware, $middleware->withCacheControlHeader('public, max-age=3600'));
     }
@@ -157,11 +167,5 @@ final class HttpCacheTest extends TestCase
         }
 
         return $request;
-    }
-
-    private function generateEtag(string $seed, ?string $weakEtag = null): string
-    {
-        $etag = '"' . rtrim(base64_encode(sha1($seed, true)), '=') . '"';
-        return $weakEtag ? 'W/' . $etag : $etag;
     }
 }
