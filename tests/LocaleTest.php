@@ -38,14 +38,14 @@ final class LocaleTest extends TestCase
     {
         $localeMiddleware = $this->createMiddleware();
 
-        $this->assertNotSame($localeMiddleware->withCookieSecure(true), $localeMiddleware);
+        $this->assertNotSame($localeMiddleware->withSecureCookie(true), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withDefaultLocale('uz'), $localeMiddleware);
-        $this->assertNotSame($localeMiddleware->withEnableDetectLocale(true), $localeMiddleware);
-        $this->assertNotSame($localeMiddleware->withEnableSaveLocale(false), $localeMiddleware);
-        $this->assertNotSame($localeMiddleware->withLocales(['ru' => 'ru-RU', 'uz' => 'uz-UZ']), $localeMiddleware);
+        $this->assertNotSame($localeMiddleware->withDetectLocale(true), $localeMiddleware);
+        $this->assertNotSame($localeMiddleware->withSaveLocale(false), $localeMiddleware);
+        $this->assertNotSame($localeMiddleware->withSupportedLocales(['ru' => 'ru-RU', 'uz' => 'uz-UZ']), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withQueryParameterName('lang'), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withSessionName('lang'), $localeMiddleware);
-        $this->assertNotSame($localeMiddleware->withIgnoredRequests(['/auth**']), $localeMiddleware);
+        $this->assertNotSame($localeMiddleware->withIgnoredRequestUrlPatterns(['/auth**']), $localeMiddleware);
     }
 
     public function testInvalidLocalesFormat(): void
@@ -201,7 +201,7 @@ final class LocaleTest extends TestCase
     public function testDetectLocale(): void
     {
         $request = $this->createRequest($uri = '/', headers: [Header::ACCEPT_LANGUAGE => 'uz-UZ']);
-        $middleware = $this->createMiddleware(['uz' => 'uz-UZ'])->withEnableDetectLocale(true);
+        $middleware = $this->createMiddleware(['uz' => 'uz-UZ'])->withDetectLocale(true);
 
         $response = $this->process($middleware, $request);
 
@@ -213,7 +213,7 @@ final class LocaleTest extends TestCase
     public function testDetectLocaleWithoutHeader(): void
     {
         $request = $this->createRequest($uri = '/');
-        $middleware = $this->createMiddleware(['uz' => 'uz-UZ'])->withEnableDetectLocale(true);
+        $middleware = $this->createMiddleware(['uz' => 'uz-UZ'])->withDetectLocale(true);
 
         $response = $this->process($middleware, $request);
 
@@ -238,7 +238,7 @@ final class LocaleTest extends TestCase
     public function testIgnoredRequests(): void
     {
         $request = $this->createRequest($uri = '/auth/login', queryParams: ['_language' => 'uz']);
-        $middleware = $this->createMiddleware(['uz' => 'uz-UZ'])->withIgnoredRequests(['/auth/**']);
+        $middleware = $this->createMiddleware(['uz' => 'uz-UZ'])->withIgnoredRequestUrlPatterns(['/auth/**']);
 
         $response = $this->process($middleware, $request);
 

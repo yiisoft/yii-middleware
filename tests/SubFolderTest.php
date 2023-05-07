@@ -81,7 +81,7 @@ final class SubFolderTest extends TestCase
         $mw = $this->createMiddleware('/middle', '@baseUrl');
 
         $this->expectException(BadUriPrefixException::class);
-        $this->expectExceptionMessage('URI prefix does not match');
+        $this->expectExceptionMessage('URI prefix doesn\'t match');
 
         $this->process($mw, $request);
     }
@@ -92,7 +92,7 @@ final class SubFolderTest extends TestCase
         $mw = $this->createMiddleware('/other_prefix', '@baseUrl');
 
         $this->expectException(BadUriPrefixException::class);
-        $this->expectExceptionMessage('URI prefix does not match');
+        $this->expectExceptionMessage('URI prefix doesn\'t match');
 
         $this->process($mw, $request);
     }
@@ -103,7 +103,7 @@ final class SubFolderTest extends TestCase
         $mw = $this->createMiddleware('/project1/we', '@baseUrl');
 
         $this->expectException(BadUriPrefixException::class);
-        $this->expectExceptionMessage('URI prefix does not match completely');
+        $this->expectExceptionMessage('URI prefix doesn\'t match completely');
 
         $this->process($mw, $request);
     }
@@ -181,7 +181,7 @@ final class SubFolderTest extends TestCase
                 '',
                 '/web/index.php',
             ],
-            'auto prefix does not match completely' => [
+            'auto prefix doesn\'t match completely' => [
                 '/public/web/',
                 '/pub/index.php',
                 '/default/web',

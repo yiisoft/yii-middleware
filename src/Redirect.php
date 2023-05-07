@@ -47,7 +47,8 @@ final class Redirect implements MiddlewareInterface
     /**
      * Returns a new instance with the specified route data for redirection.
      *
-     * If a redirect URL has been set {@see toUrl()}, the route data will be ignored, since the URL is a priority.
+     * If you've set a redirect URL with {@see toUrl()}, the middleware ignores the route data, since the URL
+     * is a priority.
      *
      * @param string $name The route name for redirection.
      * @param array<string, scalar|\Stringable|null> $parameters $parameters The route parameters for redirection.
@@ -99,7 +100,7 @@ final class Redirect implements MiddlewareInterface
     /**
      * @inheritDoc
      *
-     * @throws RuntimeException If the data for redirection was not set earlier.
+     * @throws RuntimeException If the data for redirection wasn't set earlier.
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {

@@ -14,7 +14,7 @@ use Yiisoft\Validator\Rule\Ip;
 use Yiisoft\Validator\ValidatorInterface;
 
 /**
- * `IpFilter` validates the IP received in the request.
+ * `IpFilter` allows access from specified IP ranges only and responds with 403 for all other IPs.
  */
 final class IpFilter implements MiddlewareInterface
 {
@@ -22,10 +22,10 @@ final class IpFilter implements MiddlewareInterface
      * @param ValidatorInterface $validator Client IP validator. The properties of the validator
      * can be modified up to the moment of processing.
      * @param ResponseFactoryInterface $responseFactory The response factory instance.
-     * @param string|null $clientIpAttribute Attribute name of client IP. If `null`, then `REMOTE_ADDR` value
-     * of the server parameters is processed. If the value is not `null`, then the attribute specified
-     * must have a value, otherwise the request will be closed with forbidden.
-     * @param array $ipRanges The IPv4 or IPv6 ranges that are allowed or forbidden.
+     * @param string|null $clientIpAttribute Name of the request attribute holding client IP. If there is no such
+     * attribute, or it has no value, then the middleware will respond with 403 forbidden.
+     * If the name of the request attribute is `null`, then `REMOTE_ADDR` server parameter is used to determine client IP.
+     * @param array $ipRanges Allowed IPv4 or IPv6 ranges.
      *
      * @psalm-param array<array-key, string> $ipRanges
      */

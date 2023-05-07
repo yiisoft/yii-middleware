@@ -16,16 +16,19 @@ use function dirname;
 use function strlen;
 
 /**
- * This middleware supports routing when webroot is not the same folder as public.
+ * This middleware supports routing when the entry point of the application isn't directly at the webroot.
+ * By default, it determines webroot based on server parameters.
+ *
+ * You should place this middleware before `Route` middleware in the middleware list.
  */
 final class SubFolder implements MiddlewareInterface
 {
     /**
      * @param UrlGeneratorInterface $uriGenerator The URI generator instance.
      * @param Aliases $aliases The aliases instance.
-     * @param string|null $prefix URI prefix the specified immediately after the domain part.
-     * The prefix value usually begins with a slash and must not end with a slash.
-     * @param string|null $baseUrlAlias The base url alias {@see Aliases::get()}. Defaults to `@baseUrl`.
+     * @param string|null $prefix URI prefix that goes immediately after the domain part.
+     * The prefix value usually begins with a slash and mustn't end with a slash.
+     * @param string|null $baseUrlAlias The base URL alias {@see Aliases::get()}. Defaults to `@baseUrl`.
      */
     public function __construct(
         private UrlGeneratorInterface $uriGenerator,
@@ -35,9 +38,6 @@ final class SubFolder implements MiddlewareInterface
     ) {
     }
 
-    /**
-     * @inheritDoc
-     */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $uri = $request->getUri();
@@ -55,7 +55,7 @@ final class SubFolder implements MiddlewareInterface
             }
 
             if (!str_starts_with($path, $baseUrl)) {
-                throw new BadUriPrefixException('URI prefix does not match.');
+                throw new BadUriPrefixException('URI prefix doesn\'t match.');
             }
         }
 
@@ -73,7 +73,7 @@ final class SubFolder implements MiddlewareInterface
                     $this->aliases->set($this->baseUrlAlias, $baseUrl);
                 }
             } elseif ($this->prefix !== null) {
-                throw new BadUriPrefixException('URI prefix does not match completely.');
+                throw new BadUriPrefixException('URI prefix doesn\'t match completely.');
             }
         }
 

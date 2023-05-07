@@ -15,16 +15,16 @@ use Yiisoft\Http\Status;
 use function strcasecmp;
 
 /**
- * Redirects insecure requests from HTTP to HTTPS, and adds headers necessary to enhance security policy.
+ * Redirects insecure requests from HTTP to HTTPS, and adds headers necessary to enhance the security policy.
  *
- * HTTP Strict-Transport-Security (HSTS) header is added to each response and tells the browser
- * that your site works on HTTPS only.
+ * Middleware adds HTTP Strict-Transport-Security (HSTS) header to each response.
+ * The header tells the browser that your site works with HTTPS only.
  *
  * The Content-Security-Policy (CSP) header can force the browser to load page resources only through a secure
  * connection, even if links in the page layout are specified with an unprotected protocol.
  *
- * Note: Prefer forcing HTTPS via web server in case you are not creating installable product such as CMS and not
- * hosting the project on a server where you do not have access to web server configuration.
+ * Note: Prefer forcing HTTPS via web server in case you aren't creating installable product such as CMS and aren't
+ * hosting the project on a server where you don't have access to web server configuration.
  */
 final class ForceSecureConnection implements MiddlewareInterface
 {

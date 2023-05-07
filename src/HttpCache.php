@@ -40,7 +40,7 @@ final class HttpCache implements MiddlewareInterface
     private ?string $cacheControlHeader = 'public, max-age=3600';
 
     /**
-     * Returns a new instance with the specified callable that generates the last modified.
+     * Returns a new instance with the specified callable that generates the last modified UNIX timestamp.
      *
      * @param callable $lastModified A PHP callback that returns the UNIX timestamp of the last modification time.
      *
@@ -87,7 +87,7 @@ final class HttpCache implements MiddlewareInterface
     /**
      * Returns a new instance with weak ETags generation enabled. Disabled by default.
      *
-     * Weak ETags should be used if the content should be considered semantically equivalent, but not byte-equal.
+     * You should use weak ETags if the content is semantically equal, but not byte-equal.
      *
      * @see https://tools.ietf.org/html/rfc7232#section-2.3
      */
@@ -99,9 +99,9 @@ final class HttpCache implements MiddlewareInterface
     }
 
     /**
-     * Returns a new instance with the specified additional parameters for ETag seed string generation.
+     * Returns a new instance with the specified extra parameters for ETag seed string generation.
      *
-     * @param mixed $params Additional parameters that should be passed to the {@see withEtagSeed()} callbacks.
+     * @param mixed $params Extra parameters for {@see withEtagSeed()} callbacks.
      */
     public function withParams(mixed $params): self
     {
@@ -113,7 +113,7 @@ final class HttpCache implements MiddlewareInterface
     /**
      * Returns a new instance with the specified value of the `Cache-Control` HTTP header.
      *
-     * @param string|null $header The value of the `Cache-Control` HTTP header. If null, the header will not be sent.
+     * @param string|null $header The value of the `Cache-Control` HTTP header. If `null`, the header won't be sent.
      *
      * @see https://tools.ietf.org/html/rfc2616#section-14.9
      */
@@ -172,12 +172,13 @@ final class HttpCache implements MiddlewareInterface
     }
 
     /**
-     * Validates if the HTTP cache contains valid content. If both Last-Modified and ETag are null, returns false.
+     * Validates if the HTTP cache has valid content.
+     * If both Last-Modified and ETag are `null`, it returns `false`.
      *
      * @param ServerRequestInterface $request The server request instance.
      * @param int|null $lastModified The calculated Last-Modified value in terms of a UNIX timestamp.
-     * If null, the Last-Modified header will not be validated.
-     * @param string|null $etag The calculated ETag value. If null, the ETag header will not be validated.
+     * If `null`, the Last-Modified header won't be validated.
+     * @param string|null $etag The calculated ETag value. If `null`, the ETag header won't be validated.
      *
      * @return bool Whether the HTTP cache is still valid.
      */
@@ -191,7 +192,7 @@ final class HttpCache implements MiddlewareInterface
                 PREG_SPLIT_NO_EMPTY,
             );
 
-            // HTTP_IF_NONE_MATCH takes precedence over HTTP_IF_MODIFIED_SINCE
+            // `HTTP_IF_NONE_MATCH` takes precedence over `HTTP_IF_MODIFIED_SINCE`.
             // https://tools.ietf.org/html/rfc7232#section-3.3
             return $etag !== null && !empty($header) && in_array($etag, $header, true);
         }
@@ -207,9 +208,9 @@ final class HttpCache implements MiddlewareInterface
     /**
      * Generates an ETag from the given seed string.
      *
-     * @param string $seed Seed for the ETag
+     * @param string $seed Seed for the ETag.
      *
-     * @return string the generated ETag
+     * @return string The generated ETag.
      */
     private function generateEtag(string $seed): string
     {

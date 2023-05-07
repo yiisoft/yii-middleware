@@ -26,7 +26,7 @@ see the [Yii middleware guide](https://github.com/yiisoft/docs/blob/master/guide
 
 ## Installation
 
-The package could be installed with composer:
+You could install the package with composer:
 
 ```shell
 composer require yiisoft/yii-middleware
@@ -35,29 +35,31 @@ composer require yiisoft/yii-middleware
 ## General usage
 
 All classes are separate implementations of [PSR 15](https://github.com/php-fig/http-server-middleware)
-middleware and do not interact with each other in any way.
+middleware and don't interact with each other in any way.
 
-### `BasicNetworkResolver`
+### `TrustedHeaderProtocolResolver`
 
-Updates an instance of server request with protocol from special headers.
+Trusted header protocol resolver is setting a server request protocol based on special header you trust
+such as `X-Forwarded-Proto`.
 
-It can be used in if your server is behind a trusted load balancer or a proxy that is setting a special header.
+You can use it if your server is behind a trusted load balancer or a proxy that's always setting the special header
+itself discarding any header values provided by user.
 
 ```php
-use Yiisoft\Yii\Middleware\BasicNetworkResolver;
+use Yiisoft\Yii\Middleware\TrustedHeaderProtocolResolver;
 
 /**
  * @var Psr\Http\Message\ServerRequestInterface $request
  * @var Psr\Http\Server\RequestHandlerInterface $handler
  */
 
-$middleware = new BasicNetworkResolver();
+$middleware = new TrustedHeaderProtocolResolver();
 
 $middleware = $middleware->withAddedProtocolHeader('x-forwarded-proto', [
     'http' => ['http'],
     'https' => ['https', 'on'],
 ]);
-// Disable previous settings:
+// Disable earlier settings:
 $middleware = $middleware->withoutProtocolHeader('x-forwarded-proto');
 
 $response = $middleware->process($request, $handler);
@@ -65,7 +67,7 @@ $response = $middleware->process($request, $handler);
 
 ### `ForceSecureConnection`
 
-Redirects insecure requests from HTTP to HTTPS, and adds headers necessary to enhance security policy.
+Redirects insecure requests from HTTP to HTTPS, and adds headers necessary to enhance the security policy.
 
 ```php
 use Yiisoft\Yii\Middleware\ForceSecureConnection;
@@ -95,8 +97,8 @@ $middleware = $middleware->withCSP('upgrade-insecure-requests; default-src https
 $middleware = $middleware->withoutCSP();
 ```
 
-HTTP `Strict-Transport-Security` (HSTS) header is added to each response
-and tells the browser that your site works on HTTPS only.
+Middleware adds HTTP Strict-Transport-Security (HSTS) header to each response.
+The header tells the browser that your site works with HTTPS only.
 
 ```php
 $maxAge = 3600; // Default is 31_536_000 (12 months).
@@ -140,21 +142,21 @@ $response = $middleware->process($request, $handler);
 Additionally, you can specify the following options:
 
 ```php
-// Specify additional parameters for ETag seed string generation:
+// Extra parameters for ETag seed string generation:
 $middleware = $middleware->withParams(['parameter' => 'value']);
 
-// Specify value of the `Cache-Control` HTTP header:
+// The value of the `Cache-Control` HTTP header:
 $middleware = $middleware->withCacheControlHeader('public, max-age=31536000');
-// Default is `public, max-age=3600`. If null, the header will not be sent.
+// Default is `public, max-age=3600`. If null, the header won't be sent.
 
 // Enable weak ETags generation (disabled by default):
 $middleware = $middleware->withWeakTag();
-// Weak ETags should be used if the content should be considered semantically equivalent, but not byte-equal.
+// You should use weak ETags if the content is semantically equal, but not byte-equal.
 ```
 
 ### `IpFilter`
 
-Validates the IP received in the request.
+`IpFilter` allows access from specified IP ranges only and responds with 403 for all other IPs.
 
 ```php
 use Yiisoft\Yii\Middleware\IpFilter;
@@ -166,10 +168,10 @@ use Yiisoft\Yii\Middleware\IpFilter;
  * @var Yiisoft\Validator\Rule\ValidatorInterface $validator
  */
 
-// Name of the client IP address request attribute:
+// Name of the request attribute holding client IP:
 $clientIpAttribute = 'client-ip';
-// If `null`, then `REMOTE_ADDR` value of the server parameters is processed. If the value is not `null`,
-// then the attribute specified must have a value, otherwise the request will be closed with forbidden.
+// If there is no such attribute, or it has no value, then the middleware will respond with 403 forbidden.
+// If the name of the request attribute is `null`, then `REMOTE_ADDR` server parameter is used to determine client IP.
 
 $middleware = new IpFilter($validator, $responseFactory, $clientIpAttribute);
 
@@ -199,7 +201,7 @@ $middleware = new Redirect($ipValidator, $urlGenerator);
 $middleware = $middleware->toUrl('/login');
 // Or specify route data for redirection:
 $middleware = $middleware->toRoute('auth/login', ['parameter' => 'value']);
-// If a redirect URL has been set a `toUrl()` method, the route data will be ignored, since the URL is a priority.
+// If you have set a redirect URL with {@see toUrl()}, the middleware ignores the route data, since the URL is a priority.
 
 $response = $middleware->process($request, $handler);
 ```
@@ -219,9 +221,10 @@ $middleware = $middleware->withStatus(303);
 
 ### `SubFolder`
 
-Supports routing when `webroot` is not the same folder as public. By default, detects `webroot` from server params.
+Supports routing when the entry point of the application isn't directly at the webroot.
+By default, it determines webroot based on server parameters.
 
-> Info: This middleware should be placed before `Route` middleware.
+> Info: You should place this middleware before `Route` middleware in the middleware list.
 
 If you want the application to run on the specified path, use the prefix instead:
 
@@ -264,11 +267,10 @@ $response = $middleware->process($request, $handler);
 
 ### `TrustedHostsNetworkResolver`
 
-Adds and resolves trusted hosts with related headers.
+Trusted hosts network resolver can set IP, protocol, host, URL, and port based on trusted headers such as
+`Forward` or `X-Forwarded-Host` coming from trusted hosts you define. Usually these are load balancers.
 
-The header lists are evaluated in the order they were specified. If you specify multiple headers by type
-(e.g. IP headers), you must ensure that the irrelevant header is removed e.g. web server application,
-otherwise spoof clients can be use this vulnerability.
+Make sure that the trusted host always overwrites or removes user-defined headers to avoid security issues.
 
 ```php
 /**
@@ -278,12 +280,12 @@ otherwise spoof clients can be use this vulnerability.
  */
 
 $middleware = $middleware->withAddedTrustedHosts(
-    // List of secure hosts including `$_SERVER['REMOTE_ADDR']`, can specify IPv4, IPv6, domains and aliases.
+    // List of secure hosts including `$_SERVER['REMOTE_ADDR']`. You can specify IPv4, IPv6, domains, and aliases.
     hosts: ['1.1.1.1', '2.2.2.1/3', '2001::/32', 'localhost'],
-    // Headers containing IP lists. Headers containing multiple sub-elements (e.g. RFC 7239) must for
-    // other relevant types (e.g. host headers), otherwise they will only be used as an IP list.
+    // IP list headers. Headers containing many sub-elements (e.g. RFC 7239) must also be listed for other relevant
+    // types (such as host headers), otherwise they will only be used as an IP list.
     ipHeaders: ['x-forwarded-for', [TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded']],
-    // Protocol headers with accepted protocols and values. Matching of values is case-insensitive.
+    // Protocol headers with accepted protocols and corresponding header values. Matching is case-insensitive.
     protocolHeaders: ['x-forwarded-proto' => ['https' => 'on']],
     // List of headers containing HTTP host.
     hostHeaders: ['forwarded', 'x-forwarded-for'],
@@ -291,10 +293,10 @@ $middleware = $middleware->withAddedTrustedHosts(
     urlHeaders: ['x-rewrite-url'],
     // List of headers containing port number.
     portHeaders:['x-rewrite-port'],
-    // List of trusted headers. Removed from the request, if in checking process are classified as untrusted by hosts.
+    // List of trusted headers. For untrusted hosts, middleware removes these from the request.
     trustedHeaders: ['x-forwarded-for', 'forwarded'],
 );
-// Disable previous settings:
+// Disable earlier settings:
 $middleware = $middleware->withoutTrustedHosts();
 
 $response = $middleware->process($request, $handler);
@@ -304,7 +306,7 @@ Additionally, you can specify the following options:
 
 ```php
 /**
- * Specify request attribute name to which trusted path data is added.
+ * Specify a request attribute name to which middleware writes trusted path data.
  * 
  * @var Yiisoft\Yii\Middleware\TrustedHostsNetworkResolver $middleware
  * @var string|null $attribute
@@ -321,9 +323,9 @@ $middleware = $middleware->withValidator($validator);
 
 ### `Locale`
 
-Supports locale-based routing and configures services such as translator, URL generator, etc.
+Supports locale-based routing and configures translator and URL generator.
 
-> Info: This middleware should be placed before `Route` middleware.
+> Info: You should place this middleware before `Route` middleware in the middleware list.
 
 ```php
 use Yiisoft\Yii\Middleware\Locale;
@@ -334,12 +336,12 @@ $locales = ['en' => 'en-US', 'ru' => 'ru-RU', 'uz' => 'uz-UZ']
  * 
  * @var Locale $middleware
  */
-$middleware = $middleware->withLocales($locales);
+$middleware = $middleware->withSupportedLocales($locales);
 
 /**
- * Specify requests that should be ignored.
+ * Ignore requests which URLs that match `/api**` wildcard pattern.
  */
-$middleware = $middleware->withIgnoredRequests(['/api**']);
+$middleware = $middleware->withIgnoredRequestUrlPatterns(['/api**']);
 
 $response = $middleware->process($request);
 ```
@@ -350,16 +352,16 @@ Additionally, you can specify the following options:
 use Yiisoft\Yii\Middleware\Locale;
 
 /**
- * Enable detection option to detect locale from `Accept-Language` header.
+ * Detect locale from `Accept-Language` header.
  *
  * @var Locale $middleware
  */
-$middleware = $middleware->withEnableDetectLocale(true);
+$middleware = $middleware->withDetectLocale(true);
 
 /**
-* Enable saving option to save current locale in cookies.
+* Save current locale in session and cookies. 
  */
-$middleware = $middleware->withEnableSaveLocale(true);
+$middleware = $middleware->withSaveLocale(true);
 ```
 
 ### `AllowAllCors`
