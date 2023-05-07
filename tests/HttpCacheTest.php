@@ -46,10 +46,8 @@ final class HttpCacheTest extends TestCase
         $this->assertSame(Status::OK, $response->getStatusCode());
     }
 
-    public function testResultWithEtag(): void
+    public function testModifiedResultWithEtag(): void
     {
-        // Modified result
-
         $etag = 'test-etag';
         $middleware = $this->createMiddlewareWithETag($etag);
         $headers = [
@@ -64,9 +62,25 @@ final class HttpCacheTest extends TestCase
 
         $etagHeaderValue = '"IMPoQ2/Us52fJk3jpOZtEACPlVA"';
         $this->assertSame($response->getHeaderLine('Etag'), $etagHeaderValue);
+    }
 
-        // Not modified result
+    public function dataNotModifiedResultWithEtag(): array
+    {
+        $etagSeed = 'test-etag';
+        $etagValue = 'IMPoQ2/Us52fJk3jpOZtEACPlVA';
 
+        return [
+            [$etagSeed, "\"$etagValue\""],
+            [$etagSeed, "\"$etagValue-gzip\""],
+        ];
+    }
+
+    /**
+     * @dataProvider dataNotModifiedResultWithEtag
+     */
+    public function testNotModifiedResultWIthEtag(string $etagSeed, string $etagHeaderValue): void
+    {
+        $middleware = $this->createMiddlewareWithETag($etagSeed);
         $headers = [
             Header::IF_NONE_MATCH => $etagHeaderValue,
         ];
