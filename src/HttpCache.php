@@ -188,8 +188,7 @@ final class HttpCache implements MiddlewareInterface
             $headerParts = preg_split(
                 '/[\s,]+/',
                 str_replace('-gzip', '', $request->getHeaderLine(Header::IF_NONE_MATCH)),
-                -1,
-                PREG_SPLIT_NO_EMPTY,
+                flags: PREG_SPLIT_NO_EMPTY,
             );
 
             // "HTTP_IF_NONE_MATCH" takes precedence over "HTTP_IF_MODIFIED_SINCE".
