@@ -17,7 +17,7 @@ use function is_string;
 use function strtolower;
 
 /**
- * Trusted header protocol resolver is setting a server request protocol based on special header you trust
+ * Trusted header protocol resolver sets a server request protocol based on a special header you trust
  * such as `X-Forwarded-Proto`.
  *
  * You can use it if your server is behind a trusted load balancer or a proxy that's always setting the special header

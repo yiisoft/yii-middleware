@@ -45,7 +45,7 @@ final class Locale implements MiddlewareInterface
      * @param ResponseFactoryInterface $responseFactory Response factory used to create redirect responses.
      * @param array $supportedLocales List of supported locales in key-value format such as `['ru' => 'ru_RU', 'uz' => 'uz_UZ']`.
      * @param string[] $ignoredRequestUrlPatterns {@see WildcardPattern Patterns} for ignoring requests with URLs matching.
-     * @param bool $secureCookie If middleware should flag locale cookie as "secure."
+     * @param bool $secureCookie Whether middleware should flag locale cookie as "secure."
      */
     public function __construct(
         private TranslatorInterface $translator,
@@ -299,7 +299,7 @@ final class Locale implements MiddlewareInterface
     /**
      * Return new instance with enabled or disabled saving of locale.
      *
-     * @param bool $enabled If middleware should save locale into session and cookies.
+     * @param bool $enabled Whether middleware should save locale into session and cookies.
      */
     public function withSaveLocale(bool $enabled): self
     {
@@ -335,7 +335,7 @@ final class Locale implements MiddlewareInterface
     /**
      * Return new instance with enabled or disabled secure cookies.
      *
-     * @param bool $secure If middleware should flag locale cookie as "secure."
+     * @param bool $secure Whether middleware should flag locale cookie as "secure."
      */
     public function withSecureCookie(bool $secure): self
     {

@@ -39,7 +39,7 @@ middleware and don't interact with each other in any way.
 
 ### `TrustedHeaderProtocolResolver`
 
-Trusted header protocol resolver is setting a server request protocol based on special header you trust
+Trusted header protocol resolver sets a server request protocol based on special header you trust
 such as `X-Forwarded-Proto`.
 
 You can use it if your server is behind a trusted load balancer or a proxy that's always setting the special header
@@ -201,7 +201,8 @@ $middleware = new Redirect($ipValidator, $urlGenerator);
 $middleware = $middleware->toUrl('/login');
 // Or specify route data for redirection:
 $middleware = $middleware->toRoute('auth/login', ['parameter' => 'value']);
-// If you have set a redirect URL with {@see toUrl()}, the middleware ignores the route data, since the URL is a priority.
+// If you have set a redirect URL with "toUrl()" method, the middleware ignores the route data, since the URL is a
+// priority.
 
 $response = $middleware->process($request, $handler);
 ```
@@ -338,9 +339,7 @@ $locales = ['en' => 'en-US', 'ru' => 'ru-RU', 'uz' => 'uz-UZ']
  */
 $middleware = $middleware->withSupportedLocales($locales);
 
-/**
- * Ignore requests which URLs that match `/api**` wildcard pattern.
- */
+// Ignore requests which URLs that match "/api**" wildcard pattern.
 $middleware = $middleware->withIgnoredRequestUrlPatterns(['/api**']);
 
 $response = $middleware->process($request);
