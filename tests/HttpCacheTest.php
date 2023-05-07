@@ -120,7 +120,7 @@ final class HttpCacheTest extends TestCase
         $this->assertSame($response->getHeaderLine('Etag'), 'W/"IMPoQ2/Us52fJk3jpOZtEACPlVA"');
     }
 
-    public function dataNotModifiedResultWithLastModified()
+    public function dataNotModifiedResultWithLastModified(): array
     {
         $time = time();
         $ifModifiedSince = $this->formatTime($time);
@@ -139,7 +139,7 @@ final class HttpCacheTest extends TestCase
                 '',
             ],
             [
-                $time - 1,
+                $time,
                 'test-etag',
                 $ifModifiedSince,
                 '',
@@ -172,6 +172,24 @@ final class HttpCacheTest extends TestCase
         $this->assertSame(Status::NOT_MODIFIED, $response->getStatusCode());
         $this->assertEmpty((string) $response->getBody());
         $this->assertSame($expectedLastModified, $response->getHeaderLine('Last-Modified'));
+    }
+
+    public function testModifiedResultWithLastModifiedAndEmptyIfNoneMatchHeader(): void
+    {
+        $time = time();
+        $middleware = $this->createMiddlewareWithLastModified($time - 1);
+
+        $headers = [
+            Header::IF_NONE_MATCH => '',
+        ];
+        $response = $middleware->process(
+            $this->createServerRequest(Method::GET, $headers),
+            $this->createRequestHandler(),
+        );
+
+        $this->assertSame(Status::OK, $response->getStatusCode());
+        $this->assertEmpty((string) $response->getBody());
+        $this->assertSame($this->formatTime($time - 1), $response->getHeaderLine('Last-Modified'));
     }
 
     public function testEmptyIfNoneMatchAndIfModifiedSinceHeaders(): void
