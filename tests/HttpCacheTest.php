@@ -35,7 +35,7 @@ final class HttpCacheTest extends TestCase
         $middleware = $this->createMiddlewareWithLastModified($time + 1);
 
         $headers = [
-            Header::IF_MODIFIED_SINCE => gmdate('D, d M Y H:i:s', $time) . 'GMT',
+            Header::IF_MODIFIED_SINCE => $this->formatTime($time - 1),
         ];
 
         $response = $middleware->process(
@@ -46,12 +46,25 @@ final class HttpCacheTest extends TestCase
         $this->assertSame(Status::OK, $response->getStatusCode());
     }
 
-    public function testModifiedResultWithEtag(): void
+    public function dataModifiedResultWithEtag(): array
     {
-        $etag = 'test-etag';
-        $middleware = $this->createMiddlewareWithETag($etag);
+        $etagSeed = 'test-etag';
+        $expectedEtag = '"IMPoQ2/Us52fJk3jpOZtEACPlVA"';
+
+        return [
+            [$etagSeed, $etagSeed, $expectedEtag],
+            [$etagSeed, '', $expectedEtag],
+        ];
+    }
+
+    /**
+     * @dataProvider dataModifiedResultWithEtag
+     */
+    public function testModifiedResultWithEtag(string $etagSeed, string $etagHeaderValue, string $expectedEtag): void
+    {
+        $middleware = $this->createMiddlewareWithETag($etagSeed);
         $headers = [
-            Header::IF_NONE_MATCH => $etag,
+            Header::IF_NONE_MATCH => $etagHeaderValue,
         ];
         $response = $middleware->process(
             $this->createServerRequest(Method::GET, $headers),
@@ -59,9 +72,7 @@ final class HttpCacheTest extends TestCase
         );
 
         $this->assertSame(Status::OK, $response->getStatusCode());
-
-        $etagHeaderValue = '"IMPoQ2/Us52fJk3jpOZtEACPlVA"';
-        $this->assertSame($response->getHeaderLine('Etag'), $etagHeaderValue);
+        $this->assertSame($response->getHeaderLine('Etag'), $expectedEtag);
     }
 
     public function dataNotModifiedResultWithEtag(): array
@@ -112,25 +123,25 @@ final class HttpCacheTest extends TestCase
     public function dataNotModifiedResultWithLastModified()
     {
         $time = time();
+        $ifModifiedSince = $this->formatTime($time);
 
         return [
             [
-                $this->createMiddlewareWithLastModified($time - 1),
-                $time,
-                gmdate('D, d M Y H:i:s', $time - 1) . ' GMT',
+                $time - 1,
+                null,
+                $ifModifiedSince,
+                $this->formatTime($time - 1),
             ],
             [
-                $this
-                    ->createMiddlewareWithLastModified($time - 1)
-                    ->withEtagSeed(static fn () => 'test-etag'),
-                $time,
+                $time - 1,
+                'test-etag',
+                $ifModifiedSince,
                 '',
             ],
             [
-                $this
-                    ->createMiddlewareWithLastModified($time)
-                    ->withEtagSeed(static fn () => 'test-etag'),
-                $time,
+                $time - 1,
+                'test-etag',
+                $ifModifiedSince,
                 '',
             ],
         ];
@@ -140,12 +151,18 @@ final class HttpCacheTest extends TestCase
      * @dataProvider dataNotModifiedResultWithLastModified
      */
     public function testNotModifiedResultWithLastModified(
-        HttpCache $middleware,
-        int $time,
+        int $lastModified,
+        ?string $etagSeed,
+        string $ifModifiedSince,
         string $expectedLastModified,
     ): void {
+        $middleware = $this->createMiddlewareWithLastModified($lastModified);
+        if ($etagSeed !== null) {
+            $middleware = $middleware->withEtagSeed(fn () => $etagSeed);
+        }
+
         $headers = [
-            Header::IF_MODIFIED_SINCE => gmdate('D, d M Y H:i:s', $time) . ' GMT',
+            Header::IF_MODIFIED_SINCE => $ifModifiedSince,
         ];
         $response = $middleware->process(
             $this->createServerRequest(Method::GET, $headers),
@@ -211,5 +228,10 @@ final class HttpCacheTest extends TestCase
         }
 
         return $request;
+    }
+
+    private function formatTime(int $time): string
+    {
+        return gmdate('D, d M Y H:i:s', $time) . ' GMT';
     }
 }
