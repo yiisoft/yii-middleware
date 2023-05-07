@@ -9,6 +9,7 @@ use HttpSoft\Message\ServerRequest;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Yiisoft\Http\Header;
 use Yiisoft\Http\Method;
 use Yiisoft\Http\Status;
 use Yiisoft\Yii\Middleware\HttpCache;
@@ -34,7 +35,7 @@ final class HttpCacheTest extends TestCase
         $middleware = $this->createMiddlewareWithLastModified($time + 1);
 
         $headers = [
-            'If-Modified-Since' => gmdate('D, d M Y H:i:s', $time) . 'GMT',
+            Header::IF_MODIFIED_SINCE => gmdate('D, d M Y H:i:s', $time) . 'GMT',
         ];
 
         $response = $middleware->process(
@@ -52,7 +53,7 @@ final class HttpCacheTest extends TestCase
         $etag = 'test-etag';
         $middleware = $this->createMiddlewareWithETag($etag);
         $headers = [
-            'If-None-Match' => $etag,
+            Header::IF_NONE_MATCH => $etag,
         ];
         $response = $middleware->process(
             $this->createServerRequest(Method::GET, $headers),
@@ -67,7 +68,7 @@ final class HttpCacheTest extends TestCase
         // Not modified result
 
         $headers = [
-            'If-None-Match' => $etagHeaderValue,
+            Header::IF_NONE_MATCH => $etagHeaderValue,
         ];
         $response = $middleware->process(
             $this->createServerRequest(Method::GET, $headers),
@@ -83,7 +84,7 @@ final class HttpCacheTest extends TestCase
         $etag = 'test-etag';
         $middleware = $this->createMiddlewareWithETag($etag)->withWeakEtag();
         $headers = [
-            'If-None-Match' => $etag,
+            Header::IF_NONE_MATCH => $etag,
         ];
         $response = $middleware->process(
             $this->createServerRequest(Method::GET, $headers),
@@ -100,7 +101,7 @@ final class HttpCacheTest extends TestCase
         $middleware = $this->createMiddlewareWithLastModified($time - 1);
 
         $headers = [
-            'If-Modified-Since' => gmdate('D, d M Y H:i:s', $time) . ' GMT',
+            Header::IF_MODIFIED_SINCE => gmdate('D, d M Y H:i:s', $time) . ' GMT',
         ];
 
         $response = $middleware->process(
@@ -111,6 +112,27 @@ final class HttpCacheTest extends TestCase
         $this->assertSame(Status::NOT_MODIFIED, $response->getStatusCode());
         $this->assertEmpty((string) $response->getBody());
         $this->assertSame(gmdate('D, d M Y H:i:s', $time - 1) . ' GMT', $response->getHeaderLine('Last-Modified'));
+    }
+
+    public function testNotModifiedResultWithLastModifiedAndEtag(): void
+    {
+        $time = time();
+        $middleware = $this
+            ->createMiddlewareWithLastModified($time - 1)
+            ->withEtagSeed(static fn () => 'test-etag');
+
+        $headers = [
+            Header::IF_MODIFIED_SINCE => gmdate('D, d M Y H:i:s', $time) . ' GMT',
+        ];
+
+        $response = $middleware->process(
+            $this->createServerRequest(Method::GET, $headers),
+            $this->createRequestHandler(),
+        );
+
+        $this->assertSame(Status::NOT_MODIFIED, $response->getStatusCode());
+        $this->assertEmpty((string) $response->getBody());
+        $this->assertEmpty($response->getHeaderLine('Last-Modified'));
     }
 
     public function testEmptyIfNoneMatchAndIfModifiedSinceHeaders(): void

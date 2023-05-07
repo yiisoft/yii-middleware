@@ -28,12 +28,12 @@ final class HttpCache implements MiddlewareInterface
     /**
      * @var callable|null
      */
-    private $lastModified = null;
+    private $lastModified;
 
     /**
      * @var callable|null
      */
-    private $etagSeed = null;
+    private $etagSeed;
 
     private bool $weakEtag = false;
     private mixed $params = null;
@@ -146,18 +146,18 @@ final class HttpCache implements MiddlewareInterface
             }
         }
 
-        $cacheIsValid = $this->validateCache($request, $lastModified, $etag);
         $response = $handler->handle($request);
-
-        if ($cacheIsValid) {
-            $response = $response->withStatus(Status::NOT_MODIFIED);
-        }
 
         if ($this->cacheControlHeader !== null) {
             $response = $response->withHeader(Header::CACHE_CONTROL, $this->cacheControlHeader);
         }
         if ($etag !== null) {
             $response = $response->withHeader(Header::ETAG, $etag);
+        }
+
+        $cacheIsValid = $this->validateCache($request, $lastModified, $etag);
+        if ($cacheIsValid) {
+            $response = $response->withStatus(Status::NOT_MODIFIED);
         }
 
         /** @see https://tools.ietf.org/html/rfc7232#section-4.1 */
