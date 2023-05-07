@@ -192,7 +192,7 @@ final class HttpCache implements MiddlewareInterface
                 PREG_SPLIT_NO_EMPTY,
             );
 
-            // `HTTP_IF_NONE_MATCH` takes precedence over `HTTP_IF_MODIFIED_SINCE`.
+            // "HTTP_IF_NONE_MATCH" takes precedence over "HTTP_IF_MODIFIED_SINCE".
             // https://tools.ietf.org/html/rfc7232#section-3.3
             return $etag !== null && !empty($header) && in_array($etag, $header, true);
         }

@@ -44,23 +44,22 @@ use function trim;
  *
  * ```php
  * $trustedHostsNetworkResolver->withAddedTrustedHosts(
- *   // List of secure hosts including `$_SERVER['REMOTE_ADDR']`.
- *   // You can specify IPv4, IPv6, domains, and aliases. See {@see Ip}.
- *   ['1.1.1.1', '2.2.2.1/3', '2001::/32', 'localhost'].
- *   // IP list headers. For advanced handling of headers {@see TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239}.
- *   // Headers containing many sub-elements (e.g. RFC 7239) must also be listed for other relevant types
- *   // (such as host headers), otherwise they will only be used as an IP list.
- *   ['x-forwarded-for', [TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded']]
- *   // Protocol headers with accepted protocols and corresponding header values. Matching is case-insensitive.
- *   ['front-end-https' => ['https' => 'on']],
- *   // List of headers containing HTTP host.
- *   ['forwarded', 'x-forwarded-for']
- *   // List of headers containing HTTP URL.
- *   ['x-rewrite-url'],
- *   // List of headers containing port number.
- *   ['x-rewrite-port'],
- *   // List of trusted headers. For untrusted hosts, middleware removes these from the request.
- *   ['x-forwarded-for', 'forwarded', ...],
+ *     // List of secure hosts including "$_SERVER['REMOTE_ADDR']".
+ *     hosts: ['1.1.1.1', '2.2.2.1/3', '2001::/32', 'localhost'].
+ *     // IP list headers.
+ *     // Headers containing multiple sub-elements (e.g. RFC 7239) must also be listed for other relevant types
+ *     // (such as host headers), otherwise they will only be used as an IP list.
+ *     ipHeaders: ['x-forwarded-for', [TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded']]
+ *     // Protocol headers with accepted protocols and corresponding header values. Matching is case-insensitive.
+ *     protocolHeaders: ['front-end-https' => ['https' => 'on']],
+ *     // List of headers containing HTTP host.
+ *     hostHeaders: ['forwarded', 'x-forwarded-for']
+ *     // List of headers containing HTTP URL.
+ *     urlHeaders: ['x-rewrite-url'],
+ *     // List of headers containing port number.
+ *     portHeaders: ['x-rewrite-port'],
+ *     // List of trusted headers. For untrusted hosts, middleware removes these from the request.
+ *     trustedHeaders: ['x-forwarded-for', 'forwarded', ...],
  * );
  * ```
  *
@@ -136,8 +135,9 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
      *
      * @param string[] $hosts List of trusted host IP addresses. The {@see isValidHost()} method could be overwritten in
      * a subclass to allow using domain names with reverse DNS resolving, for example `yiiframework.com`,
-     * `*.yiiframework.com`.
-     * @param array $ipHeaders List of headers containing IP.
+     * `*.yiiframework.com`. You can specify IPv4, IPv6, domains, and aliases. See {@see Ip}.
+     * @param array $ipHeaders List of headers containing IP. For advanced handling of headers see
+     * {@see TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239}.
      * @param array $protocolHeaders List of headers containing protocol. e.g.
      * `['x-forwarded-for' => ['http' => 'http', 'https' => ['on', 'https']]]`.
      * @param string[] $hostHeaders List of headers containing HTTP host.
