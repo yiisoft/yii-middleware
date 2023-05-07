@@ -117,7 +117,7 @@ final class HttpCacheTest extends TestCase
             [
                 $this->createMiddlewareWithLastModified($time - 1),
                 $time,
-                gmdate('D, d M Y H:i:s', $time - 1) . ' GMT'
+                gmdate('D, d M Y H:i:s', $time - 1) . ' GMT',
             ],
             [
                 $this
@@ -136,8 +136,7 @@ final class HttpCacheTest extends TestCase
         HttpCache $middleware,
         int $time,
         string $expectedLastModified,
-    ): void
-    {
+    ): void {
         $headers = [
             Header::IF_MODIFIED_SINCE => gmdate('D, d M Y H:i:s', $time) . ' GMT',
         ];
