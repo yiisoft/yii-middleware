@@ -126,6 +126,13 @@ final class HttpCacheTest extends TestCase
                 $time,
                 '',
             ],
+            [
+                $this
+                    ->createMiddlewareWithLastModified($time)
+                    ->withEtagSeed(static fn () => 'test-etag'),
+                $time,
+                '',
+            ],
         ];
     }
 
