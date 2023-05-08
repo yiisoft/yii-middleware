@@ -213,6 +213,11 @@ final class SubFolderTest extends TestCase
         ];
         yield [
             [
+                'ORIG_SCRIPT_NAME' => '/public/index.php',
+            ],
+        ];
+        yield [
+            [
                 'DOCUMENT_ROOT' => '/www',
                 'SCRIPT_FILENAME' => '/www/public/index.php',
             ],

@@ -96,9 +96,9 @@ final class SubFolder implements MiddlewareInterface
             $scriptUrl = $serverParams['ORIG_SCRIPT_NAME'];
         } elseif (
             isset($serverParams['PHP_SELF']) &&
-            ($pos = strpos($serverParams['PHP_SELF'], '/' . $scriptName)) !== false
+            ($pos = strpos($serverParams['PHP_SELF'], $scriptName)) !== false
         ) {
-            $scriptUrl = substr($serverParams['PHP_SELF'], 0, $pos) . '/' . $scriptName;
+            $scriptUrl = substr($serverParams['PHP_SELF'], 0, $pos + strlen($scriptName));
         } elseif (
             !empty($serverParams['DOCUMENT_ROOT']) &&
             str_starts_with($scriptUrl, $serverParams['DOCUMENT_ROOT'])
