@@ -51,12 +51,14 @@ final class IpFilterTest extends TestCase
             ->method('getServerParams')
             ->willReturn($serverParams);
 
-        $this->responseFactoryMock
+        $this
+            ->responseFactoryMock
             ->expects($this->once())
             ->method('createResponse')
             ->willReturn(new Response(Status::FORBIDDEN));
 
-        $this->requestHandlerMock
+        $this
+            ->requestHandlerMock
             ->expects($this->never())
             ->method('handle')
             ->with($requestMock);
@@ -113,7 +115,8 @@ final class IpFilterTest extends TestCase
             ->with($attributeName)
             ->willReturn($ip);
 
-        $this->requestHandlerMock
+        $this
+            ->requestHandlerMock
             ->expects($this->once())
             ->method('handle')
             ->with($requestMock)
