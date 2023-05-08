@@ -73,7 +73,7 @@ final class LocaleTest extends TestCase
 
     public function testDefaultLocaleWithCountry(): void
     {
-        $request = $this->createRequest($uri = '/uz');
+        $request = $this->createRequest('/uz');
         $middleware = $this->createMiddleware(['uz' => 'uz-UZ'])->withDefaultLocale('uz-UZ');
 
         $response = $this->process($middleware, $request);
@@ -86,7 +86,7 @@ final class LocaleTest extends TestCase
     public function testWithoutLocales(): void
     {
         $request = $this->createRequest($uri = '/ru');
-        $middleware = $this->createMiddleware([]);
+        $middleware = $this->createMiddleware();
 
         $this->process($middleware, $request);
 
@@ -96,7 +96,7 @@ final class LocaleTest extends TestCase
 
     public function testDefaultLocaleWithLocales(): void
     {
-        $request = $this->createRequest($uri = '/ru/home');
+        $request = $this->createRequest('/ru/home');
         $middleware = $this->createMiddleware(['en' => 'en-US', 'ru' => 'ru-RU'])->withDefaultLocale('ru');
 
         $response = $this->process($middleware, $request);
@@ -105,54 +105,28 @@ final class LocaleTest extends TestCase
         $this->assertSame('/home', $response->getHeaderLine(Header::LOCATION));
     }
 
-    public function testLocale(): void
+    public function dataLocale(): array
     {
-        $request = $this->createRequest($uri = '/uz');
-        $middleware = $this->createMiddleware(['uz' => 'uz-UZ']);
-
-        $this->process($middleware, $request);
-
-        $this->assertSame($uri, $this->getRequestPath());
+        return [
+            'basic' => ['/uz', ['uz' => 'uz-UZ']],
+            'with dash' => ['/uz-UZ', ['uz' => 'uz-UZ']],
+            'with underscore' => ['/uz_UZ', ['uz' => 'uz_UZ']],
+            'without country' => ['/uz', ['uz' => 'uz']],
+            'with subtags' => ['/en_us', ['en_us' => 'en-US', 'en_gb' => 'en-GB']]
+        ];
     }
 
-    public function testLocaleWithDash(): void
+    /**
+     * @dataProvider dataLocale
+     */
+    public function testLocale(string $requestUri, array $locales): void
     {
-        $request = $this->createRequest($uri = '/uz-UZ');
-        $middleware = $this->createMiddleware(['uz' => 'uz-UZ']);
+        $request = $this->createRequest($requestUri);
+        $middleware = $this->createMiddleware($locales);
 
         $this->process($middleware, $request);
 
-        $this->assertSame($uri, $this->getRequestPath());
-    }
-
-    public function testLocaleWithUnderscore(): void
-    {
-        $request = $this->createRequest($uri = '/uz_UZ');
-        $middleware = $this->createMiddleware(['uz' => 'uz_UZ']);
-
-        $this->process($middleware, $request);
-
-        $this->assertSame($uri, $this->getRequestPath());
-    }
-
-    public function testLocaleWithoutCountry(): void
-    {
-        $request = $this->createRequest($uri = '/uz');
-        $middleware = $this->createMiddleware(['uz' => 'uz']);
-
-        $this->process($middleware, $request);
-
-        $this->assertSame($uri, $this->getRequestPath());
-    }
-
-    public function testLocaleWithSubtags(): void
-    {
-        $request = $this->createRequest($uri = '/en_us');
-        $middleware = $this->createMiddleware(['en_us' => 'en-US', 'en_gb' => 'en-GB']);
-
-        $this->process($middleware, $request);
-
-        $this->assertSame($uri, $this->getRequestPath());
+        $this->assertSame($requestUri, $this->getRequestPath());
     }
 
     public function testSaveLocale(): void
