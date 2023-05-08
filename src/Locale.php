@@ -29,13 +29,14 @@ final class Locale implements MiddlewareInterface
 {
     private const DEFAULT_LOCALE = 'en';
     private const DEFAULT_LOCALE_NAME = '_language';
+    private const LOCALE_SEPARATORS = ['-', '_'];
 
     private bool $saveLocale = true;
     private bool $detectLocale = false;
     private string $defaultLocale = self::DEFAULT_LOCALE;
     private string $queryParameterName = self::DEFAULT_LOCALE_NAME;
     private string $sessionName = self::DEFAULT_LOCALE_NAME;
-    private ?DateInterval $cookieDuration;
+    private DateInterval $cookieDuration;
 
     /**
      * @param TranslatorInterface $translator Translator instance to set locale for.
@@ -45,7 +46,7 @@ final class Locale implements MiddlewareInterface
      * @param ResponseFactoryInterface $responseFactory Response factory used to create redirect responses.
      * @param array $supportedLocales List of supported locales in key-value format such as `['ru' => 'ru_RU', 'uz' => 'uz_UZ']`.
      * @param string[] $ignoredRequestUrlPatterns {@see WildcardPattern Patterns} for ignoring requests with URLs matching.
-     * @param bool $secureCookie Whether middleware should flag locale cookie as "secure."
+     * @param bool $secureCookie Whether middleware should flag locale cookie as "secure".
      */
     public function __construct(
         private TranslatorInterface $translator,
@@ -202,18 +203,16 @@ final class Locale implements MiddlewareInterface
         $this->logger->debug('Saving found locale to session and cookies.');
         $this->session->set($this->sessionName, $locale);
         $cookie = new Cookie(name: $this->sessionName, value: $locale, secure: $this->secureCookie);
-        if ($this->cookieDuration !== null) {
-            $cookie = $cookie->withMaxAge($this->cookieDuration);
-        }
+        $cookie = $cookie->withMaxAge($this->cookieDuration);
         return $cookie->addToResponse($response);
     }
 
     private function parseLocale(string $locale): string
     {
-        if (str_contains($locale, '-')) {
-            [$locale] = explode('-', $locale, 2);
-        } elseif (str_contains($locale, '_')) {
-            [$locale] = explode('_', $locale, 2);
+        foreach (self::LOCALE_SEPARATORS as $separator) {
+            if (str_contains($locale, $separator)) {
+                return explode($separator, $locale, 2)[0];
+            }
         }
 
         return $locale;

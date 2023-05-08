@@ -11,6 +11,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Yiisoft\Cookies\CookieCollection;
 use Yiisoft\Http\Header;
 use Yiisoft\Http\Method;
 use Yiisoft\Http\Status;
@@ -156,13 +157,21 @@ final class LocaleTest extends TestCase
 
     public function testSaveLocale(): void
     {
-        $request = $this->createRequest($uri = '/uz');
+        $request = $this->createRequest('/uz');
         $middleware = $this->createMiddleware(['uz' => 'uz-UZ']);
 
         $response = $this->process($middleware, $request);
 
         $this->assertSame('uz', $this->locale);
-        $this->assertStringContainsString('_language=uz', $response->getHeaderLine(Header::SET_COOKIE));
+
+        $cookies = (CookieCollection::fromResponse($response))->toArray();
+        $this->assertArrayHasKey('_language', $cookies);
+
+        $cookie = $cookies['_language'];
+        $this->assertSame('_language', $cookie->getName());
+        $this->assertSame('uz', $cookie->getValue());
+        $this->assertNotNull($cookie->getExpires());
+        $this->assertFalse($cookie->isSecure());
     }
 
     public function testSavedLocale(): void
@@ -268,7 +277,7 @@ final class LocaleTest extends TestCase
         return $uri->getPath() . ($uri->getQuery() !== '' ? '?' . $uri->getQuery() : '');
     }
 
-    private function createMiddleware(array $locales = [], bool $secure = false): Locale
+    private function createMiddleware(array $locales = []): Locale
     {
         $translator = $this->createMock(TranslatorInterface::class);
         $translator
@@ -300,13 +309,15 @@ final class LocaleTest extends TestCase
             ->willReturnReference($this->prefix);
 
         $session = $this->createMock(SessionInterface::class);
-        $session->method('set')
-                ->willReturnCallback(function ($name, $value) {
-                    $this->session[$name] = $value;
-                });
+        $session
+            ->method('set')
+            ->willReturnCallback(function ($name, $value) {
+                $this->session[$name] = $value;
+            });
 
-        $session->method('get')
-                ->willReturnCallback(fn ($name) => $this->session[$name]);
+        $session
+            ->method('get')
+            ->willReturnCallback(fn ($name) => $this->session[$name]);
 
         return new Locale(
             $translator,
@@ -315,8 +326,6 @@ final class LocaleTest extends TestCase
             new SimpleLogger(),
             new ResponseFactory(),
             $locales,
-            [],
-            $secure
         );
     }
 
