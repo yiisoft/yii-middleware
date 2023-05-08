@@ -112,7 +112,7 @@ final class LocaleTest extends TestCase
             'with dash' => ['/uz-UZ', ['uz' => 'uz-UZ']],
             'with underscore' => ['/uz_UZ', ['uz' => 'uz_UZ']],
             'without country' => ['/uz', ['uz' => 'uz']],
-            'with subtags' => ['/en_us', ['en_us' => 'en-US', 'en_gb' => 'en-GB']]
+            'with subtags' => ['/en_us', ['en_us' => 'en-US', 'en_gb' => 'en-GB']],
         ];
     }
 
