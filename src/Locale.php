@@ -37,6 +37,10 @@ final class Locale implements MiddlewareInterface
     private string $queryParameterName = self::DEFAULT_LOCALE_NAME;
     private string $sessionName = self::DEFAULT_LOCALE_NAME;
     private DateInterval $cookieDuration;
+    /**
+     * @psalm-var array<string, string>
+     */
+    private array $supportedLocales;
 
     /**
      * @param TranslatorInterface $translator Translator instance to set locale for.
@@ -54,20 +58,21 @@ final class Locale implements MiddlewareInterface
         private SessionInterface $session,
         private LoggerInterface $logger,
         private ResponseFactoryInterface $responseFactory,
-        private array $supportedLocales = [],
+        array $supportedLocales = [],
         private array $ignoredRequestUrlPatterns = [],
         private bool $secureCookie = false,
     ) {
         $this->cookieDuration = new DateInterval('P30D');
+
+        $this->validateSupportedLocales($supportedLocales);
+        $this->supportedLocales = $supportedLocales;
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        if ($this->supportedLocales === []) {
+        if (empty($this->supportedLocales)) {
             return $handler->handle($request);
         }
-
-        $this->assertLocalesFormat();
 
         $uri = $request->getUri();
         $path = $uri->getPath();
@@ -138,10 +143,6 @@ final class Locale implements MiddlewareInterface
     private function getLocaleFromPath(string $path): ?string
     {
         $parts = [];
-        /**
-         * @var string $code
-         * @var string $locale
-         */
         foreach ($this->supportedLocales as $code => $locale) {
             $parts[] = $code;
             $parts[] = $locale;
@@ -229,13 +230,13 @@ final class Locale implements MiddlewareInterface
     }
 
     /**
-     * @psalm-assert array<string, string> $this->supportedLocales
+     * @psalm-assert array<string, string> $supportedLocales
      *
      * @throws InvalidLocalesFormatException
      */
-    private function assertLocalesFormat(): void
+    private function validateSupportedLocales(array $supportedLocales): void
     {
-        foreach ($this->supportedLocales as $code => $locale) {
+        foreach ($supportedLocales as $code => $locale) {
             if (!is_string($code) || !is_string($locale)) {
                 throw new InvalidLocalesFormatException();
             }
@@ -251,9 +252,12 @@ final class Locale implements MiddlewareInterface
      * Return new instance with supported locales specified.
      *
      * @param array $locales List of supported locales in key-value format such as `['ru' => 'ru_RU', 'uz' => 'uz_UZ']`.
+     *
+     * @throws InvalidLocalesFormatException
      */
     public function withSupportedLocales(array $locales): self
     {
+        $this->validateSupportedLocales($locales);
         $new = clone $this;
         $new->supportedLocales = $locales;
         return $new;
