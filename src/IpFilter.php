@@ -46,21 +46,23 @@ final class IpFilter implements MiddlewareInterface
         /** @psalm-var array{REMOTE_ADDR?: mixed} $serverParams */
         $serverParams = $request->getServerParams();
         $clientIp ??= $serverParams['REMOTE_ADDR'] ?? null;
+        if ($clientIp === null) {
+            return $this->createForbiddenResponse();
+        }
 
-        $result = $this->validator->validate(
-            $clientIp,
-            [new Ip(allowSubnet: false, allowNegation: false, ranges: $this->ipRanges)]
-        );
-
-        if (
-            $clientIp === null
-            || !$result->isValid()
-        ) {
-            $response = $this->responseFactory->createResponse(Status::FORBIDDEN);
-            $response->getBody()->write(Status::TEXTS[Status::FORBIDDEN]);
-            return $response;
+        $result = $this->validator->validate($clientIp, [new Ip(ranges: $this->ipRanges)]);
+        if (!$result->isValid()) {
+            return $this->createForbiddenResponse();
         }
 
         return $handler->handle($request);
+    }
+
+    private function createForbiddenResponse(): ResponseInterface
+    {
+        $response = $this->responseFactory->createResponse(Status::FORBIDDEN);
+        $response->getBody()->write(Status::TEXTS[Status::FORBIDDEN]);
+
+        return $response;
     }
 }
