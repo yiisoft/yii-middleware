@@ -164,7 +164,7 @@ final class LocaleTest extends TestCase
 
         $this->assertSame('uz', $this->locale);
 
-        $cookies = (CookieCollection::fromResponse($response))->toArray();
+        $cookies = CookieCollection::fromResponse($response)->toArray();
         $this->assertArrayHasKey('_language', $cookies);
 
         $cookie = $cookies['_language'];
