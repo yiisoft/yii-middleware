@@ -80,7 +80,7 @@ final class SubFolder implements MiddlewareInterface
         return $handler->handle($request);
     }
 
-    public function getBaseUrl(ServerRequestInterface $request): string
+    private function getBaseUrl(ServerRequestInterface $request): string
     {
         /** @var array{SCRIPT_FILENAME?:string,PHP_SELF?:string,ORIG_SCRIPT_NAME?:string,DOCUMENT_ROOT?:string} $serverParams */
         $serverParams = $request->getServerParams();
