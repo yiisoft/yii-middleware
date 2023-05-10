@@ -172,6 +172,9 @@ final class LocaleTest extends TestCase
         $this->assertEquals(new DateTime('2023-06-09 08:24:39'), $cookie->getExpires());
         $this->assertFalse($cookie->isSecure());
 
+        $this->assertArrayHasKey('_language', $this->session);
+        $this->assertSame('uz', $this->session['_language']);
+
         $expectedLoggerMessages = [
             [
                 'level' => 'debug',
@@ -222,6 +225,8 @@ final class LocaleTest extends TestCase
 
         $cookies = CookieCollection::fromResponse($response)->toArray();
         $this->assertArrayNotHasKey('_language', $cookies);
+
+        $this->assertArrayNotHasKey('_language', $this->session);
 
         $expectedLoggerMessages = [
             [
