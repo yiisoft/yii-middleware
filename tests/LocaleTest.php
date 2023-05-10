@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Yiisoft\Yii\Middleware\Tests;
 
-use DateInterval;
 use DateTime;
 use DateTimeImmutable;
 use HttpSoft\Message\Response;
