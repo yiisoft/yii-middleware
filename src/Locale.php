@@ -64,7 +64,7 @@ final class Locale implements MiddlewareInterface
     ) {
         $this->cookieDuration = new DateInterval('P30D');
 
-        $this->validateSupportedLocales($supportedLocales);
+        $this->assertSupportedLocalesFormat($supportedLocales);
         $this->supportedLocales = $supportedLocales;
     }
 
@@ -234,7 +234,7 @@ final class Locale implements MiddlewareInterface
      *
      * @throws InvalidLocalesFormatException
      */
-    private function validateSupportedLocales(array $supportedLocales): void
+    private function assertSupportedLocalesFormat(array $supportedLocales): void
     {
         foreach ($supportedLocales as $code => $locale) {
             if (!is_string($code) || !is_string($locale)) {
@@ -257,7 +257,7 @@ final class Locale implements MiddlewareInterface
      */
     public function withSupportedLocales(array $locales): self
     {
-        $this->validateSupportedLocales($locales);
+        $this->assertSupportedLocalesFormat($locales);
         $new = clone $this;
         $new->supportedLocales = $locales;
         return $new;
