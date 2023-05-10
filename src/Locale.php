@@ -50,7 +50,10 @@ final class Locale implements MiddlewareInterface
      * @param ResponseFactoryInterface $responseFactory Response factory used to create redirect responses.
      * @param array $supportedLocales List of supported locales in key-value format such as `['ru' => 'ru_RU', 'uz' => 'uz_UZ']`.
      * @param string[] $ignoredRequestUrlPatterns {@see WildcardPattern Patterns} for ignoring requests with URLs matching.
-     * @param bool $secureCookie Whether middleware should flag locale cookie as "secure".
+     * @param bool $secureCookie Whether middleware should flag locale cookie as "secure". Effective only when
+     * {@see $saveLocale} is set to `true`.
+     * @param ?DateInterval $cookieDuration Locale cookie lifetime. Effective only when {@see $saveLocale} is set to
+     * `true`. Defaults to 30 days.
      */
     public function __construct(
         private TranslatorInterface $translator,
@@ -61,8 +64,9 @@ final class Locale implements MiddlewareInterface
         array $supportedLocales = [],
         private array $ignoredRequestUrlPatterns = [],
         private bool $secureCookie = false,
+        ?DateInterval $cookieDuration = null,
     ) {
-        $this->cookieDuration = new DateInterval('P30D');
+        $this->cookieDuration = $cookieDuration ?? new DateInterval('P30D');
 
         $this->assertSupportedLocalesFormat($supportedLocales);
         $this->supportedLocales = $supportedLocales;
