@@ -27,14 +27,16 @@ use Yiisoft\Yii\Middleware\Locale;
 
 final class LocaleTest extends TestCase
 {
-    private ?string $locale;
+    private ?string $translatorLocale;
+    private ?string $urlGeneratorLocale;
     private string $prefix = '';
     private array $session = [];
     private ?ServerRequestInterface $lastRequest;
 
     public function setUp(): void
     {
-        $this->locale = null;
+        $this->translatorLocale = null;
+        $this->urlGeneratorLocale = null;
         $this->lastRequest = null;
 
         if (str_starts_with($this->getName(), 'testSaveLocale')) {
@@ -80,7 +82,8 @@ final class LocaleTest extends TestCase
 
         $response = $this->process($middleware, $request);
 
-        $this->assertSame('en', $this->locale);
+        $this->assertSame('en-US', $this->translatorLocale);
+        $this->assertSame('en', $this->urlGeneratorLocale);
         $this->assertSame($uri, $this->getRequestPath());
         $this->assertSame('/home?test=1', $response->getHeaderLine(Header::LOCATION));
     }
@@ -92,7 +95,8 @@ final class LocaleTest extends TestCase
 
         $response = $this->process($middleware, $request);
 
-        $this->assertSame('uz', $this->locale);
+        $this->assertSame('uz-UZ', $this->translatorLocale);
+        $this->assertSame('uz', $this->urlGeneratorLocale);
         $this->assertSame('/', $response->getHeaderLine(Header::LOCATION));
         $this->assertSame(Status::FOUND, $response->getStatusCode());
     }
@@ -104,7 +108,8 @@ final class LocaleTest extends TestCase
 
         $this->process($middleware, $request);
 
-        $this->assertNull($this->locale);
+        $this->assertSame(null, $this->translatorLocale);
+        $this->assertSame(null, $this->urlGeneratorLocale);
         $this->assertSame($uri, $this->getRequestPath());
     }
 
@@ -115,7 +120,8 @@ final class LocaleTest extends TestCase
 
         $response = $this->process($middleware, $request);
 
-        $this->assertSame('ru', $this->locale);
+        $this->assertSame('ru-RU', $this->translatorLocale);
+        $this->assertSame('ru', $this->urlGeneratorLocale);
         $this->assertSame('/home', $response->getHeaderLine(Header::LOCATION));
     }
 
@@ -150,7 +156,8 @@ final class LocaleTest extends TestCase
 
         $response = $this->process($middleware, $request);
 
-        $this->assertSame('uz', $this->locale);
+        $this->assertSame('uz-UZ', $this->translatorLocale);
+        $this->assertSame('uz', $this->urlGeneratorLocale);
 
         $cookies = CookieCollection::fromResponse($response)->toArray();
         $this->assertArrayHasKey('_language', $cookies);
@@ -172,7 +179,8 @@ final class LocaleTest extends TestCase
 
         $response = $this->process($middleware, $request);
 
-        $this->assertSame('uz', $this->locale);
+        $this->assertSame('uz-UZ', $this->translatorLocale);
+        $this->assertSame('uz', $this->urlGeneratorLocale);
 
         $cookies = CookieCollection::fromResponse($response)->toArray();
         $this->assertArrayHasKey('_language', $cookies);
@@ -224,7 +232,8 @@ final class LocaleTest extends TestCase
 
         $response = $this->process($middleware, $request);
 
-        $this->assertSame('uz', $this->locale);
+        $this->assertSame('uz-UZ', $this->translatorLocale);
+        $this->assertSame('uz', $this->urlGeneratorLocale);
         $this->assertSame('/uz' . $uri, $response->getHeaderLine(Header::LOCATION));
         $this->assertSame(Status::FOUND, $response->getStatusCode());
     }
@@ -236,7 +245,8 @@ final class LocaleTest extends TestCase
 
         $response = $this->process($middleware, $request);
 
-        $this->assertNull($this->locale);
+        $this->assertSame(null, $this->translatorLocale);
+        $this->assertSame(null, $this->urlGeneratorLocale);
         $this->assertSame('/en' . $uri, $this->getRequestPath());
         $this->assertSame('', $response->getHeaderLine(Header::LOCATION));
         $this->assertSame(Status::OK, $response->getStatusCode());
@@ -249,7 +259,8 @@ final class LocaleTest extends TestCase
 
         $response = $this->process($middleware, $request);
 
-        $this->assertSame('uz', $this->locale);
+        $this->assertSame('uz-UZ', $this->translatorLocale);
+        $this->assertSame('uz', $this->urlGeneratorLocale);
         $this->assertSame('', $response->getHeaderLine(Header::LOCATION));
         $this->assertSame(Status::OK, $response->getStatusCode());
     }
@@ -293,13 +304,13 @@ final class LocaleTest extends TestCase
         $translator
             ->method('setLocale')
             ->willReturnCallback(function ($locale) use ($translator) {
-                $this->locale = $locale;
+                $this->translatorLocale = $locale;
                 return $translator;
             });
 
         $translator
             ->method('getLocale')
-            ->willReturnReference($this->locale);
+            ->willReturnReference($this->translatorLocale);
 
         $urlGenerator = $this->createMock(UrlGeneratorInterface::class);
         $urlGenerator
@@ -311,7 +322,7 @@ final class LocaleTest extends TestCase
         $urlGenerator
             ->method('setDefaultArgument')
             ->willReturnCallback(function ($name, $value) {
-                $this->locale = $value;
+                $this->urlGeneratorLocale = $value;
             });
 
         $urlGenerator
