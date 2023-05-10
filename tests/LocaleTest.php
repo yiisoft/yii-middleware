@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Yiisoft\Yii\Middleware\Tests;
 
+use DateInterval;
+use DateTime;
+use DateTimeImmutable;
 use HttpSoft\Message\Response;
 use HttpSoft\Message\ResponseFactory;
 use HttpSoft\Message\ServerRequest;
@@ -144,7 +147,8 @@ final class LocaleTest extends TestCase
         $cookie = $cookies['_language'];
         $this->assertSame('_language', $cookie->getName());
         $this->assertSame('uz', $cookie->getValue());
-        $this->assertNotNull($cookie->getExpires());
+        $this->assertInstanceOf(DateTimeImmutable::class, $cookie->getExpires());
+        $this->assertGreaterThan(new DateTime('now'), $cookie->getExpires());
         $this->assertFalse($cookie->isSecure());
     }
 
@@ -208,7 +212,7 @@ final class LocaleTest extends TestCase
 
     public function testLocaleWithOtherMethod(): void
     {
-        $request = $this->createRequest($uri = '/', Method::POST, queryParams: ['_language' => 'uz']);
+        $request = $this->createRequest('/', Method::POST, queryParams: ['_language' => 'uz']);
         $middleware = $this->createMiddleware(['uz' => 'uz-UZ']);
 
         $response = $this->process($middleware, $request);
