@@ -28,12 +28,12 @@ final class HttpCache implements MiddlewareInterface
     /**
      * @var callable|null
      */
-    private $lastModified;
+    private $lastModified = null;
 
     /**
      * @var callable|null
      */
-    private $etagSeed;
+    private $etagSeed = null;
 
     private bool $weakEtag = false;
     private mixed $params = null;
