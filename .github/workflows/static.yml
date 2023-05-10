@@ -25,6 +25,7 @@ jobs:
   psalm:
     uses: yiisoft/actions/.github/workflows/psalm.yml@master
     with:
+      extensions: uopz
       os: >-
         ['ubuntu-latest']
       php: >-
