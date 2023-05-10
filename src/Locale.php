@@ -168,7 +168,7 @@ final class Locale implements MiddlewareInterface
 
     private function getLocaleFromRequest(ServerRequestInterface $request): ?string
     {
-        /** @var array<string, string> $cookies */
+        /** @psalm-var array<string, string> $cookies */
         $cookies = $request->getCookieParams();
         if (isset($cookies[$this->sessionName])) {
             $this->logger->debug(sprintf("Locale '%s' found in cookies", $cookies[$this->sessionName]));

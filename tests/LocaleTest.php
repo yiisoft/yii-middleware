@@ -13,6 +13,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Psr\Log\LoggerInterface;
 use SlopeIt\ClockMock\ClockMock;
 use Yiisoft\Cookies\CookieCollection;
 use Yiisoft\Http\Header;
@@ -32,12 +33,14 @@ final class LocaleTest extends TestCase
     private string $prefix = '';
     private array $session = [];
     private ?ServerRequestInterface $lastRequest;
+    private LoggerInterface $logger;
 
     public function setUp(): void
     {
         $this->translatorLocale = null;
         $this->urlGeneratorLocale = null;
         $this->lastRequest = null;
+        $this->logger = new SimpleLogger();
 
         if (str_starts_with($this->getName(), 'testSaveLocale')) {
             ClockMock::freeze(new DateTime('2023-05-10 08:24:39'));
@@ -56,6 +59,7 @@ final class LocaleTest extends TestCase
         $localeMiddleware = $this->createMiddleware();
 
         $this->assertNotSame($localeMiddleware->withSecureCookie(true), $localeMiddleware);
+        $this->assertNotSame($localeMiddleware->withCookieDuration(new DateInterval('P31D')), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withDefaultLocale('uz'), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withDetectLocale(true), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withSaveLocale(false), $localeMiddleware);
@@ -167,6 +171,20 @@ final class LocaleTest extends TestCase
         $this->assertSame('uz', $cookie->getValue());
         $this->assertEquals(new DateTime('2023-06-09 08:24:39'), $cookie->getExpires());
         $this->assertFalse($cookie->isSecure());
+
+        $expectedLoggerMessages = [
+            [
+                'level' => 'debug',
+                'message' => "Locale 'uz' found in URL",
+                'context' => [],
+            ],
+            [
+                'level' => 'debug',
+                'message' => 'Saving found locale to session and cookies.',
+                'context' => [],
+            ],
+        ];
+        $this->assertSame($expectedLoggerMessages, $this->logger->getMessages());
     }
 
     public function testSaveLocaleWithCustomArguments(): void
@@ -192,7 +210,30 @@ final class LocaleTest extends TestCase
         $this->assertTrue($cookie->isSecure());
     }
 
-    public function testSavedLocale(): void
+    public function testDisabledSaveLocale(): void
+    {
+        $request = $this->createRequest('/uz');
+        $middleware = $this->createMiddleware(['uz' => 'uz-UZ'])->withSaveLocale(false);
+
+        $response = $this->process($middleware, $request);
+
+        $this->assertSame('uz-UZ', $this->translatorLocale);
+        $this->assertSame('uz', $this->urlGeneratorLocale);
+
+        $cookies = CookieCollection::fromResponse($response)->toArray();
+        $this->assertArrayNotHasKey('_language', $cookies);
+
+        $expectedLoggerMessages = [
+            [
+                'level' => 'debug',
+                'message' => "Locale 'uz' found in URL",
+                'context' => [],
+            ],
+        ];
+        $this->assertSame($expectedLoggerMessages, $this->logger->getMessages());
+    }
+
+    public function testLocaleFromCookies(): void
     {
         $request = $this->createRequest($uri = '/home?test=1', cookieParams: ['_language' => 'uz']);
         $middleware = $this->createMiddleware(['uz' => 'uz-UZ', 'en' => 'en-US']);
@@ -201,28 +242,46 @@ final class LocaleTest extends TestCase
 
         $this->assertSame('/uz' . $uri, $response->getHeaderLine(Header::LOCATION));
         $this->assertSame(Status::FOUND, $response->getStatusCode());
+
+        $expectedLoggerMessages = [
+            [
+                'level' => 'debug',
+                'message' => "Locale 'uz' found in cookies",
+                'context' => [],
+            ],
+        ];
+        $this->assertSame($expectedLoggerMessages, $this->logger->getMessages());
     }
 
-    public function testLocaleWithQueryParam(): void
+    public function dataLocaleFromQueryParam(): array
+    {
+        return [
+            'basic' => ['uz', 'uz'],
+            'extended' => ['uz-UZ', 'uz'],
+        ];
+    }
+
+    /**
+     * @dataProvider dataLocaleFromQueryParam
+     */
+    public function testLocaleFromQueryParam(string $locale, string $expectedLocale): void
     {
         $request = $this->createRequest($uri = '/', queryParams: ['_language' => 'uz']);
         $middleware = $this->createMiddleware(['uz' => 'uz-UZ']);
 
         $response = $this->process($middleware, $request);
 
-        $this->assertSame('/uz' . $uri, $response->getHeaderLine(Header::LOCATION));
+        $this->assertSame("/$expectedLocale" . $uri, $response->getHeaderLine(Header::LOCATION));
         $this->assertSame(Status::FOUND, $response->getStatusCode());
-    }
 
-    public function testLocaleWithQueryParamCountry(): void
-    {
-        $request = $this->createRequest($uri = '/', queryParams: ['_language' => 'uz-UZ']);
-        $middleware = $this->createMiddleware(['uz' => 'uz-UZ']);
-
-        $response = $this->process($middleware, $request);
-
-        $this->assertSame('/uz' . $uri, $response->getHeaderLine(Header::LOCATION));
-        $this->assertSame(Status::FOUND, $response->getStatusCode());
+        $expectedLoggerMessages = [
+            [
+                'level' => 'debug',
+                'message' => "Locale '$expectedLocale' found in query string",
+                'context' => [],
+            ],
+        ];
+        $this->assertSame($expectedLoggerMessages, $this->logger->getMessages());
     }
 
     public function testDetectLocale(): void
@@ -344,7 +403,7 @@ final class LocaleTest extends TestCase
             $translator,
             $urlGenerator,
             $session,
-            new SimpleLogger(),
+            $this->logger,
             new ResponseFactory(),
             $locales,
         );
