@@ -185,6 +185,10 @@ final class HttpCache implements MiddlewareInterface
     private function validateCache(ServerRequestInterface $request, ?int $lastModified, ?string $etag): bool
     {
         if ($request->hasHeader(Header::IF_NONE_MATCH)) {
+            if ($etag === null) {
+                return false;
+            }
+
             $headerParts = preg_split(
                 '/[\s,]+/',
                 str_replace('-gzip', '', $request->getHeaderLine(Header::IF_NONE_MATCH)),
@@ -193,7 +197,7 @@ final class HttpCache implements MiddlewareInterface
 
             // "HTTP_IF_NONE_MATCH" takes precedence over "HTTP_IF_MODIFIED_SINCE".
             // https://tools.ietf.org/html/rfc7232#section-3.3
-            return $etag !== null && in_array($etag, $headerParts, true);
+            return $headerParts !== false && in_array($etag, $headerParts, true);
         }
 
         if ($request->hasHeader(Header::IF_MODIFIED_SINCE)) {
