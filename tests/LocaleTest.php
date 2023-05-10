@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Yiisoft\Yii\Middleware\Tests;
 
 use DateTime;
-use DateTimeImmutable;
 use HttpSoft\Message\Response;
 use HttpSoft\Message\ResponseFactory;
 use HttpSoft\Message\ServerRequest;
