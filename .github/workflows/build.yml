@@ -25,6 +25,7 @@ jobs:
   phpunit:
     uses: yiisoft/actions/.github/workflows/phpunit.yml@master
     with:
+      extensions: uopz
       os: >-
         ['ubuntu-latest', 'windows-latest']
       php: >-

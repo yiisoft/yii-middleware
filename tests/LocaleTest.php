@@ -14,6 +14,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use SlopeIt\ClockMock\ClockMock;
 use Yiisoft\Cookies\CookieCollection;
 use Yiisoft\Http\Header;
 use Yiisoft\Http\Method;
@@ -36,6 +37,17 @@ final class LocaleTest extends TestCase
     {
         $this->locale = null;
         $this->lastRequest = null;
+
+        if (str_starts_with($this->getName(), 'testSaveLocale')) {
+            ClockMock::freeze(new DateTime('2023-05-10 08:24:39'));
+        }
+    }
+
+    public function tearDown(): void
+    {
+        if (str_starts_with($this->getName(), 'testSaveLocale')) {
+            ClockMock::reset();
+        }
     }
 
     public function testImmutability(): void
@@ -147,9 +159,30 @@ final class LocaleTest extends TestCase
         $cookie = $cookies['_language'];
         $this->assertSame('_language', $cookie->getName());
         $this->assertSame('uz', $cookie->getValue());
-        $this->assertInstanceOf(DateTimeImmutable::class, $cookie->getExpires());
-        $this->assertGreaterThan(new DateTime('now'), $cookie->getExpires());
+        $this->assertEquals(new DateTime('2023-06-09 08:24:39'), $cookie->getExpires());
         $this->assertFalse($cookie->isSecure());
+    }
+
+    public function testSaveLocaleWithCustomArguments(): void
+    {
+        $request = $this->createRequest('/uz');
+        $middleware = $this
+            ->createMiddleware(['uz' => 'uz-UZ'])
+            ->withSecureCookie(true)
+            ->withCookieDuration(new DateInterval('P31D'));
+
+        $response = $this->process($middleware, $request);
+
+        $this->assertSame('uz', $this->locale);
+
+        $cookies = CookieCollection::fromResponse($response)->toArray();
+        $this->assertArrayHasKey('_language', $cookies);
+
+        $cookie = $cookies['_language'];
+        $this->assertSame('_language', $cookie->getName());
+        $this->assertSame('uz', $cookie->getValue());
+        $this->assertEquals(new DateTime('2023-06-10 08:24:39'), $cookie->getExpires());
+        $this->assertTrue($cookie->isSecure());
     }
 
     public function testSavedLocale(): void

@@ -350,4 +350,16 @@ final class Locale implements MiddlewareInterface
         $new->secureCookie = $secure;
         return $new;
     }
+
+    /**
+     * Return new instance with changed cookie duration.
+     *
+     * @param DateInterval $cookieDuration Locale cookie lifetime.
+     */
+    public function withCookieDuration(DateInterval $cookieDuration): self
+    {
+        $new = clone $this;
+        $new->cookieDuration = $cookieDuration;
+        return $new;
+    }
 }
