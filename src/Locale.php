@@ -215,8 +215,9 @@ final class Locale implements MiddlewareInterface
     private function parseLocale(string $locale): string
     {
         foreach (self::LOCALE_SEPARATORS as $separator) {
-            if (str_contains($locale, $separator)) {
-                return explode($separator, $locale, 2)[0];
+            $separatorPosition = strpos($locale, $separator);
+            if ($separatorPosition !== false) {
+                return substr($locale, 0, $separatorPosition);
             }
         }
 

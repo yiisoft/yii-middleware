@@ -119,7 +119,7 @@ final class LocaleTest extends TestCase
     public function dataDefaultLocaleAndMultipleSupportedLocales(): array
     {
         return [
-            'without URI prefix' => ['', '/home'],
+            'basic' => ['', '/home'],
             'with URI prefix' => ['/api', '/api/home'],
             'with URI prefix, trailing slash' => ['/api/', '/api/home'],
         ];
@@ -331,25 +331,32 @@ final class LocaleTest extends TestCase
     public function dataDetectLocale(): array
     {
         return [
-            'without URI prefix' => ['', '/uz'],
-            'with URI prefix' => ['/api', '/api/uz'],
-            'with URI prefix, trailing slash' => ['/api/', '/api/uz'],
+            'basic' => ['uz', 'uz-UZ', '', '/uz'],
+            'locale with more than separator' => ['zh', 'zh-Hant-TW', '', '/zh'],
+            'locale without separator' => ['uz', 'uz', '', '/uz'],
+            'with URI prefix' => ['uz', 'uz-UZ', '/api', '/api/uz'],
+            'with URI prefix, trailing slash' => ['uz', 'uz-UZ', '/api/', '/api/uz'],
         ];
     }
 
     /**
      * @dataProvider dataDetectLocale
      */
-    public function testDetectLocale(string $uriPrefix, string $expectedLocationHeaderValue): void
+    public function testDetectLocale(
+        string $shortLocale,
+        string $fullLocale,
+        string $uriPrefix,
+        string $expectedLocationHeaderValue,
+    ): void
     {
-        $request = $this->createRequest($uri = '/', headers: [Header::ACCEPT_LANGUAGE => 'uz-UZ']);
-        $middleware = $this->createMiddleware(['uz' => 'uz-UZ'])->withDetectLocale(true);
+        $request = $this->createRequest($uri = '/', headers: [Header::ACCEPT_LANGUAGE => $fullLocale]);
+        $middleware = $this->createMiddleware([$shortLocale => $fullLocale])->withDetectLocale(true);
         $this->uriPrefix = $uriPrefix;
 
         $response = $this->process($middleware, $request);
 
-        $this->assertSame('uz-UZ', $this->translatorLocale);
-        $this->assertSame('uz', $this->urlGeneratorLocale);
+        $this->assertSame($fullLocale, $this->translatorLocale);
+        $this->assertSame($shortLocale, $this->urlGeneratorLocale);
         $this->assertSame($expectedLocationHeaderValue . $uri, $response->getHeaderLine(Header::LOCATION));
         $this->assertSame(Status::FOUND, $response->getStatusCode());
     }
