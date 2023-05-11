@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Yiisoft\Yii\Middleware\Tests;
 
+use DateInterval;
+use DateTime;
 use HttpSoft\Message\Response;
 use HttpSoft\Message\ResponseFactory;
 use HttpSoft\Message\ServerRequest;
@@ -11,6 +13,8 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use SlopeIt\ClockMock\ClockMock;
+use Yiisoft\Cookies\CookieCollection;
 use Yiisoft\Http\Header;
 use Yiisoft\Http\Method;
 use Yiisoft\Http\Status;
@@ -32,6 +36,17 @@ final class LocaleTest extends TestCase
     {
         $this->locale = null;
         $this->lastRequest = null;
+
+        if (str_starts_with($this->getName(), 'testSaveLocale')) {
+            ClockMock::freeze(new DateTime('2023-05-10 08:24:39'));
+        }
+    }
+
+    public function tearDown(): void
+    {
+        if (str_starts_with($this->getName(), 'testSaveLocale')) {
+            ClockMock::reset();
+        }
     }
 
     public function testImmutability(): void
@@ -72,7 +87,7 @@ final class LocaleTest extends TestCase
 
     public function testDefaultLocaleWithCountry(): void
     {
-        $request = $this->createRequest($uri = '/uz');
+        $request = $this->createRequest('/uz');
         $middleware = $this->createMiddleware(['uz' => 'uz-UZ'])->withDefaultLocale('uz-UZ');
 
         $response = $this->process($middleware, $request);
@@ -85,7 +100,7 @@ final class LocaleTest extends TestCase
     public function testWithoutLocales(): void
     {
         $request = $this->createRequest($uri = '/ru');
-        $middleware = $this->createMiddleware([]);
+        $middleware = $this->createMiddleware();
 
         $this->process($middleware, $request);
 
@@ -95,7 +110,7 @@ final class LocaleTest extends TestCase
 
     public function testDefaultLocaleWithLocales(): void
     {
-        $request = $this->createRequest($uri = '/ru/home');
+        $request = $this->createRequest('/ru/home');
         $middleware = $this->createMiddleware(['en' => 'en-US', 'ru' => 'ru-RU'])->withDefaultLocale('ru');
 
         $response = $this->process($middleware, $request);
@@ -104,65 +119,69 @@ final class LocaleTest extends TestCase
         $this->assertSame('/home', $response->getHeaderLine(Header::LOCATION));
     }
 
-    public function testLocale(): void
+    public function dataLocale(): array
     {
-        $request = $this->createRequest($uri = '/uz');
-        $middleware = $this->createMiddleware(['uz' => 'uz-UZ']);
-
-        $this->process($middleware, $request);
-
-        $this->assertSame($uri, $this->getRequestPath());
+        return [
+            'basic' => ['/uz', ['uz' => 'uz-UZ']],
+            'with dash' => ['/uz-UZ', ['uz' => 'uz-UZ']],
+            'with underscore' => ['/uz_UZ', ['uz' => 'uz_UZ']],
+            'without country' => ['/uz', ['uz' => 'uz']],
+            'with subtags' => ['/en_us', ['en_us' => 'en-US', 'en_gb' => 'en-GB']],
+        ];
     }
 
-    public function testLocaleWithDash(): void
+    /**
+     * @dataProvider dataLocale
+     */
+    public function testLocale(string $requestUri, array $locales): void
     {
-        $request = $this->createRequest($uri = '/uz-UZ');
-        $middleware = $this->createMiddleware(['uz' => 'uz-UZ']);
+        $request = $this->createRequest($requestUri);
+        $middleware = $this->createMiddleware($locales);
 
         $this->process($middleware, $request);
 
-        $this->assertSame($uri, $this->getRequestPath());
-    }
-
-    public function testLocaleWithUnderscore(): void
-    {
-        $request = $this->createRequest($uri = '/uz_UZ');
-        $middleware = $this->createMiddleware(['uz' => 'uz_UZ']);
-
-        $this->process($middleware, $request);
-
-        $this->assertSame($uri, $this->getRequestPath());
-    }
-
-    public function testLocaleWithoutCountry(): void
-    {
-        $request = $this->createRequest($uri = '/uz');
-        $middleware = $this->createMiddleware(['uz' => 'uz']);
-
-        $this->process($middleware, $request);
-
-        $this->assertSame($uri, $this->getRequestPath());
-    }
-
-    public function testLocaleWithSubtags(): void
-    {
-        $request = $this->createRequest($uri = '/en_us');
-        $middleware = $this->createMiddleware(['en_us' => 'en-US', 'en_gb' => 'en-GB']);
-
-        $this->process($middleware, $request);
-
-        $this->assertSame($uri, $this->getRequestPath());
+        $this->assertSame($requestUri, $this->getRequestPath());
     }
 
     public function testSaveLocale(): void
     {
-        $request = $this->createRequest($uri = '/uz');
+        $request = $this->createRequest('/uz');
         $middleware = $this->createMiddleware(['uz' => 'uz-UZ']);
 
         $response = $this->process($middleware, $request);
 
         $this->assertSame('uz', $this->locale);
-        $this->assertStringContainsString('_language=uz', $response->getHeaderLine(Header::SET_COOKIE));
+
+        $cookies = CookieCollection::fromResponse($response)->toArray();
+        $this->assertArrayHasKey('_language', $cookies);
+
+        $cookie = $cookies['_language'];
+        $this->assertSame('_language', $cookie->getName());
+        $this->assertSame('uz', $cookie->getValue());
+        $this->assertEquals(new DateTime('2023-06-09 08:24:39'), $cookie->getExpires());
+        $this->assertFalse($cookie->isSecure());
+    }
+
+    public function testSaveLocaleWithCustomArguments(): void
+    {
+        $request = $this->createRequest('/uz');
+        $middleware = $this
+            ->createMiddleware(['uz' => 'uz-UZ'])
+            ->withSecureCookie(true)
+            ->withCookieDuration(new DateInterval('P31D'));
+
+        $response = $this->process($middleware, $request);
+
+        $this->assertSame('uz', $this->locale);
+
+        $cookies = CookieCollection::fromResponse($response)->toArray();
+        $this->assertArrayHasKey('_language', $cookies);
+
+        $cookie = $cookies['_language'];
+        $this->assertSame('_language', $cookie->getName());
+        $this->assertSame('uz', $cookie->getValue());
+        $this->assertEquals(new DateTime('2023-06-10 08:24:39'), $cookie->getExpires());
+        $this->assertTrue($cookie->isSecure());
     }
 
     public function testSavedLocale(): void
@@ -225,7 +244,7 @@ final class LocaleTest extends TestCase
 
     public function testLocaleWithOtherMethod(): void
     {
-        $request = $this->createRequest($uri = '/', Method::POST, queryParams: ['_language' => 'uz']);
+        $request = $this->createRequest('/', Method::POST, queryParams: ['_language' => 'uz']);
         $middleware = $this->createMiddleware(['uz' => 'uz-UZ']);
 
         $response = $this->process($middleware, $request);
@@ -268,7 +287,7 @@ final class LocaleTest extends TestCase
         return $uri->getPath() . ($uri->getQuery() !== '' ? '?' . $uri->getQuery() : '');
     }
 
-    private function createMiddleware(array $locales = [], bool $secure = false): Locale
+    private function createMiddleware(array $locales = []): Locale
     {
         $translator = $this->createMock(TranslatorInterface::class);
         $translator
@@ -300,13 +319,15 @@ final class LocaleTest extends TestCase
             ->willReturnReference($this->prefix);
 
         $session = $this->createMock(SessionInterface::class);
-        $session->method('set')
-                ->willReturnCallback(function ($name, $value) {
-                    $this->session[$name] = $value;
-                });
+        $session
+            ->method('set')
+            ->willReturnCallback(function ($name, $value) {
+                $this->session[$name] = $value;
+            });
 
-        $session->method('get')
-                ->willReturnCallback(fn ($name) => $this->session[$name]);
+        $session
+            ->method('get')
+            ->willReturnCallback(fn ($name) => $this->session[$name]);
 
         return new Locale(
             $translator,
@@ -315,8 +336,6 @@ final class LocaleTest extends TestCase
             new SimpleLogger(),
             new ResponseFactory(),
             $locales,
-            [],
-            $secure
         );
     }
 

@@ -9,6 +9,7 @@ use HttpSoft\Message\ServerRequest;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Yiisoft\Http\Header;
 use Yiisoft\Http\Method;
 use Yiisoft\Http\Status;
 use Yiisoft\Yii\Middleware\HttpCache;
@@ -34,7 +35,7 @@ final class HttpCacheTest extends TestCase
         $middleware = $this->createMiddlewareWithLastModified($time + 1);
 
         $headers = [
-            'If-Modified-Since' => gmdate('D, d M Y H:i:s', $time) . 'GMT',
+            Header::IF_MODIFIED_SINCE => $this->formatTime($time - 1),
         ];
 
         $response = $middleware->process(
@@ -45,14 +46,25 @@ final class HttpCacheTest extends TestCase
         $this->assertSame(Status::OK, $response->getStatusCode());
     }
 
-    public function testResultWithEtag(): void
+    public function dataModifiedResultWithEtag(): array
     {
-        // Modified result
+        $etagSeed = 'test-etag';
+        $expectedEtag = '"IMPoQ2/Us52fJk3jpOZtEACPlVA"';
 
-        $etag = 'test-etag';
-        $middleware = $this->createMiddlewareWithETag($etag);
+        return [
+            [$etagSeed, $etagSeed, $expectedEtag],
+            [$etagSeed, '', $expectedEtag],
+        ];
+    }
+
+    /**
+     * @dataProvider dataModifiedResultWithEtag
+     */
+    public function testModifiedResultWithEtag(string $etagSeed, string $etagHeaderValue, string $expectedEtag): void
+    {
+        $middleware = $this->createMiddlewareWithETag($etagSeed);
         $headers = [
-            'If-None-Match' => $etag,
+            Header::IF_NONE_MATCH => $etagHeaderValue,
         ];
         $response = $middleware->process(
             $this->createServerRequest(Method::GET, $headers),
@@ -60,14 +72,28 @@ final class HttpCacheTest extends TestCase
         );
 
         $this->assertSame(Status::OK, $response->getStatusCode());
+        $this->assertSame($response->getHeaderLine('Etag'), $expectedEtag);
+    }
 
-        $etagHeaderValue = '"IMPoQ2/Us52fJk3jpOZtEACPlVA"';
-        $this->assertSame($response->getHeaderLine('Etag'), $etagHeaderValue);
+    public function dataNotModifiedResultWithEtag(): array
+    {
+        $etagSeed = 'test-etag';
+        $etagValue = 'IMPoQ2/Us52fJk3jpOZtEACPlVA';
 
-        // Not modified result
+        return [
+            [$etagSeed, "\"$etagValue\""],
+            [$etagSeed, "\"$etagValue-gzip\""],
+        ];
+    }
 
+    /**
+     * @dataProvider dataNotModifiedResultWithEtag
+     */
+    public function testNotModifiedResultWIthEtag(string $etagSeed, string $etagHeaderValue): void
+    {
+        $middleware = $this->createMiddlewareWithETag($etagSeed);
         $headers = [
-            'If-None-Match' => $etagHeaderValue,
+            Header::IF_NONE_MATCH => $etagHeaderValue,
         ];
         $response = $middleware->process(
             $this->createServerRequest(Method::GET, $headers),
@@ -83,7 +109,7 @@ final class HttpCacheTest extends TestCase
         $etag = 'test-etag';
         $middleware = $this->createMiddlewareWithETag($etag)->withWeakEtag();
         $headers = [
-            'If-None-Match' => $etag,
+            Header::IF_NONE_MATCH => $etag,
         ];
         $response = $middleware->process(
             $this->createServerRequest(Method::GET, $headers),
@@ -94,15 +120,50 @@ final class HttpCacheTest extends TestCase
         $this->assertSame($response->getHeaderLine('Etag'), 'W/"IMPoQ2/Us52fJk3jpOZtEACPlVA"');
     }
 
-    public function testNotModifiedResultWithLastModified(): void
+    public function dataNotModifiedResultWithLastModified(): array
     {
         $time = time();
-        $middleware = $this->createMiddlewareWithLastModified($time - 1);
+        $ifModifiedSince = $this->formatTime($time);
+
+        return [
+            [
+                $time - 1,
+                null,
+                $ifModifiedSince,
+                $this->formatTime($time - 1),
+            ],
+            [
+                $time - 1,
+                'test-etag',
+                $ifModifiedSince,
+                '',
+            ],
+            [
+                $time,
+                'test-etag',
+                $ifModifiedSince,
+                '',
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider dataNotModifiedResultWithLastModified
+     */
+    public function testNotModifiedResultWithLastModified(
+        int $lastModified,
+        ?string $etagSeed,
+        string $ifModifiedSince,
+        string $expectedLastModified,
+    ): void {
+        $middleware = $this->createMiddlewareWithLastModified($lastModified);
+        if ($etagSeed !== null) {
+            $middleware = $middleware->withEtagSeed(fn () => $etagSeed);
+        }
 
         $headers = [
-            'If-Modified-Since' => gmdate('D, d M Y H:i:s', $time) . ' GMT',
+            Header::IF_MODIFIED_SINCE => $ifModifiedSince,
         ];
-
         $response = $middleware->process(
             $this->createServerRequest(Method::GET, $headers),
             $this->createRequestHandler(),
@@ -110,7 +171,25 @@ final class HttpCacheTest extends TestCase
 
         $this->assertSame(Status::NOT_MODIFIED, $response->getStatusCode());
         $this->assertEmpty((string) $response->getBody());
-        $this->assertSame(gmdate('D, d M Y H:i:s', $time - 1) . ' GMT', $response->getHeaderLine('Last-Modified'));
+        $this->assertSame($expectedLastModified, $response->getHeaderLine('Last-Modified'));
+    }
+
+    public function testModifiedResultWithLastModifiedAndEmptyIfNoneMatchHeader(): void
+    {
+        $time = time();
+        $middleware = $this->createMiddlewareWithLastModified($time - 1);
+
+        $headers = [
+            Header::IF_NONE_MATCH => '',
+        ];
+        $response = $middleware->process(
+            $this->createServerRequest(Method::GET, $headers),
+            $this->createRequestHandler(),
+        );
+
+        $this->assertSame(Status::OK, $response->getStatusCode());
+        $this->assertEmpty((string) $response->getBody());
+        $this->assertSame($this->formatTime($time - 1), $response->getHeaderLine('Last-Modified'));
     }
 
     public function testEmptyIfNoneMatchAndIfModifiedSinceHeaders(): void
@@ -167,5 +246,10 @@ final class HttpCacheTest extends TestCase
         }
 
         return $request;
+    }
+
+    private function formatTime(int $time): string
+    {
+        return gmdate('D, d M Y H:i:s', $time) . ' GMT';
     }
 }

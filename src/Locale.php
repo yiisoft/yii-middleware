@@ -29,13 +29,18 @@ final class Locale implements MiddlewareInterface
 {
     private const DEFAULT_LOCALE = 'en';
     private const DEFAULT_LOCALE_NAME = '_language';
+    private const LOCALE_SEPARATORS = ['-', '_'];
 
     private bool $saveLocale = true;
     private bool $detectLocale = false;
     private string $defaultLocale = self::DEFAULT_LOCALE;
     private string $queryParameterName = self::DEFAULT_LOCALE_NAME;
     private string $sessionName = self::DEFAULT_LOCALE_NAME;
-    private ?DateInterval $cookieDuration;
+    private DateInterval $cookieDuration;
+    /**
+     * @psalm-var array<string, string>
+     */
+    private array $supportedLocales;
 
     /**
      * @param TranslatorInterface $translator Translator instance to set locale for.
@@ -45,7 +50,10 @@ final class Locale implements MiddlewareInterface
      * @param ResponseFactoryInterface $responseFactory Response factory used to create redirect responses.
      * @param array $supportedLocales List of supported locales in key-value format such as `['ru' => 'ru_RU', 'uz' => 'uz_UZ']`.
      * @param string[] $ignoredRequestUrlPatterns {@see WildcardPattern Patterns} for ignoring requests with URLs matching.
-     * @param bool $secureCookie Whether middleware should flag locale cookie as "secure."
+     * @param bool $secureCookie Whether middleware should flag locale cookie as "secure". Effective only when
+     * {@see $saveLocale} is set to `true`.
+     * @param ?DateInterval $cookieDuration Locale cookie lifetime. Effective only when {@see $saveLocale} is set to
+     * `true`. Defaults to 30 days.
      */
     public function __construct(
         private TranslatorInterface $translator,
@@ -53,20 +61,22 @@ final class Locale implements MiddlewareInterface
         private SessionInterface $session,
         private LoggerInterface $logger,
         private ResponseFactoryInterface $responseFactory,
-        private array $supportedLocales = [],
+        array $supportedLocales = [],
         private array $ignoredRequestUrlPatterns = [],
         private bool $secureCookie = false,
+        ?DateInterval $cookieDuration = null,
     ) {
-        $this->cookieDuration = new DateInterval('P30D');
+        $this->cookieDuration = $cookieDuration ?? new DateInterval('P30D');
+
+        $this->assertSupportedLocalesFormat($supportedLocales);
+        $this->supportedLocales = $supportedLocales;
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        if ($this->supportedLocales === []) {
+        if (empty($this->supportedLocales)) {
             return $handler->handle($request);
         }
-
-        $this->assertLocalesFormat();
 
         $uri = $request->getUri();
         $path = $uri->getPath();
@@ -137,10 +147,6 @@ final class Locale implements MiddlewareInterface
     private function getLocaleFromPath(string $path): ?string
     {
         $parts = [];
-        /**
-         * @var string $code
-         * @var string $locale
-         */
         foreach ($this->supportedLocales as $code => $locale) {
             $parts[] = $code;
             $parts[] = $locale;
@@ -202,18 +208,16 @@ final class Locale implements MiddlewareInterface
         $this->logger->debug('Saving found locale to session and cookies.');
         $this->session->set($this->sessionName, $locale);
         $cookie = new Cookie(name: $this->sessionName, value: $locale, secure: $this->secureCookie);
-        if ($this->cookieDuration !== null) {
-            $cookie = $cookie->withMaxAge($this->cookieDuration);
-        }
+        $cookie = $cookie->withMaxAge($this->cookieDuration);
         return $cookie->addToResponse($response);
     }
 
     private function parseLocale(string $locale): string
     {
-        if (str_contains($locale, '-')) {
-            [$locale] = explode('-', $locale, 2);
-        } elseif (str_contains($locale, '_')) {
-            [$locale] = explode('_', $locale, 2);
+        foreach (self::LOCALE_SEPARATORS as $separator) {
+            if (str_contains($locale, $separator)) {
+                return explode($separator, $locale, 2)[0];
+            }
         }
 
         return $locale;
@@ -230,13 +234,13 @@ final class Locale implements MiddlewareInterface
     }
 
     /**
-     * @psalm-assert array<string, string> $this->supportedLocales
+     * @psalm-assert array<string, string> $supportedLocales
      *
      * @throws InvalidLocalesFormatException
      */
-    private function assertLocalesFormat(): void
+    private function assertSupportedLocalesFormat(array $supportedLocales): void
     {
-        foreach ($this->supportedLocales as $code => $locale) {
+        foreach ($supportedLocales as $code => $locale) {
             if (!is_string($code) || !is_string($locale)) {
                 throw new InvalidLocalesFormatException();
             }
@@ -252,9 +256,12 @@ final class Locale implements MiddlewareInterface
      * Return new instance with supported locales specified.
      *
      * @param array $locales List of supported locales in key-value format such as `['ru' => 'ru_RU', 'uz' => 'uz_UZ']`.
+     *
+     * @throws InvalidLocalesFormatException
      */
     public function withSupportedLocales(array $locales): self
     {
+        $this->assertSupportedLocalesFormat($locales);
         $new = clone $this;
         $new->supportedLocales = $locales;
         return $new;
@@ -341,6 +348,18 @@ final class Locale implements MiddlewareInterface
     {
         $new = clone $this;
         $new->secureCookie = $secure;
+        return $new;
+    }
+
+    /**
+     * Return new instance with changed cookie duration.
+     *
+     * @param DateInterval $cookieDuration Locale cookie lifetime.
+     */
+    public function withCookieDuration(DateInterval $cookieDuration): self
+    {
+        $new = clone $this;
+        $new->cookieDuration = $cookieDuration;
         return $new;
     }
 }

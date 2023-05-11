@@ -146,18 +146,18 @@ final class HttpCache implements MiddlewareInterface
             }
         }
 
-        $cacheIsValid = $this->validateCache($request, $lastModified, $etag);
         $response = $handler->handle($request);
-
-        if ($cacheIsValid) {
-            $response = $response->withStatus(Status::NOT_MODIFIED);
-        }
 
         if ($this->cacheControlHeader !== null) {
             $response = $response->withHeader(Header::CACHE_CONTROL, $this->cacheControlHeader);
         }
         if ($etag !== null) {
             $response = $response->withHeader(Header::ETAG, $etag);
+        }
+
+        $cacheIsValid = $this->validateCache($request, $lastModified, $etag);
+        if ($cacheIsValid) {
+            $response = $response->withStatus(Status::NOT_MODIFIED);
         }
 
         /** @see https://tools.ietf.org/html/rfc7232#section-4.1 */
@@ -185,16 +185,19 @@ final class HttpCache implements MiddlewareInterface
     private function validateCache(ServerRequestInterface $request, ?int $lastModified, ?string $etag): bool
     {
         if ($request->hasHeader(Header::IF_NONE_MATCH)) {
-            $header = preg_split(
+            if ($etag === null) {
+                return false;
+            }
+
+            $headerParts = preg_split(
                 '/[\s,]+/',
                 str_replace('-gzip', '', $request->getHeaderLine(Header::IF_NONE_MATCH)),
-                -1,
-                PREG_SPLIT_NO_EMPTY,
+                flags: PREG_SPLIT_NO_EMPTY,
             );
 
             // "HTTP_IF_NONE_MATCH" takes precedence over "HTTP_IF_MODIFIED_SINCE".
             // https://tools.ietf.org/html/rfc7232#section-3.3
-            return $etag !== null && !empty($header) && in_array($etag, $header, true);
+            return $headerParts !== false && in_array($etag, $headerParts, true);
         }
 
         if ($request->hasHeader(Header::IF_MODIFIED_SINCE)) {
