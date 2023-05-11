@@ -126,6 +126,19 @@ final class LocaleTest extends TestCase
         $this->assertSame('/home', $response->getHeaderLine(Header::LOCATION));
     }
 
+    public function testWithDefaultLocaleAndUriPrefix(): void
+    {
+        $request = $this->createRequest('/ru/home');
+        $middleware = $this->createMiddleware(['en' => 'en-US', 'ru' => 'ru-RU'])->withDefaultLocale('ru');
+        $this->prefix = '/api';
+
+        $response = $this->process($middleware, $request);
+
+        $this->assertSame('ru-RU', $this->translatorLocale);
+        $this->assertSame('ru', $this->urlGeneratorLocale);
+        $this->assertSame('/api/home', $response->getHeaderLine(Header::LOCATION));
+    }
+
     public function testDefaultLocaleWithOtherHttpMethod(): void
     {
         $request = $this->createRequest('/ru/home', Method::POST, queryParams: ['_language' => 'ru']);
