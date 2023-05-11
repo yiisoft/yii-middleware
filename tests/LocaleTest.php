@@ -30,7 +30,7 @@ final class LocaleTest extends TestCase
 {
     private ?string $translatorLocale;
     private ?string $urlGeneratorLocale;
-    private string $prefix = '';
+    private string $uriPrefix = '';
     private array $session = [];
     private ?ServerRequestInterface $lastRequest;
     private LoggerInterface $logger;
@@ -39,7 +39,7 @@ final class LocaleTest extends TestCase
     {
         $this->translatorLocale = null;
         $this->urlGeneratorLocale = null;
-        $this->prefix = '';
+        $this->uriPrefix = '';
         $this->session = [];
         $this->lastRequest = null;
         $this->logger = new SimpleLogger();
@@ -134,7 +134,7 @@ final class LocaleTest extends TestCase
     {
         $request = $this->createRequest('/ru/home');
         $middleware = $this->createMiddleware(['en' => 'en-US', 'ru' => 'ru-RU'])->withDefaultLocale('ru');
-        $this->prefix = $uriPrefix;
+        $this->uriPrefix = $uriPrefix;
 
         $response = $this->process($middleware, $request);
 
@@ -339,11 +339,11 @@ final class LocaleTest extends TestCase
     /**
      * @dataProvider dataDetectLocale
      */
-    public function testDetectLocale(string $prefix, string $expectedLocationHeaderValue): void
+    public function testDetectLocale(string $uriPrefix, string $expectedLocationHeaderValue): void
     {
         $request = $this->createRequest($uri = '/', headers: [Header::ACCEPT_LANGUAGE => 'uz-UZ']);
         $middleware = $this->createMiddleware(['uz' => 'uz-UZ'])->withDetectLocale(true);
-        $this->prefix = $prefix;
+        $this->uriPrefix = $uriPrefix;
 
         $response = $this->process($middleware, $request);
 
@@ -431,8 +431,8 @@ final class LocaleTest extends TestCase
         $urlGenerator = $this->createMock(UrlGeneratorInterface::class);
         $urlGenerator
             ->method('setUriPrefix')
-            ->willReturnCallback(function ($prefix) {
-                $this->prefix = $prefix;
+            ->willReturnCallback(function ($name) {
+                $this->uriPrefix = $name;
             });
 
         $urlGenerator
@@ -443,7 +443,7 @@ final class LocaleTest extends TestCase
 
         $urlGenerator
             ->method('getUriPrefix')
-            ->willReturnReference($this->prefix);
+            ->willReturnReference($this->uriPrefix);
 
         $session = $this->createMock(SessionInterface::class);
         $session
