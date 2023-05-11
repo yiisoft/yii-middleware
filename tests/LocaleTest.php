@@ -121,6 +121,7 @@ final class LocaleTest extends TestCase
         return [
             'without URI prefix' => ['', '/home'],
             'with URI prefix' => ['/api', '/api/home'],
+            'with URI prefix, trailing slash' => ['/api/', '/api/home'],
         ];
     }
 
@@ -332,6 +333,7 @@ final class LocaleTest extends TestCase
         return [
             'without URI prefix' => ['', '/uz'],
             'with URI prefix' => ['/api', '/api/uz'],
+            'with URI prefix, trailing slash' => ['/api/', '/api/uz'],
         ];
     }
 
