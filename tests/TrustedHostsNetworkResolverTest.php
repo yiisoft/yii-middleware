@@ -658,8 +658,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
     {
         $middleware = new class (
             new Validator(),
-        ) extends TrustedHostsNetworkResolver
-        {
+        ) extends TrustedHostsNetworkResolver {
             protected function isValidHost(string $host, array $ranges): bool
             {
                 return $host !== '5.5.5.5';
