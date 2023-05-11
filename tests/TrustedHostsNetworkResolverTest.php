@@ -155,8 +155,16 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 ],
                 '5.5.5.5',
             ],
-            'rfc7239, level 4, contains invalid IP' => [
-                ['forwarded' => ['for=invalid9.9.9.9', 'for=5.5.5.5', 'for=2.2.2.2']],
+            'rfc7239, level 4, contains invalid IPs' => [
+                [
+                    'forwarded' => [
+                        'for=invalid9.9.9.9',
+                        'for=9.9.9.9/11', // With subnet
+                        'for=!9.9.9.9/32', // With negation
+                        'for=5.5.5.5',
+                        'for=2.2.2.2',
+                    ],
+                ],
                 [
                     [
                         'hosts' => ['8.8.8.8', '127.0.0.1', '2.2.2.2'],
