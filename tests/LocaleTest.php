@@ -328,6 +328,7 @@ final class LocaleTest extends TestCase
     {
         $request = $this->createRequest($uri = '/');
         $middleware = $this->createMiddleware(['uz' => 'uz-UZ'])->withDetectLocale(true);
+        $this->urlGeneratorLocale = 'uz';
 
         $response = $this->process($middleware, $request);
 
