@@ -130,8 +130,7 @@ final class LocaleTest extends TestCase
     public function testWithDefaultLocaleAndMultipleSupportedLocales(
         string $uriPrefix,
         string $expectedLocationHeaderValue,
-    ): void
-    {
+    ): void {
         $request = $this->createRequest('/ru/home');
         $middleware = $this->createMiddleware(['en' => 'en-US', 'ru' => 'ru-RU'])->withDefaultLocale('ru');
         $this->prefix = $uriPrefix;
