@@ -39,6 +39,8 @@ final class LocaleTest extends TestCase
     {
         $this->translatorLocale = null;
         $this->urlGeneratorLocale = null;
+        $this->prefix = '';
+        $this->session = [];
         $this->lastRequest = null;
         $this->logger = new SimpleLogger();
 
@@ -114,29 +116,31 @@ final class LocaleTest extends TestCase
         $this->assertSame(Status::FOUND, $response->getStatusCode());
     }
 
-    public function testWithDefaultLocaleAndMultipleSupportedLocales(): void
+    public function dataDefaultLocaleAndMultipleSupportedLocales(): array
     {
-        $request = $this->createRequest('/ru/home');
-        $middleware = $this->createMiddleware(['en' => 'en-US', 'ru' => 'ru-RU'])->withDefaultLocale('ru');
-
-        $response = $this->process($middleware, $request);
-
-        $this->assertSame('ru-RU', $this->translatorLocale);
-        $this->assertSame('ru', $this->urlGeneratorLocale);
-        $this->assertSame('/home', $response->getHeaderLine(Header::LOCATION));
+        return [
+            'without URI prefix' => ['', '/home'],
+            'with URI prefix' => ['/api', '/api/home'],
+        ];
     }
 
-    public function testWithDefaultLocaleAndUriPrefix(): void
+    /**
+     * @dataProvider dataDefaultLocaleAndMultipleSupportedLocales
+     */
+    public function testWithDefaultLocaleAndMultipleSupportedLocales(
+        string $uriPrefix,
+        string $expectedLocationHeaderValue,
+    ): void
     {
         $request = $this->createRequest('/ru/home');
         $middleware = $this->createMiddleware(['en' => 'en-US', 'ru' => 'ru-RU'])->withDefaultLocale('ru');
-        $this->prefix = '/api';
+        $this->prefix = $uriPrefix;
 
         $response = $this->process($middleware, $request);
 
         $this->assertSame('ru-RU', $this->translatorLocale);
         $this->assertSame('ru', $this->urlGeneratorLocale);
-        $this->assertSame('/api/home', $response->getHeaderLine(Header::LOCATION));
+        $this->assertSame($expectedLocationHeaderValue, $response->getHeaderLine(Header::LOCATION));
     }
 
     public function testDefaultLocaleWithOtherHttpMethod(): void
@@ -324,16 +328,28 @@ final class LocaleTest extends TestCase
         $this->assertSame($expectedLoggerMessages, $this->logger->getMessages());
     }
 
-    public function testDetectLocale(): void
+    public function dataDetectLocale(): array
+    {
+        return [
+            'without URI prefix' => ['', '/uz'],
+            'with URI prefix' => ['/api', '/api/uz'],
+        ];
+    }
+
+    /**
+     * @dataProvider dataDetectLocale
+     */
+    public function testDetectLocale(string $prefix, string $expectedLocationHeaderValue): void
     {
         $request = $this->createRequest($uri = '/', headers: [Header::ACCEPT_LANGUAGE => 'uz-UZ']);
         $middleware = $this->createMiddleware(['uz' => 'uz-UZ'])->withDetectLocale(true);
+        $this->prefix = $prefix;
 
         $response = $this->process($middleware, $request);
 
         $this->assertSame('uz-UZ', $this->translatorLocale);
         $this->assertSame('uz', $this->urlGeneratorLocale);
-        $this->assertSame('/uz' . $uri, $response->getHeaderLine(Header::LOCATION));
+        $this->assertSame($expectedLocationHeaderValue . $uri, $response->getHeaderLine(Header::LOCATION));
         $this->assertSame(Status::FOUND, $response->getStatusCode());
     }
 
