@@ -347,8 +347,7 @@ final class LocaleTest extends TestCase
         string $fullLocale,
         string $uriPrefix,
         string $expectedLocationHeaderValue,
-    ): void
-    {
+    ): void {
         $request = $this->createRequest($uri = '/', headers: [Header::ACCEPT_LANGUAGE => $fullLocale]);
         $middleware = $this->createMiddleware([$shortLocale => $fullLocale])->withDetectLocale(true);
         $this->uriPrefix = $uriPrefix;
