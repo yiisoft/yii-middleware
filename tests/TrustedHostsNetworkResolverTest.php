@@ -155,25 +155,6 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 ],
                 '5.5.5.5',
             ],
-            'rfc7239, level 4, contains invalid IPs' => [
-                [
-                    'forwarded' => [
-                        'for=invalid9.9.9.9',
-                        'for=9.9.9.9/11', // With subnet
-                        'for=!9.9.9.9/32', // With negation
-                        'for=5.5.5.5',
-                        'for=2.2.2.2',
-                    ],
-                ],
-                [
-                    [
-                        'hosts' => ['8.8.8.8', '127.0.0.1', '2.2.2.2'],
-                        'ipHeaders' => [[TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded']],
-                        'trustedHeaders' => ['forwarded'],
-                    ],
-                ],
-                '5.5.5.5',
-            ],
             'rfc7239, level 5, host, protocol' => [
                 ['forwarded' => ['for=9.9.9.9', 'proto=https;for=5.5.5.5;host=test', 'for=2.2.2.2']],
                 [
@@ -370,7 +351,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
         string $expectedHttpScheme = 'http',
         string $expectedPath = '/',
         string $expectedQuery = '',
-        ?int $expectedPort = null
+        ?int $expectedPort = null,
     ): void {
         $request = $this->createRequestWithSchemaAndHeaders(
             headers: $headers,
@@ -629,6 +610,86 @@ final class TrustedHostsNetworkResolverTest extends TestCase
         $this->expectException(RuntimeException::class);
 
         $this->createTrustedHostsNetworkResolver()->withAttributeIps('');
+    }
+
+    public function dataInvalidIpAndForCombination(): array
+    {
+        return [
+            'with subnet' => ['for=5.5.5.5/11'],
+            'with negation' => ['for=!5.5.5.5/32'],
+            'wrong parameter name' => ['test=5.5.5.5'],
+            'missing parameter name' => ['5.5.5.5'],
+        ];
+    }
+
+    /**
+     * @dataProvider dataInvalidIpAndForCombination
+     */
+    public function testInvalidIpAndForCombination(string $invalidIp): void
+    {
+        $middleware = $this->createTrustedHostsNetworkResolver()->withAttributeIps('resolvedIps');
+        $headers = [
+            'forwarded' => [
+                'for=5.5.5.5',
+                $invalidIp,
+                'for=2.2.2.2',
+            ],
+        ];
+        $request = $this->createRequestWithSchemaAndHeaders(
+            headers: $headers,
+            serverParams: ['REMOTE_ADDR' => '127.0.0.1'],
+        );
+        $requestHandler = new MockRequestHandler();
+        $middleware = $middleware->withAddedTrustedHosts(
+            hosts: ['8.8.8.8', '127.0.0.1', '2.2.2.2'],
+            ipHeaders: [[TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded']],
+            trustedHeaders: ['forwarded'],
+        );
+        $response = $middleware->process($request, $requestHandler);
+
+        $this->assertSame(Status::OK, $response->getStatusCode());
+        $this->assertSame(
+            '2.2.2.2',
+            $requestHandler->processedRequest->getAttribute(TrustedHostsNetworkResolver::REQUEST_CLIENT_IP),
+        );
+    }
+
+    public function testOverwrittenIsValidHost(): void
+    {
+        $middleware = new class (
+            new Validator(),
+        ) extends TrustedHostsNetworkResolver
+        {
+            protected function isValidHost(string $host, array $ranges): bool
+            {
+                return $host !== '5.5.5.5';
+            }
+        };
+        $middleware = $middleware->withAttributeIps('resolvedIps');
+        $headers = [
+            'forwarded' => [
+                'for=9.9.9.9',
+                'for=5.5.5.5',
+                'for=2.2.2.2',
+            ],
+        ];
+        $request = $this->createRequestWithSchemaAndHeaders(
+            headers: $headers,
+            serverParams: ['REMOTE_ADDR' => '127.0.0.1'],
+        );
+        $requestHandler = new MockRequestHandler();
+        $middleware = $middleware->withAddedTrustedHosts(
+            hosts: ['8.8.8.8', '127.0.0.1', '2.2.2.2'],
+            ipHeaders: [[TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded']],
+            trustedHeaders: ['forwarded'],
+        );
+        $response = $middleware->process($request, $requestHandler);
+
+        $this->assertSame(Status::OK, $response->getStatusCode());
+        $this->assertSame(
+            '5.5.5.5',
+            $requestHandler->processedRequest->getAttribute(TrustedHostsNetworkResolver::REQUEST_CLIENT_IP),
+        );
     }
 
     public function testImmutability(): void
