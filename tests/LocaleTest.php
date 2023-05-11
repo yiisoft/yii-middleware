@@ -331,7 +331,8 @@ final class LocaleTest extends TestCase
     public function dataDetectLocale(): array
     {
         return [
-            'basic' => ['uz', 'uz-UZ', '', '/uz'],
+            'dash separator' => ['uz', 'uz-UZ', '', '/uz'],
+            'underscore separator' => ['uz', 'uz_UZ', '', '/uz'],
             'locale with more than separator' => ['zh', 'zh-Hant-TW', '', '/zh'],
             'locale without separator' => ['uz', 'uz', '', '/uz'],
             'with URI prefix' => ['uz', 'uz-UZ', '/api', '/api/uz'],
@@ -358,6 +359,23 @@ final class LocaleTest extends TestCase
         $this->assertSame($fullLocale, $this->translatorLocale);
         $this->assertSame($shortLocale, $this->urlGeneratorLocale);
         $this->assertSame($expectedLocationHeaderValue . $uri, $response->getHeaderLine(Header::LOCATION));
+        $this->assertSame(Status::FOUND, $response->getStatusCode());
+    }
+
+    public function testDetectLocaleWithQueryParam(): void
+    {
+        $request = $this->createRequest(
+            $uri = '/',
+            queryParams: ['_language' => 'ru'],
+            headers: [Header::ACCEPT_LANGUAGE => 'uz-UZ'],
+        );
+        $middleware = $this->createMiddleware(['uz' => 'uz-UZ', 'ru' => 'ru-RU'])->withDetectLocale(true);
+
+        $response = $this->process($middleware, $request);
+
+        $this->assertSame('ru-RU', $this->translatorLocale);
+        $this->assertSame('ru', $this->urlGeneratorLocale);
+        $this->assertSame('/ru' . $uri, $response->getHeaderLine(Header::LOCATION));
         $this->assertSame(Status::FOUND, $response->getStatusCode());
     }
 
