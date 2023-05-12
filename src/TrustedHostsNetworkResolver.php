@@ -310,19 +310,12 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
                 }
             }
 
-            $ip = $hostData['ip'];
-
-            if (!$this->isValidHost($ip)) {
-                // Invalid IP.
+            if (!$this->isValidHost($hostData['ip'], $trustedHostData[self::DATA_KEY_HOSTS])) {
+                // Invalid IP or not trusted host.
                 break;
             }
 
             $hostDataList[] = $hostData;
-
-            if (!$this->isValidHost($ip, $trustedHostData[self::DATA_KEY_HOSTS])) {
-                // Not trusted host.
-                break;
-            }
         } while (count($hostList) > 0);
 
         if ($this->attributeIps !== null) {
