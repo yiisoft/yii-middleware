@@ -312,7 +312,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
             $ip = $hostData['ip'];
 
-            if (!$this->isValidHost($ip, ['any'])) {
+            if (!$this->isValidHost($ip)) {
                 // Invalid IP.
                 break;
             }
@@ -430,7 +430,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
      * @param string[] $ranges
      * @psalm-param Closure(string, string[]): Result $validator
      */
-    protected function isValidHost(string $host, array $ranges): bool
+    protected function isValidHost(string $host, array $ranges = []): bool
     {
         return $this
             ->validator

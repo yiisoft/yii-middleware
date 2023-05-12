@@ -660,7 +660,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
             new Validator(),
         ) extends TrustedHostsNetworkResolver
         {
-            protected function isValidHost(string $host, array $ranges): bool
+            protected function isValidHost(string $host, array $ranges = []): bool
             {
                 return $host !== '5.5.5.5';
             }
