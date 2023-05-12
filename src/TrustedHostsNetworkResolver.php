@@ -356,7 +356,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
         // Find protocol.
         /** @psalm-var ProtocolHeadersData $protocolHeadersData */
         $protocolHeadersData = $trustedHostData[self::DATA_KEY_PROTOCOL_HEADERS];
-        foreach ($protocolHeadersData as $protocolHeader => $protocols) {
+        foreach ($protocolHeadersData as $protocolHeader => $protocolMap) {
             if (!$request->hasHeader($protocolHeader)) {
                 continue;
             }
@@ -372,7 +372,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
             $protocolHeaderValue = $request->getHeaderLine($protocolHeader);
 
-            foreach ($protocols as $protocol => $acceptedValues) {
+            foreach ($protocolMap as $protocol => $acceptedValues) {
                 if (in_array($protocolHeaderValue, $acceptedValues, true)) {
                     $uri = $uri->withScheme($protocol);
                     break 2;
@@ -493,17 +493,16 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             $header = strtolower($header);
 
             if (is_callable($protocolAndAcceptedValues)) {
-                $output[$header] = $protocolAndAcceptedValues;
-                continue;
+                $protocolAndAcceptedValues = $protocolAndAcceptedValues();
             }
 
             if (!is_array($protocolAndAcceptedValues)) {
                 throw new InvalidArgumentException(
-                    'Accepted values for protocol headers must be either an array or a callable.',
+                    'Accepted values for protocol headers must be either an array or a callable returning array.',
                 );
             }
 
-            if ($protocolAndAcceptedValues === []) {
+            if (empty($protocolAndAcceptedValues)) {
                 throw new InvalidArgumentException('Accepted values for protocol headers cannot be an empty array.');
             }
 
