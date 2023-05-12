@@ -259,7 +259,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                     'x-rewrite-url' => ['/test?test=test'],
                     'x-forwarded-host' => ['test.another'],
                     'x-forwarded-proto' => ['on'],
-                    'forwarded' => ['for="9.9.9.9:abs"', 'proto=https;for="5.5.5.5:123";host=test', 'for=2.2.2.2']
+                    'forwarded' => ['for="9.9.9.9:abs"', 'proto=https;for="5.5.5.5:123";host=test', 'for=2.2.2.2'],
                 ],
                 [
                     [
