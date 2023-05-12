@@ -692,6 +692,48 @@ final class TrustedHostsNetworkResolverTest extends TestCase
         $this->createTrustedHostsNetworkResolver()->withAttributeIps('');
     }
 
+    public function dataValidIpAndForCombination(): array
+    {
+        return [
+            'ipv4, basic' => ['5.5.5.5'],
+            // 'ipv6, basic' => ['2001:db8:3333:4444:5555:6666:7777:8888'],
+            // 'ipv6, short form notation' => ['::'],
+        ];
+    }
+
+    /**
+     * @dataProvider dataValidIpAndForCombination
+     */
+    public function testValidIpAndForCombination(string $validIp): void
+    {
+        $middleware = $this->createTrustedHostsNetworkResolver()->withAttributeIps('resolvedIps');
+        $headers = [
+            'forwarded' => [
+                'for=9.9.9.9',
+                'for=invalid9.9.9.9',
+                "for=$validIp",
+                'for=2.2.2.2',
+            ],
+        ];
+        $request = $this->createRequestWithSchemaAndHeaders(
+            headers: $headers,
+            serverParams: ['REMOTE_ADDR' => '127.0.0.1'],
+        );
+        $requestHandler = new MockRequestHandler();
+        $middleware = $middleware->withAddedTrustedHosts(
+            hosts: ['8.8.8.8', '127.0.0.1', '2.2.2.2'],
+            ipHeaders: [[TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded']],
+            trustedHeaders: ['forwarded'],
+        );
+        $response = $middleware->process($request, $requestHandler);
+
+        $this->assertSame(Status::OK, $response->getStatusCode());
+        $this->assertSame(
+            $validIp,
+            $requestHandler->processedRequest->getAttribute(TrustedHostsNetworkResolver::REQUEST_CLIENT_IP),
+        );
+    }
+
     public function dataInvalidIpAndForCombination(): array
     {
         return [
@@ -739,36 +781,13 @@ final class TrustedHostsNetworkResolverTest extends TestCase
         $middleware = new class (
             new Validator(),
         ) extends TrustedHostsNetworkResolver {
-            protected function isValidHost(string $host, array $ranges = []): bool
+            public function isValidHost(string $host, array $ranges = []): bool
             {
-                return $host !== '5.5.5.5';
+                return $host === '5.5.5.5' ? false : parent::isValidHost($host, $ranges);
             }
         };
-        $middleware = $middleware->withAttributeIps('resolvedIps');
-        $headers = [
-            'forwarded' => [
-                'for=9.9.9.9',
-                'for=5.5.5.5',
-                'for=2.2.2.2',
-            ],
-        ];
-        $request = $this->createRequestWithSchemaAndHeaders(
-            headers: $headers,
-            serverParams: ['REMOTE_ADDR' => '127.0.0.1'],
-        );
-        $requestHandler = new MockRequestHandler();
-        $middleware = $middleware->withAddedTrustedHosts(
-            hosts: ['8.8.8.8', '127.0.0.1', '2.2.2.2'],
-            ipHeaders: [[TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded']],
-            trustedHeaders: ['forwarded'],
-        );
-        $response = $middleware->process($request, $requestHandler);
-
-        $this->assertSame(Status::OK, $response->getStatusCode());
-        $this->assertSame(
-            '5.5.5.5',
-            $requestHandler->processedRequest->getAttribute(TrustedHostsNetworkResolver::REQUEST_CLIENT_IP),
-        );
+        $this->assertFalse($middleware->isValidHost('5.5.5.5'));
+        $this->assertTrue($middleware->isValidHost('2.2.2.2'));
     }
 
     public function testImmutability(): void
