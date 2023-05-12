@@ -509,9 +509,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
             $output[$header] = [];
 
-            /**
-             * @psalm-var array<string|string[]> $protocolAndAcceptedValues
-             */
+            /** @psalm-var array<string|string[]> $protocolAndAcceptedValues */
             foreach ($protocolAndAcceptedValues as $protocol => $acceptedValues) {
                 if (!is_string($protocol)) {
                     throw new InvalidArgumentException('The protocol must be a string.');
