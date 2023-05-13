@@ -228,27 +228,27 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 '/test',
                 'param1=val1?param2=val2',
             ],
-//            'rfc7239, level 6, host, protocol, url, not IP header' => [
-//                [
-//                    'forwarded' => ['for=9.9.9.9', 'proto=https;for=5.5.5.5;host=test', 'for=2.2.2.2'],
-//                    'x-rewrite-url' => ['/test'],
-//                ],
-//                [
-//                    [
-//                        'hosts' => ['8.8.8.8', '127.0.0.1', '2.2.2.2'],
-//                        'ipHeaders' => [[TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded-custom']],
-//                        'hostHeaders' => ['forwarded', 'forwarded-custom'],
-//                        'protocolHeaders' => ['forwarded' => fn () => ['http' => 'http', 'https' => 'https']],
-//                        'urlHeaders' => ['non-existing-header', 'x-rewrite-url'],
-//                        'trustedHeaders' => ['forwarded', 'forwarded-custom', 'x-rewrite-url'],
-//                    ],
-//                ],
-//                '5.5.5.5',
-//                'test',
-//                'https',
-//                '/test',
-//                '',
-//            ],
+            //            'rfc7239, level 6, host, protocol, url, not IP header' => [
+            //                [
+            //                    'forwarded' => ['for=9.9.9.9', 'proto=https;for=5.5.5.5;host=test', 'for=2.2.2.2'],
+            //                    'x-rewrite-url' => ['/test'],
+            //                ],
+            //                [
+            //                    [
+            //                        'hosts' => ['8.8.8.8', '127.0.0.1', '2.2.2.2'],
+            //                        'ipHeaders' => [[TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded-custom']],
+            //                        'hostHeaders' => ['forwarded', 'forwarded-custom'],
+            //                        'protocolHeaders' => ['forwarded' => fn () => ['http' => 'http', 'https' => 'https']],
+            //                        'urlHeaders' => ['non-existing-header', 'x-rewrite-url'],
+            //                        'trustedHeaders' => ['forwarded', 'forwarded-custom', 'x-rewrite-url'],
+            //                    ],
+            //                ],
+            //                '5.5.5.5',
+            //                'test',
+            //                'https',
+            //                '/test',
+            //                '',
+            //            ],
 
             // Custom host and non-standard protocol value
 
