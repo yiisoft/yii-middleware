@@ -203,7 +203,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
         foreach ($hosts as $host) {
             $host = str_replace('*', 'wildcard', $host); // wildcard is allowed in host
 
-            if (filter_var($host, FILTER_VALIDATE_DOMAIN) === false) {
+            if (filter_var($host, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) === false) {
                 throw new InvalidArgumentException("\"$host\" host must be either a domain or an IP address.");
             }
         }
@@ -310,12 +310,19 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
                 }
             }
 
-            if (!$this->isValidHost($hostData['ip'], $trustedHostData[self::DATA_KEY_HOSTS])) {
-                // Invalid IP or not trusted host.
+            $ip = $hostData['ip'];
+
+            if (!$this->isValidHost($ip)) {
+                // Invalid IP.
                 break;
             }
 
             $hostDataList[] = $hostData;
+
+            if (!$this->isValidHost($ip, $trustedHostData[self::DATA_KEY_HOSTS])) {
+                // Not trusted host.
+                break;
+            }
         } while (count($hostList) > 0);
 
         if ($this->attributeIps !== null) {
@@ -354,20 +361,20 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
                 continue;
             }
 
-            if (
-                $protocolHeader === $ipHeader
-                && $ipListType === self::IP_HEADER_TYPE_RFC7239
-                && isset($hostData['protocol'])
-            ) {
-                $uri = $uri->withScheme($hostData['protocol']);
-                break;
-            }
+            if ($protocolHeader === $ipHeader && $ipListType === self::IP_HEADER_TYPE_RFC7239) {
+                if (!isset($hostData['protocol'])) {
+                    continue;
+                }
 
-            $protocolHeaderValue = $request->getHeaderLine($protocolHeader);
+                $protocolHeaderValue = $hostData['protocol'];
+            } else {
+                $protocolHeaderValue = $request->getHeaderLine($protocolHeader);
+            }
 
             foreach ($protocolMap as $protocol => $acceptedValues) {
                 if (in_array($protocolHeaderValue, $acceptedValues, true)) {
                     $uri = $uri->withScheme($protocol);
+
                     break 2;
                 }
             }
