@@ -250,9 +250,9 @@ final class TrustedHostsNetworkResolverTest extends TestCase
 //                '',
 //            ],
 
-            // Custom host and non-standard protocol value
+            // Custom host, url and non-standard protocol value
 
-            'rfc7239, level 7, another host, another protocol, url' => [
+            'rfc7239, level 7, another host, another protocol (prioritized), url, case insensitive protocol headers' => [
                 [
                     'forwarded' => ['for=9.9.9.9', 'proto=http;for=5.5.5.5;host=test', 'for=2.2.2.2'],
                     'x-rewrite-url' => ['/test?test=test'],
@@ -265,7 +265,7 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                         'ipHeaders' => [[TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded']],
                         'hostHeaders' => ['x-forwarded-host', 'forwarded'],
                         'protocolHeaders' => [
-                            'front-end-https' => ['https' => 'on'],
+                            'front-end-https' => ['HTTPS' => 'on'],
                             'forwarded' => ['http' => 'http', 'https' => 'https'],
                         ],
                         'urlHeaders' => ['x-rewrite-url'],

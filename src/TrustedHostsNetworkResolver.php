@@ -518,7 +518,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
                     throw new InvalidArgumentException('The protocol must be non-empty string.');
                 }
 
-                $output[$header][$protocol] = array_map('\strtolower', (array) $acceptedValues);
+                $output[$header][$protocol] = (array) $acceptedValues;
             }
         }
 
