@@ -201,7 +201,11 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
         $this->requireListOfNonEmptyStrings($portHeaders, self::DATA_KEY_PORT_HEADERS);
 
         foreach ($hosts as $host) {
-            $host = str_replace('*', 'wildcard', $host); // wildcard is allowed in host
+            /**
+             * Wildcard is allowed in host. It's replaced by placeholder temporarily just for validation, because it's
+             * not supported by {@see filter_var}.
+             */
+            $host = str_replace('*', 'wildcard', $host);
 
             if (filter_var($host, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) === false) {
                 throw new InvalidArgumentException("\"$host\" host must be either a domain or an IP address.");
