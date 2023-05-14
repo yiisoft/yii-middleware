@@ -73,27 +73,27 @@ final class TrustedHostsNetworkResolverTest extends TestCase
                 1234,
             ],
 
-//            'port headers 1' => [
-//                [
-//                    'x-forwarded-for' => ['1234'],
-//                    'forwarded' => ['for=9.9.9.9', 'proto=http;for="5.5.5.5:4321";host=test', 'for=2.2.2.2'],
-//                ],
-//                [
-//                    [
-//                        'hosts' => ['5.5.5.5', '2.2.2.2', '127.0.0.1'],
-//                        'ipHeaders' => [[TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded']],
-//                        'hostHeaders' => ['forwarded'],
-//                        'portHeaders' => ['forwarded', 'x-forwarded-for'],
-//                        'trustedHeaders' => ['forwarded', 'x-forwarded-for'],
-//                    ],
-//                ],
-//                '2.2.2.2',
-//                '',
-//                'http',
-//                '/',
-//                '',
-//                4321,
-//            ],
+            //            'port headers 1' => [
+            //                [
+            //                    'x-forwarded-for' => ['1234'],
+            //                    'forwarded' => ['for=9.9.9.9', 'proto=http;for="5.5.5.5:4321";host=test', 'for=2.2.2.2'],
+            //                ],
+            //                [
+            //                    [
+            //                        'hosts' => ['5.5.5.5', '2.2.2.2', '127.0.0.1'],
+            //                        'ipHeaders' => [[TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded']],
+            //                        'hostHeaders' => ['forwarded'],
+            //                        'portHeaders' => ['forwarded', 'x-forwarded-for'],
+            //                        'trustedHeaders' => ['forwarded', 'x-forwarded-for'],
+            //                    ],
+            //                ],
+            //                '2.2.2.2',
+            //                '',
+            //                'http',
+            //                '/',
+            //                '',
+            //                4321,
+            //            ],
 
             'xForward, level 6' => [
                 ['x-forwarded-proto' => ['https']],
