@@ -312,7 +312,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
             $ip = $hostData['ip'];
 
-            if (!$this->isValidHost($ip, ['any'])) {
+            if (!$this->isValidHost($ip)) {
                 // Invalid IP.
                 break;
             }
@@ -428,15 +428,14 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
      * You can overwrite this method in a subclass to support reverse DNS verification.
      *
      * @param string[] $ranges
-     * @param Closure(string, string[]): Result $validator
+     * @psalm-param Closure(string, string[]): Result $validator
      */
-    protected function isValidHost(string $host, array $ranges): bool
+    protected function isValidHost(string $host, array $ranges = []): bool
     {
-        $result = $this->validator->validate(
-            $host,
-            [new Ip(allowSubnet: false, allowNegation: false, ranges: $ranges)]
-        );
-        return $result->isValid();
+        return $this
+            ->validator
+            ->validate($host, [new Ip(ranges: $ranges)])
+            ->isValid();
     }
 
     /**
@@ -510,9 +509,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
 
             $output[$header] = [];
 
-            /**
-             * @psalm-var array<string|string[]> $protocolAndAcceptedValues
-             */
+            /** @psalm-var array<string|string[]> $protocolAndAcceptedValues */
             foreach ($protocolAndAcceptedValues as $protocol => $acceptedValues) {
                 if (!is_string($protocol)) {
                     throw new InvalidArgumentException('The protocol must be a string.');

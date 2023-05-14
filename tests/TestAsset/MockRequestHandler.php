@@ -20,12 +20,6 @@ final class MockRequestHandler implements RequestHandlerInterface
     {
     }
 
-    public function setHandleException(?Throwable $throwable): self
-    {
-        $this->handleException = $throwable;
-        return $this;
-    }
-
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         if ($this->handleException !== null) {
