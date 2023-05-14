@@ -297,40 +297,54 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
             $hostList = $this->getFormattedIpList($hostList);
         }
 
-        array_unshift($hostList, ['ip' => $actualHost]); // Move server's IP to the first position.
-        $hostDataList = [];
+        $hostData = ['ip' => $actualHost];
+        array_unshift($hostList, $hostData); // Move server's IP to the first position.
+        $hostDataListRemaining = $hostList;
+        $hostDataListValidated = [];
+        $hostsCount = 0;
 
         do {
-            $hostData = array_shift($hostList);
-            if (!isset($hostData['ip'])) {
-                $hostData = $this->reverseObfuscate($hostData, $hostDataList, $hostList, $request);
+            $hostsCount++;
 
-                if ($hostData === null) {
+            $rawHostData = array_shift($hostDataListRemaining);
+            if (!isset($rawHostData['ip'])) {
+                $rawHostData = $this->reverseObfuscate(
+                    $rawHostData,
+                    $hostDataListValidated,
+                    $hostDataListRemaining,
+                    $request,
+                );
+                if ($rawHostData === null) {
                     continue;
                 }
 
-                if (!isset($hostData['ip'])) {
+                if (!isset($rawHostData['ip'])) {
                     break;
                 }
             }
 
-            $ip = $hostData['ip'];
-
+            $ip = $rawHostData['ip'];
             if (!$this->isValidHost($ip)) {
                 // Invalid IP.
                 break;
             }
 
-            $hostDataList[] = $hostData;
+            if ($hostsCount >= 3) {
+                $hostData = $rawHostData;
+            }
+
+            $hostDataListValidated[] = $hostData;
 
             if (!$this->isValidHost($ip, $trustedHostData[self::DATA_KEY_HOSTS])) {
                 // Not trusted host.
                 break;
             }
-        } while (count($hostList) > 0);
+
+            $hostData = $rawHostData;
+        } while (count($hostDataListRemaining) > 0);
 
         if ($this->attributeIps !== null) {
-            $request = $request->withAttribute($this->attributeIps, $hostDataList);
+            $request = $request->withAttribute($this->attributeIps, $hostDataListValidated);
         }
 
         $uri = $request->getUri();
@@ -340,19 +354,19 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
                 continue;
             }
 
-            if (
-                $hostHeader === $ipHeader
-                && $ipListType === self::IP_HEADER_TYPE_RFC7239
-                && isset($hostData['httpHost'])
-            ) {
-                $uri = $uri->withHost($hostData['httpHost']);
-                break;
-            }
+            if ($hostHeader === $ipHeader && $ipListType === self::IP_HEADER_TYPE_RFC7239) {
+                if (!isset($hostData['httpHost'])) {
+                    continue;
+                }
 
-            $host = $request->getHeaderLine($hostHeader);
+                $host = $hostData['httpHost'];
+            } else {
+                $host = $request->getHeaderLine($hostHeader);
+            }
 
             if (filter_var($host, FILTER_VALIDATE_DOMAIN) !== false) {
                 $uri = $uri->withHost($host);
+
                 break;
             }
         }
