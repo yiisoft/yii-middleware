@@ -49,10 +49,10 @@ final class Locale implements MiddlewareInterface
      * @param ResponseFactoryInterface $responseFactory Response factory used to create redirect responses.
      * @param array $supportedLocales List of supported locales in key-value format such as `['ru' => 'ru_RU', 'uz' => 'uz_UZ']`.
      * @param string[] $ignoredRequestUrlPatterns {@see WildcardPattern Patterns} for ignoring requests with URLs matching.
-     * @param bool $secureCookie Whether middleware should flag locale cookie as "secure". Effective only when
-     * {@see $saveLocale} is set to `true`.
      * @param ?DateInterval $cookieDuration Locale cookie lifetime. Effective only when {@see $saveLocale} is set to
      * `true`. `null` disables saving locale to cookies completely.
+     * @param bool $secureCookie Whether middleware should flag locale cookie as "secure". Effective only when
+     * {@see $saveLocale} is set to `true` and {@see $cookieDuration} is not `null`.
      */
     public function __construct(
         private TranslatorInterface $translator,
@@ -79,69 +79,59 @@ final class Locale implements MiddlewareInterface
         $path = $uri->getPath();
         $query = $uri->getQuery();
 
-        $locale = $this->getLocaleFromPath($path);
-
+        $locale = $this->getLocaleFromUriPath($path);
         if ($locale !== null) {
-            $this->translator->setLocale($this->supportedLocales[$locale]);
-            $this->urlGenerator->setDefaultArgument($this->queryParameterName, $locale);
-
             $response = $handler->handle($request);
-            $newPath = null;
+
             if ($this->isDefaultLocale($locale) && $request->getMethod() === Method::GET) {
                 $length = strlen($locale);
-                $newPath = substr($path, $length + 1);
+                $newPath = substr($path, $length + 1) ?: '/';
+                $location = $this->getBaseUrl() . $newPath . ($query !== '' ? '?' . $query : '');
+                $response = $this
+                    ->responseFactory
+                    ->createResponse(Status::FOUND)
+                    ->withHeader(Header::LOCATION, $location);
             }
-            return $this->applyLocaleFromPath($locale, $response, $query, $newPath);
-        }
-        if ($this->saveLocale) {
-            $locale = $this->getLocaleFromRequest($request);
-        }
-        if ($locale === null && $this->detectLocale) {
-            $locale = $this->detectLocale($request);
-        }
-        if ($locale === null || $this->isDefaultLocale($locale) || $this->isRequestIgnored($request)) {
-            $this->urlGenerator->setDefaultArgument($this->queryParameterName, null);
-            $request = $request->withUri($uri->withPath('/' . $this->defaultLocale . $path));
-            return $handler->handle($request);
+        } else {
+            $locale = $this->getLocaleFromQueryParams($request->getQueryParams());
+            if ($locale === null) {
+                $locale = $this->getLocaleFromCookies($request->getCookieParams());
+            }
+
+            if ($locale === null && $this->detectLocale) {
+                $locale = $this->detectLocale($request);
+            }
+
+            if ($locale === null || $this->isDefaultLocale($locale) || $this->isRequestIgnored($request)) {
+                $this->urlGenerator->setDefaultArgument($this->queryParameterName, null);
+                $request = $request->withUri($uri->withPath('/' . $this->defaultLocale . $path));
+
+                return $handler->handle($request);
+            }
+
+            if ($request->getMethod() === Method::GET) {
+                $location = $this->getBaseUrl() . '/' . $locale . $path . ($query !== '' ? '?' . $query : '');
+                $response = $this
+                    ->responseFactory
+                    ->createResponse(Status::FOUND)
+                    ->withHeader(Header::LOCATION, $location);
+            } else {
+                $response = $handler->handle($request);
+            }
         }
 
+        /** @var string $locale */
         $this->translator->setLocale($this->supportedLocales[$locale]);
         $this->urlGenerator->setDefaultArgument($this->queryParameterName, $locale);
 
-        if ($request->getMethod() === Method::GET) {
-            $location = $this->getBaseUrl() . '/' . $locale . $path . ($query !== '' ? '?' . $query : '');
-            return $this->responseFactory
-                ->createResponse(Status::FOUND)
-                ->withHeader(Header::LOCATION, $location);
-        }
-
-
-        return $handler->handle($request);
-    }
-
-    private function applyLocaleFromPath(
-        string $locale,
-        ResponseInterface $response,
-        string $query,
-        ?string $newPath = null,
-    ): ResponseInterface {
-        if ($newPath === '') {
-            $newPath = '/';
-        }
-
-        if ($newPath !== null) {
-            $location = $this->getBaseUrl() . $newPath . ($query !== '' ? '?' . $query : '');
-            $response = $this->responseFactory
-                ->createResponse(Status::FOUND)
-                ->withHeader(Header::LOCATION, $location);
-        }
         if ($this->saveLocale) {
             $response = $this->saveLocale($locale, $response);
         }
+
         return $response;
     }
 
-    private function getLocaleFromPath(string $path): ?string
+    private function getLocaleFromUriPath(string $path): ?string
     {
         $parts = [];
         foreach ($this->supportedLocales as $code => $locale) {
@@ -156,30 +146,41 @@ final class Locale implements MiddlewareInterface
                 $matchedLocale = $this->parseLocale($matchedLocale);
             }
             if (isset($this->supportedLocales[$matchedLocale])) {
-                $this->logger->debug(sprintf("Locale '%s' found in URL", $matchedLocale));
+                $this->logger->debug(sprintf("Locale '%s' found in URL.", $matchedLocale));
                 return $matchedLocale;
             }
         }
         return null;
     }
 
-    private function getLocaleFromRequest(ServerRequestInterface $request): ?string
+    /**
+     * @psalm-param array<string, string> $queryParameters
+     */
+    private function getLocaleFromQueryParams($queryParameters): ?string
     {
-        /** @var array<string, string> $queryParameters */
-        $queryParameters = $request->getQueryParams();
-        if (isset($queryParameters[$this->queryParameterName])) {
-            $this->logger->debug(
-                sprintf("Locale '%s' found in query string", $queryParameters[$this->queryParameterName])
-            );
-            return $this->parseLocale($queryParameters[$this->queryParameterName]);
+        if (!isset($queryParameters[$this->queryParameterName])) {
+            return null;
         }
-        /** @psalm-var array<string, string> $cookies */
-        $cookies = $request->getCookieParams();
-        if (isset($cookies[$this->sessionName])) {
-            $this->logger->debug(sprintf("Locale '%s' found in cookies", $cookies[$this->sessionName]));
-            return $this->parseLocale($cookies[$this->sessionName]);
+
+        $this->logger->debug(
+            sprintf("Locale '%s' found in query string.", $queryParameters[$this->queryParameterName]),
+        );
+
+        return $this->parseLocale($queryParameters[$this->queryParameterName]);
+    }
+
+    /**
+     * @psalm-param array<string, string> $cookieParameters
+     */
+    private function getLocaleFromCookies($cookieParameters)
+    {
+        if (!isset($cookieParameters[$this->sessionName])) {
+            return null;
         }
-        return null;
+
+        $this->logger->debug(sprintf("Locale '%s' found in cookies.", $cookieParameters[$this->sessionName]));
+
+        return $this->parseLocale($cookieParameters[$this->sessionName]);
     }
 
     private function isDefaultLocale(string $locale): bool

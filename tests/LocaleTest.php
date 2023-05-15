@@ -211,7 +211,7 @@ final class LocaleTest extends TestCase
         $expectedLoggerMessages = [
             [
                 'level' => 'debug',
-                'message' => "Locale 'uz' found in URL",
+                'message' => "Locale 'uz' found in URL.",
                 'context' => [],
             ],
             [
@@ -248,7 +248,7 @@ final class LocaleTest extends TestCase
         $expectedLoggerMessages = [
             [
                 'level' => 'debug',
-                'message' => "Locale 'uz' found in URL",
+                'message' => "Locale 'uz' found in URL.",
                 'context' => [],
             ],
             [
@@ -283,7 +283,7 @@ final class LocaleTest extends TestCase
         $expectedLoggerMessages = [
             [
                 'level' => 'debug',
-                'message' => "Locale 'uz' found in URL",
+                'message' => "Locale 'uz' found in URL.",
                 'context' => [],
             ],
         ];
@@ -303,7 +303,12 @@ final class LocaleTest extends TestCase
         $expectedLoggerMessages = [
             [
                 'level' => 'debug',
-                'message' => "Locale 'uz' found in cookies",
+                'message' => "Locale 'uz' found in cookies.",
+                'context' => [],
+            ],
+            [
+                'level' => 'debug',
+                'message' => "Saving found locale to session.",
                 'context' => [],
             ],
         ];
@@ -334,7 +339,12 @@ final class LocaleTest extends TestCase
         $expectedLoggerMessages = [
             [
                 'level' => 'debug',
-                'message' => "Locale '$expectedLocale' found in query string",
+                'message' => "Locale '$expectedLocale' found in query string.",
+                'context' => [],
+            ],
+            [
+                'level' => 'debug',
+                'message' => "Saving found locale to session.",
                 'context' => [],
             ],
         ];
