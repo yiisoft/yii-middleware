@@ -202,17 +202,11 @@ final class LocaleTest extends TestCase
         $this->assertSame('uz-UZ', $this->translatorLocale);
         $this->assertSame('uz', $this->urlGeneratorLocale);
 
-        $cookies = CookieCollection::fromResponse($response)->toArray();
-        $this->assertArrayHasKey('_language', $cookies);
-
-        $cookie = $cookies['_language'];
-        $this->assertSame('_language', $cookie->getName());
-        $this->assertSame('uz', $cookie->getValue());
-        $this->assertEquals(new DateTime('2023-06-09 08:24:39'), $cookie->getExpires());
-        $this->assertFalse($cookie->isSecure());
-
         $this->assertArrayHasKey('_language', $this->session);
         $this->assertSame('uz', $this->session['_language']);
+
+        $cookies = CookieCollection::fromResponse($response)->toArray();
+        $this->assertArrayNotHasKey('_language', $cookies);
 
         $expectedLoggerMessages = [
             [
@@ -222,7 +216,7 @@ final class LocaleTest extends TestCase
             ],
             [
                 'level' => 'debug',
-                'message' => 'Saving found locale to session and cookies.',
+                'message' => 'Saving found locale to session.',
                 'context' => [],
             ],
         ];
@@ -235,7 +229,7 @@ final class LocaleTest extends TestCase
         $middleware = $this
             ->createMiddleware(['uz' => 'uz-UZ'])
             ->withSecureCookie(true)
-            ->withCookieDuration(new DateInterval('P31D'));
+            ->withCookieDuration(new DateInterval('P30D'));
 
         $response = $this->process($middleware, $request);
 
@@ -248,8 +242,27 @@ final class LocaleTest extends TestCase
         $cookie = $cookies['_language'];
         $this->assertSame('_language', $cookie->getName());
         $this->assertSame('uz', $cookie->getValue());
-        $this->assertEquals(new DateTime('2023-06-10 08:24:39'), $cookie->getExpires());
+        $this->assertEquals(new DateTime('2023-06-09 08:24:39'), $cookie->getExpires());
         $this->assertTrue($cookie->isSecure());
+
+        $expectedLoggerMessages = [
+            [
+                'level' => 'debug',
+                'message' => "Locale 'uz' found in URL",
+                'context' => [],
+            ],
+            [
+                'level' => 'debug',
+                'message' => 'Saving found locale to session.',
+                'context' => [],
+            ],
+            [
+                'level' => 'debug',
+                'message' => 'Saving found locale to cookies.',
+                'context' => [],
+            ],
+        ];
+        $this->assertSame($expectedLoggerMessages, $this->logger->getMessages());
     }
 
     public function testDisabledSaveLocale(): void
