@@ -308,7 +308,7 @@ final class LocaleTest extends TestCase
             ],
             [
                 'level' => 'debug',
-                'message' => "Saving found locale to session.",
+                'message' => 'Saving found locale to session.',
                 'context' => [],
             ],
         ];
@@ -344,7 +344,7 @@ final class LocaleTest extends TestCase
             ],
             [
                 'level' => 'debug',
-                'message' => "Saving found locale to session.",
+                'message' => 'Saving found locale to session.',
                 'context' => [],
             ],
         ];
