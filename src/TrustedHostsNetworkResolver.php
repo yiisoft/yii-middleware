@@ -436,7 +436,7 @@ class TrustedHostsNetworkResolver implements MiddlewareInterface
         }
 
         return $handler->handle(
-            $request->withUri($uri)->withAttribute(self::REQUEST_CLIENT_IP, $hostData['ip'] ?? null)
+            $request->withUri($uri)->withAttribute(self::REQUEST_CLIENT_IP, $hostData['ip'] ?? null),
         );
     }
 
