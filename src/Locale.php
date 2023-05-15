@@ -36,7 +36,6 @@ final class Locale implements MiddlewareInterface
     private string $defaultLocale = self::DEFAULT_LOCALE;
     private string $queryParameterName = self::DEFAULT_LOCALE_NAME;
     private string $sessionName = self::DEFAULT_LOCALE_NAME;
-    private DateInterval $cookieDuration;
     /**
      * @psalm-var array<string, string>
      */
@@ -53,7 +52,7 @@ final class Locale implements MiddlewareInterface
      * @param bool $secureCookie Whether middleware should flag locale cookie as "secure". Effective only when
      * {@see $saveLocale} is set to `true`.
      * @param ?DateInterval $cookieDuration Locale cookie lifetime. Effective only when {@see $saveLocale} is set to
-     * `true`. Defaults to 30 days.
+     * `true`. `null` disables saving locale to cookies completely.
      */
     public function __construct(
         private TranslatorInterface $translator,
@@ -64,10 +63,8 @@ final class Locale implements MiddlewareInterface
         array $supportedLocales = [],
         private array $ignoredRequestUrlPatterns = [],
         private bool $secureCookie = false,
-        ?DateInterval $cookieDuration = null,
+        private ?DateInterval $cookieDuration = null,
     ) {
-        $this->cookieDuration = $cookieDuration ?? new DateInterval('P30D');
-
         $this->assertSupportedLocalesFormat($supportedLocales);
         $this->supportedLocales = $supportedLocales;
     }
@@ -168,12 +165,6 @@ final class Locale implements MiddlewareInterface
 
     private function getLocaleFromRequest(ServerRequestInterface $request): ?string
     {
-        /** @psalm-var array<string, string> $cookies */
-        $cookies = $request->getCookieParams();
-        if (isset($cookies[$this->sessionName])) {
-            $this->logger->debug(sprintf("Locale '%s' found in cookies", $cookies[$this->sessionName]));
-            return $this->parseLocale($cookies[$this->sessionName]);
-        }
         /** @var array<string, string> $queryParameters */
         $queryParameters = $request->getQueryParams();
         if (isset($queryParameters[$this->queryParameterName])) {
@@ -181,6 +172,12 @@ final class Locale implements MiddlewareInterface
                 sprintf("Locale '%s' found in query string", $queryParameters[$this->queryParameterName])
             );
             return $this->parseLocale($queryParameters[$this->queryParameterName]);
+        }
+        /** @psalm-var array<string, string> $cookies */
+        $cookies = $request->getCookieParams();
+        if (isset($cookies[$this->sessionName])) {
+            $this->logger->debug(sprintf("Locale '%s' found in cookies", $cookies[$this->sessionName]));
+            return $this->parseLocale($cookies[$this->sessionName]);
         }
         return null;
     }
@@ -205,10 +202,17 @@ final class Locale implements MiddlewareInterface
 
     private function saveLocale(string $locale, ResponseInterface $response): ResponseInterface
     {
-        $this->logger->debug('Saving found locale to session and cookies.');
+        $this->logger->debug('Saving found locale to session.');
         $this->session->set($this->sessionName, $locale);
+
+        if ($this->cookieDuration === null) {
+            return $response;
+        }
+
+        $this->logger->debug('Saving found locale to cookies.');
         $cookie = new Cookie(name: $this->sessionName, value: $locale, secure: $this->secureCookie);
         $cookie = $cookie->withMaxAge($this->cookieDuration);
+
         return $cookie->addToResponse($response);
     }
 
@@ -305,9 +309,10 @@ final class Locale implements MiddlewareInterface
     }
 
     /**
-     * Return new instance with enabled or disabled saving of locale.
+     * Return new instance with enabled or disabled saving of locale. Locale is saved to session and optionally - to
+     * cookies (when {@see $cookieDuration} is not `null`).
      *
-     * @param bool $enabled Whether middleware should save locale into session and cookies.
+     * @param bool $enabled Whether middleware should save locale.
      */
     public function withSaveLocale(bool $enabled): self
     {
@@ -355,9 +360,10 @@ final class Locale implements MiddlewareInterface
     /**
      * Return new instance with changed cookie duration.
      *
-     * @param DateInterval $cookieDuration Locale cookie lifetime.
+     * @param ?DateInterval $cookieDuration Locale cookie lifetime. When set to `null`, saving locale to cookies is
+     * disabled completely.
      */
-    public function withCookieDuration(DateInterval $cookieDuration): self
+    public function withCookieDuration(?DateInterval $cookieDuration): self
     {
         $new = clone $this;
         $new->cookieDuration = $cookieDuration;
