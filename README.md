@@ -37,34 +37,6 @@ composer require yiisoft/yii-middleware
 All classes are separate implementations of [PSR 15](https://github.com/php-fig/http-server-middleware)
 middleware and don't interact with each other in any way.
 
-### `TrustedHeaderProtocolResolver`
-
-Trusted header protocol resolver sets a server request protocol based on special header you trust
-such as `X-Forwarded-Proto`.
-
-You can use it if your server is behind a trusted load balancer or a proxy that's always setting the special header
-itself discarding any header values provided by user.
-
-```php
-use Yiisoft\Yii\Middleware\TrustedHeaderProtocolResolver;
-
-/**
- * @var Psr\Http\Message\ServerRequestInterface $request
- * @var Psr\Http\Server\RequestHandlerInterface $handler
- */
-
-$middleware = new TrustedHeaderProtocolResolver();
-
-$middleware = $middleware->withAddedProtocolHeader('x-forwarded-proto', [
-    'http' => ['http'],
-    'https' => ['https', 'on'],
-]);
-// Disable earlier settings:
-$middleware = $middleware->withoutProtocolHeader('x-forwarded-proto');
-
-$response = $middleware->process($request, $handler);
-```
-
 ### `ForceSecureConnection`
 
 Redirects insecure requests from HTTP to HTTPS, and adds headers necessary to enhance the security policy.
@@ -264,62 +236,6 @@ $middleware = new TagRequest();
 // In the process, a request attribute with the name `requestTag`
 // and the generated value by the function `uniqid()` will be added.
 $response = $middleware->process($request, $handler);
-```
-
-### `TrustedHostsNetworkResolver`
-
-Trusted hosts network resolver can set IP, protocol, host, URL, and port based on trusted headers such as
-`Forward` or `X-Forwarded-Host` coming from trusted hosts you define. Usually these are load balancers.
-
-Make sure that the trusted host always overwrites or removes user-defined headers to avoid security issues.
-
-```php
-/**
- * @var Psr\Http\Message\ServerRequestInterface $request
- * @var Psr\Http\Server\RequestHandlerInterface $handler
- * @var Yiisoft\Yii\Middleware\TrustedHostsNetworkResolver $middleware
- */
-
-$middleware = $middleware->withAddedTrustedHosts(
-    // List of secure hosts including `$_SERVER['REMOTE_ADDR']`. You can specify IPv4, IPv6, domains, and aliases.
-    hosts: ['1.1.1.1', '2.2.2.1/3', '2001::/32', 'localhost'],
-    // IP list headers. Headers containing many sub-elements (e.g. RFC 7239) must also be listed for other relevant
-    // types (such as host headers), otherwise they will only be used as an IP list.
-    ipHeaders: ['x-forwarded-for', [TrustedHostsNetworkResolver::IP_HEADER_TYPE_RFC7239, 'forwarded']],
-    // Protocol headers with accepted protocols and corresponding header values. Matching is case-insensitive.
-    protocolHeaders: ['x-forwarded-proto' => ['https' => 'on']],
-    // List of headers containing HTTP host.
-    hostHeaders: ['forwarded', 'x-forwarded-for'],
-    // List of headers containing HTTP URL.
-    urlHeaders: ['x-rewrite-url'],
-    // List of headers containing port number.
-    portHeaders:['x-rewrite-port'],
-    // List of trusted headers. For untrusted hosts, middleware removes these from the request.
-    trustedHeaders: ['x-forwarded-for', 'forwarded'],
-);
-// Disable earlier settings:
-$middleware = $middleware->withoutTrustedHosts();
-
-$response = $middleware->process($request, $handler);
-```
-
-Additionally, you can specify the following options:
-
-```php
-/**
- * Specify a request attribute name to which middleware writes trusted path data.
- * 
- * @var Yiisoft\Yii\Middleware\TrustedHostsNetworkResolver $middleware
- * @var string|null $attribute
- */
-$middleware = $middleware->withAttributeIps($attribute);
-
-/**
- * Specify client IP validator.
- * 
- * @var Yiisoft\Validator\ValidatorInterface $validator
- */
-$middleware = $middleware->withValidator($validator);
 ```
 
 ### `Locale`
