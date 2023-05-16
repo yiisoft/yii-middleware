@@ -301,7 +301,7 @@ $middleware = $middleware
     ->withSecureCookie(true)
 ```
 
-### `AllowAllCors`
+### `CorsAllowAll`
 
 Adds CORS headers to the response.
 

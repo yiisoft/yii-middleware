@@ -11,9 +11,9 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Yiisoft\Http\Header;
 
 /**
- * `AllowAllCors` adds Cross-Origin Resource Sharing (CORS) headers allowing everything to the response.
+ * Adds Cross-Origin Resource Sharing (CORS) headers allowing everything to the response.
  */
-final class AllowAllCors implements MiddlewareInterface
+final class CorsAllowAll implements MiddlewareInterface
 {
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
