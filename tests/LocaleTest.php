@@ -11,6 +11,7 @@ use HttpSoft\Message\ResponseFactory;
 use HttpSoft\Message\ServerRequest;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
@@ -23,7 +24,7 @@ use Yiisoft\Http\Status;
 use Yiisoft\Router\UrlGeneratorInterface;
 use Yiisoft\Session\SessionInterface;
 use Yiisoft\Test\Support\Log\SimpleLogger;
-use Yiisoft\Translator\TranslatorInterface;
+use Yiisoft\Yii\Middleware\Event\LocaleEvent;
 use Yiisoft\Yii\Middleware\Exception\InvalidLocalesFormatException;
 use Yiisoft\Yii\Middleware\Locale;
 
@@ -577,17 +578,13 @@ final class LocaleTest extends TestCase
 
     private function createMiddleware(array $locales = []): Locale
     {
-        $translator = $this->createMock(TranslatorInterface::class);
-        $translator
-            ->method('setLocale')
-            ->willReturnCallback(function ($locale) use ($translator) {
-                $this->translatorLocale = $locale;
-                return $translator;
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher
+            ->method('dispatch')
+            ->willReturnCallback(function (LocaleEvent $event) use ($eventDispatcher) {
+                $this->translatorLocale = $event->getLocale();
+                return $eventDispatcher;
             });
-
-        $translator
-            ->method('getLocale')
-            ->willReturnReference($this->translatorLocale);
 
         $urlGenerator = $this->createMock(UrlGeneratorInterface::class);
         $urlGenerator
@@ -618,7 +615,7 @@ final class LocaleTest extends TestCase
             ->willReturnCallback(fn ($name) => $this->session[$name]);
 
         return new Locale(
-            $translator,
+            $eventDispatcher,
             $urlGenerator,
             $session,
             $this->logger,
