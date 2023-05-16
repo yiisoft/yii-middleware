@@ -23,6 +23,8 @@ use Yiisoft\Strings\WildcardPattern;
 use Yiisoft\Yii\Middleware\Event\LocaleEvent;
 use Yiisoft\Yii\Middleware\Exception\InvalidLocalesFormatException;
 
+use function array_key_exists;
+
 /**
  * Locale middleware supports locale-based routing and configures translator and URL generator.
  * You should place it before `Route` middleware in the middleware list.
