@@ -82,7 +82,14 @@ final class SubFolder implements MiddlewareInterface
 
     private function getBaseUrl(ServerRequestInterface $request): string
     {
-        /** @var array{SCRIPT_FILENAME?:string,PHP_SELF?:string,ORIG_SCRIPT_NAME?:string,DOCUMENT_ROOT?:string} $serverParams */
+        /**
+         * @var array{
+         *     SCRIPT_FILENAME?:string,
+         *     PHP_SELF?:string,
+         *     ORIG_SCRIPT_NAME?:string,
+         *     DOCUMENT_ROOT?:string
+         * } $serverParams
+         */
         $serverParams = $request->getServerParams();
         $scriptUrl = $serverParams['SCRIPT_FILENAME'] ?? '/index.php';
         $scriptName = basename($scriptUrl);
