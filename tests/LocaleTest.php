@@ -105,8 +105,7 @@ final class LocaleTest extends TestCase
         string $localeInPath,
         string $expectedFullLocale,
         string $expectedShortLocale,
-    ): void
-    {
+    ): void {
         $request = $this->createRequest($uri = "/$localeInPath/home?test=1");
         $middleware = $this->createMiddleware(['en' => 'en-US', 'uz' => 'uz-UZ']);
 
