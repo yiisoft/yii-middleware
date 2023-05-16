@@ -23,6 +23,6 @@ final class InvalidLocalesFormatException extends Exception implements FriendlyE
             // or
             ['en' => 'en_US', 'uz' => 'uz_UZ'];
             ```
-        SOLUTION;
+            SOLUTION;
     }
 }
