@@ -15,7 +15,6 @@ jobs:
   rector:
     uses: yiisoft/actions/.github/workflows/rector.yml@master
     with:
-      extensions: uopz
       os: >-
         ['ubuntu-latest']
       php: >-
