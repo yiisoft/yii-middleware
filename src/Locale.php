@@ -37,6 +37,7 @@ final class Locale implements MiddlewareInterface
     private string $defaultLocale = self::DEFAULT_LOCALE;
     private string $queryParameterName = self::DEFAULT_LOCALE_NAME;
     private string $sessionName = self::DEFAULT_LOCALE_NAME;
+    private string $cookieName = self::DEFAULT_LOCALE_NAME;
     /**
      * @psalm-var array<string, string>
      */
@@ -176,13 +177,13 @@ final class Locale implements MiddlewareInterface
      */
     private function getLocaleFromCookies($cookieParameters): ?string
     {
-        if (!isset($cookieParameters[$this->sessionName])) {
+        if (!isset($cookieParameters[$this->cookieName])) {
             return null;
         }
 
-        $this->logger->debug(sprintf("Locale '%s' found in cookies.", $cookieParameters[$this->sessionName]));
+        $this->logger->debug(sprintf("Locale '%s' found in cookies.", $cookieParameters[$this->cookieName]));
 
-        return $this->parseLocale($cookieParameters[$this->sessionName]);
+        return $this->parseLocale($cookieParameters[$this->cookieName]);
     }
 
     private function detectLocale(ServerRequestInterface $request): ?string
@@ -208,7 +209,7 @@ final class Locale implements MiddlewareInterface
         }
 
         $this->logger->debug('Saving found locale to cookies.');
-        $cookie = new Cookie(name: $this->sessionName, value: $locale, secure: $this->secureCookie);
+        $cookie = new Cookie(name: $this->cookieName, value: $locale, secure: $this->secureCookie);
         $cookie = $cookie->withMaxAge($this->cookieDuration);
 
         return $cookie->addToResponse($response);
@@ -307,6 +308,19 @@ final class Locale implements MiddlewareInterface
     {
         $new = clone $this;
         $new->sessionName = $sessionName;
+        return $new;
+    }
+
+    /**
+     * Return new instance with the name of cookie parameter to store found locale. Effective only when
+     * {@see $saveLocale} is set to `true` and {@see $cookieDuration} is not `null`.
+     *
+     * @param string $sessionName Name of cookie parameter.
+     */
+    public function withCookieName(string $sessionName): self
+    {
+        $new = clone $this;
+        $new->cookieName = $sessionName;
         return $new;
     }
 

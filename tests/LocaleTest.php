@@ -69,6 +69,7 @@ final class LocaleTest extends TestCase
         $this->assertNotSame($localeMiddleware->withSupportedLocales(['ru' => 'ru-RU', 'uz' => 'uz-UZ']), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withQueryParameterName('lang'), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withSessionName('lang'), $localeMiddleware);
+        $this->assertNotSame($localeMiddleware->withCookieName('lang'), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withIgnoredRequestUrlPatterns(['/auth**']), $localeMiddleware);
     }
 
@@ -228,21 +229,39 @@ final class LocaleTest extends TestCase
         $this->assertSame($requestUri, $this->getRequestPath());
     }
 
-    public function testSaveLocale(): void
+    public function dataSaveLocale(): array
+    {
+        return [
+            [null],
+            ['_session_language'],
+        ];
+    }
+
+    /**
+     * @dataProvider dataSaveLocale
+     */
+    public function testSaveLocale(?string $sessionName): void
     {
         $request = $this->createRequest('/uz');
         $middleware = $this->createMiddleware(['uz' => 'uz-UZ']);
+
+        if ($sessionName !== null) {
+            $middleware = $middleware->withSessionName($sessionName);
+        }
+
+        $sessionName ??= '_language';
+        $cookieName = '_language';
 
         $response = $this->process($middleware, $request);
 
         $this->assertSame('uz-UZ', $this->translatorLocale);
         $this->assertSame('uz', $this->urlGeneratorLocale);
 
-        $this->assertArrayHasKey('_language', $this->session);
-        $this->assertSame('uz', $this->session['_language']);
+        $this->assertArrayHasKey($sessionName, $this->session);
+        $this->assertSame('uz', $this->session[$sessionName]);
 
         $cookies = CookieCollection::fromResponse($response)->toArray();
-        $this->assertArrayNotHasKey('_language', $cookies);
+        $this->assertArrayNotHasKey($cookieName, $cookies);
 
         $expectedLoggerMessages = [
             [
@@ -259,27 +278,66 @@ final class LocaleTest extends TestCase
         $this->assertSame($expectedLoggerMessages, $this->logger->getMessages());
     }
 
-    public function testSaveLocaleWithCustomArguments(): void
+    public function dataSaveLocaleWithCustomArguments(): array
+    {
+        return [
+            'sessionName: default, cookie name: default, secureCookie: default' => [null, null, null],
+            'sessionName: default, cookie name: default, secureCookie: false' => [null, null, false],
+            'sessionName: default, cookie name: default, secureCookie: true' => [null, null, true],
+            'sessionName: custom, cookie name: custom, secureCookie: default' => [
+                '_session_language',
+                '_cookie_language',
+                null,
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider dataSaveLocaleWithCustomArguments
+     */
+    public function testSaveLocaleWithCustomArguments(
+        ?string $sessionName,
+        ?string $cookieName,
+        ?bool $secureCookie,
+    ): void
     {
         $request = $this->createRequest('/uz');
         $middleware = $this
             ->createMiddleware(['uz' => 'uz-UZ'])
-            ->withSecureCookie(true)
             ->withCookieDuration(new DateInterval('P30D'));
+
+        if ($sessionName !== null) {
+            $middleware = $middleware->withSessionName($sessionName);
+        }
+
+        if ($cookieName !== null) {
+            $middleware = $middleware->withCookieName($cookieName);
+        }
+
+        if ($secureCookie !== null) {
+            $middleware = $middleware->withSecureCookie($secureCookie);
+        }
+
+        $sessionName ??= '_language';
+        $cookieName ??= '_language';
+        $expectedSecureCookie = $secureCookie ?? false;
 
         $response = $this->process($middleware, $request);
 
         $this->assertSame('uz-UZ', $this->translatorLocale);
         $this->assertSame('uz', $this->urlGeneratorLocale);
 
-        $cookies = CookieCollection::fromResponse($response)->toArray();
-        $this->assertArrayHasKey('_language', $cookies);
+        $this->assertArrayHasKey($sessionName, $this->session);
+        $this->assertSame('uz', $this->session[$sessionName]);
 
-        $cookie = $cookies['_language'];
-        $this->assertSame('_language', $cookie->getName());
+        $cookies = CookieCollection::fromResponse($response)->toArray();
+        $this->assertArrayHasKey($cookieName, $cookies);
+
+        $cookie = $cookies[$cookieName];
+        $this->assertSame($cookieName, $cookie->getName());
         $this->assertSame('uz', $cookie->getValue());
         $this->assertEquals(new DateTime('2023-06-09 08:24:39'), $cookie->getExpires());
-        $this->assertTrue($cookie->isSecure());
+        $this->assertSame($expectedSecureCookie, $cookie->isSecure());
 
         $expectedLoggerMessages = [
             [
