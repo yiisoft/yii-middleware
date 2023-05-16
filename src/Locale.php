@@ -78,24 +78,22 @@ final class Locale implements MiddlewareInterface
         $uri = $request->getUri();
         $path = $uri->getPath();
         $query = $uri->getQuery();
+        $newPath = null;
+        $locale = $this->getLocaleFromPath($path);
 
-        $locale = $this->getLocaleFromUriPath($path);
         if ($locale !== null) {
-            $response = $handler->handle($request);
-
-            if ($this->isDefaultLocale($locale) && $request->getMethod() === Method::GET) {
-                $length = strlen($locale);
-                $newPath = substr($path, $length + 1) ?: '/';
-                $location = $this->getBaseUrl() . $newPath . ($query !== '' ? '?' . $query : '');
-                $response = $this
-                    ->responseFactory
-                    ->createResponse(Status::FOUND)
-                    ->withHeader(Header::LOCATION, $location);
+            if ($request->getMethod() === Method::GET) {
+                $newPath = substr($path, strlen($locale) + 1) ?: '/';
             }
         } else {
-            $locale = $this->getLocaleFromQueryParams($request->getQueryParams());
+            /** @psalm-var array<string, string> $queryParameters */
+            $queryParameters = $request->getQueryParams();
+            $locale = $this->getLocaleFromQuery($queryParameters);
+
             if ($locale === null) {
-                $locale = $this->getLocaleFromCookies($request->getCookieParams());
+                /** @psalm-var array<string, string> $cookieParameters */
+                $cookieParameters = $request->getCookieParams();
+                $locale = $this->getLocaleFromCookies($cookieParameters);
             }
 
             if ($locale === null && $this->detectLocale) {
@@ -110,14 +108,17 @@ final class Locale implements MiddlewareInterface
             }
 
             if ($request->getMethod() === Method::GET) {
-                $location = $this->getBaseUrl() . '/' . $locale . $path . ($query !== '' ? '?' . $query : '');
-                $response = $this
-                    ->responseFactory
-                    ->createResponse(Status::FOUND)
-                    ->withHeader(Header::LOCATION, $location);
-            } else {
-                $response = $handler->handle($request);
+                $newPath = '/' . $locale . $path;
             }
+        }
+
+        $response = $handler->handle($request);
+        if ($newPath !== null) {
+            $location = $this->getBaseUrl() . $newPath . ($query !== '' ? '?' . $query : '');
+            $response = $this
+                ->responseFactory
+                ->createResponse(Status::FOUND)
+                ->withHeader(Header::LOCATION, $location);
         }
 
         /** @var string $locale */
@@ -131,7 +132,7 @@ final class Locale implements MiddlewareInterface
         return $response;
     }
 
-    private function getLocaleFromUriPath(string $path): ?string
+    private function getLocaleFromPath(string $path): ?string
     {
         $parts = [];
         foreach ($this->supportedLocales as $code => $locale) {
@@ -156,7 +157,7 @@ final class Locale implements MiddlewareInterface
     /**
      * @psalm-param array<string, string> $queryParameters
      */
-    private function getLocaleFromQueryParams($queryParameters): ?string
+    private function getLocaleFromQuery($queryParameters): ?string
     {
         if (!isset($queryParameters[$this->queryParameterName])) {
             return null;
@@ -172,7 +173,7 @@ final class Locale implements MiddlewareInterface
     /**
      * @psalm-param array<string, string> $cookieParameters
      */
-    private function getLocaleFromCookies($cookieParameters)
+    private function getLocaleFromCookies($cookieParameters): ?string
     {
         if (!isset($cookieParameters[$this->sessionName])) {
             return null;

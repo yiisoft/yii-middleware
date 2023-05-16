@@ -90,15 +90,30 @@ final class LocaleTest extends TestCase
         $this->createMiddleware($supportedLocales);
     }
 
-    public function testWithDefaultLocaleImplicit(): void
+    public function dataLocaleFromPath(): array
     {
-        $request = $this->createRequest($uri = '/en/home?test=1');
+        return [
+            'matches default locale' => ['en', 'en-US', 'en'],
+            'does not match default locale' => ['uz', 'uz-UZ', 'uz'],
+        ];
+    }
+
+    /**
+     * @dataProvider dataLocaleFromPath
+     */
+    public function testLocaleFromPath(
+        string $localeInPath,
+        string $expectedFullLocale,
+        string $expectedShortLocale,
+    ): void
+    {
+        $request = $this->createRequest($uri = "/$localeInPath/home?test=1");
         $middleware = $this->createMiddleware(['en' => 'en-US', 'uz' => 'uz-UZ']);
 
         $response = $this->process($middleware, $request);
 
-        $this->assertSame('en-US', $this->translatorLocale);
-        $this->assertSame('en', $this->urlGeneratorLocale);
+        $this->assertSame($expectedFullLocale, $this->translatorLocale);
+        $this->assertSame($expectedShortLocale, $this->urlGeneratorLocale);
         $this->assertSame($uri, $this->getRequestPath());
         $this->assertSame('/home?test=1', $response->getHeaderLine(Header::LOCATION));
     }
