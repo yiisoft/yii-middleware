@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Yiisoft\Yii\Middleware;
 
 use DateInterval;
+use InvalidArgumentException;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -100,7 +101,7 @@ final class Locale implements MiddlewareInterface
                 $locale = $this->detectLocale($request);
             }
 
-            if ($locale === null || $this->isDefaultLocale($locale) || $this->isRequestIgnored($request)) {
+            if ($locale === null || $locale === $this->defaultLocale || $this->isRequestIgnored($request)) {
                 $this->urlGenerator->setDefaultArgument($this->queryParameterName, null);
                 $request = $request->withUri($uri->withPath('/' . $this->defaultLocale . $path));
 
@@ -182,11 +183,6 @@ final class Locale implements MiddlewareInterface
         $this->logger->debug(sprintf("Locale '%s' found in cookies.", $cookieParameters[$this->sessionName]));
 
         return $this->parseLocale($cookieParameters[$this->sessionName]);
-    }
-
-    private function isDefaultLocale(string $locale): bool
-    {
-        return $locale === $this->defaultLocale || $this->supportedLocales[$locale] === $this->defaultLocale;
     }
 
     private function detectLocale(ServerRequestInterface $request): ?string
@@ -277,10 +273,14 @@ final class Locale implements MiddlewareInterface
     /**
      * Return new instance with default locale specified.
      *
-     * @param string $defaultLocale Default locale.
+     * @param string $defaultLocale Default locale. It must be present as a key in {@see $supportedLocales}.
      */
     public function withDefaultLocale(string $defaultLocale): self
     {
+        if (!array_key_exists($defaultLocale, $this->supportedLocales)) {
+            throw new InvalidArgumentException('Default locale allows only keys from supported locales.');
+        }
+
         $new = clone $this;
         $new->defaultLocale = $defaultLocale;
         return $new;

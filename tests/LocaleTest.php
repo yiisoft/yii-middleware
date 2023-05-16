@@ -9,6 +9,7 @@ use DateTime;
 use HttpSoft\Message\Response;
 use HttpSoft\Message\ResponseFactory;
 use HttpSoft\Message\ServerRequest;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -58,7 +59,7 @@ final class LocaleTest extends TestCase
 
     public function testImmutability(): void
     {
-        $localeMiddleware = $this->createMiddleware();
+        $localeMiddleware = $this->createMiddleware(['uz' => 'uz-UZ']);
 
         $this->assertNotSame($localeMiddleware->withSecureCookie(true), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withCookieDuration(new DateInterval('P31D')), $localeMiddleware);
@@ -120,15 +121,36 @@ final class LocaleTest extends TestCase
 
     public function testWithDefaultLocale(): void
     {
-        $request = $this->createRequest('/uz');
-        $middleware = $this->createMiddleware(['uz' => 'uz-UZ'])->withDefaultLocale('uz-UZ');
+        $request = $this->createRequest('/');
+        $middleware = $this->createMiddleware(['uz' => 'uz-UZ'])->withDefaultLocale('uz');
 
         $response = $this->process($middleware, $request);
 
-        $this->assertSame('uz-UZ', $this->translatorLocale);
-        $this->assertSame('uz', $this->urlGeneratorLocale);
-        $this->assertSame('/', $response->getHeaderLine(Header::LOCATION));
-        $this->assertSame(Status::FOUND, $response->getStatusCode());
+        $this->assertSame(null, $this->translatorLocale);
+        $this->assertSame(null, $this->urlGeneratorLocale);
+        $this->assertSame('', $response->getHeaderLine(Header::LOCATION));
+        $this->assertSame('/uz/', $this->getRequestPath());
+        $this->assertSame(Status::OK, $response->getStatusCode());
+    }
+
+    public function dataWithDefaultLocaleAndNotSupportedLocale(): array
+    {
+        return [
+            'full name is specified instead of short one' => ['uz-UZ'],
+            'irrelevant / non-existing locale' => ['test'],
+        ];
+    }
+
+    /**
+     * @dataProvider dataWithDefaultLocaleAndNotSupportedLocale
+     */
+    public function testWithDefaultLocaleAndNotSupportedLocale(string $defaultLocale): void
+    {
+        $middleware = $this->createMiddleware(['uz' => 'uz-UZ']);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Default locale allows only keys from supported locales');
+        $middleware->withDefaultLocale($defaultLocale);
     }
 
     public function dataDefaultLocaleAndMultipleSupportedLocales(): array
