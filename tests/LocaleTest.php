@@ -299,8 +299,7 @@ final class LocaleTest extends TestCase
         ?string $sessionName,
         ?string $cookieName,
         ?bool $secureCookie,
-    ): void
-    {
+    ): void {
         $request = $this->createRequest('/uz');
         $middleware = $this
             ->createMiddleware(['uz' => 'uz-UZ'])
