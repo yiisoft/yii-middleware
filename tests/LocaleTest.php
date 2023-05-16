@@ -384,11 +384,26 @@ final class LocaleTest extends TestCase
         $this->assertSame($expectedLoggerMessages, $this->logger->getMessages());
     }
 
-    public function testLocaleFromCookies(): void
+    public function dataLocaleFromCookies(): array
     {
-        $request = $this->createRequest($uri = '/home?test=1', cookieParams: ['_language' => 'uz']);
-        $middleware = $this->createMiddleware(['uz' => 'uz-UZ', 'en' => 'en-US']);
+        return [
+            'default parameter name' => [null],
+            'custom parameter name' => ['_cookies_language'],
+        ];
+    }
 
+    /**
+     * @dataProvider dataLocaleFromCookies
+     */
+    public function testLocaleFromCookies(?string $parameterName): void
+    {
+        $middleware = $this->createMiddleware(['uz' => 'uz-UZ', 'en' => 'en-US']);
+        if ($parameterName !== null) {
+            $middleware = $middleware->withCookieName($parameterName);
+        }
+
+        $parameterName ??= '_language';
+        $request = $this->createRequest($uri = '/home?test=1', cookieParams: [$parameterName => 'uz']);
         $response = $this->process($middleware, $request);
 
         $this->assertSame('/uz' . $uri, $response->getHeaderLine(Header::LOCATION));
@@ -412,19 +427,24 @@ final class LocaleTest extends TestCase
     public function dataLocaleFromQueryParam(): array
     {
         return [
-            'basic' => ['uz', 'uz'],
-            'extended' => ['uz-UZ', 'uz'],
+            'basic, default parameter name' => ['uz', 'uz', null],
+            'basic, custom parameter name' => ['uz', 'uz', '_query_language'],
+            'extended, default parameter name' => ['uz-UZ', 'uz', null],
         ];
     }
 
     /**
      * @dataProvider dataLocaleFromQueryParam
      */
-    public function testLocaleFromQueryParam(string $locale, string $expectedLocale): void
+    public function testLocaleFromQueryParam(string $locale, string $expectedLocale, ?string $parameterName): void
     {
-        $request = $this->createRequest($uri = '/', queryParams: ['_language' => 'uz']);
         $middleware = $this->createMiddleware(['uz' => 'uz-UZ']);
+        if ($parameterName !== null) {
+            $middleware = $middleware->withQueryParameterName($parameterName);
+        }
 
+        $parameterName ??= '_language';
+        $request = $this->createRequest($uri = '/', queryParams: [$parameterName => 'uz']);
         $response = $this->process($middleware, $request);
 
         $this->assertSame("/$expectedLocale" . $uri, $response->getHeaderLine(Header::LOCATION));
