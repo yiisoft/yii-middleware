@@ -246,6 +246,7 @@ Supports locale-based routing and configures translator and URL generator.
 
 ```php
 use Yiisoft\Yii\Middleware\Locale;
+
 // Available locales.
 $locales = ['en' => 'en-US', 'ru' => 'ru-RU', 'uz' => 'uz-UZ']
 /**
@@ -261,25 +262,46 @@ $middleware = $middleware->withIgnoredRequestUrlPatterns(['/api**']);
 $response = $middleware->process($request);
 ```
 
-Additionally, you can specify the following options:
+The priority of lookup is the following:
+
+1. URI query path, i.e., `/de/blog`.
+2. URI query parameter name, i.e., `/blog?_language=de`. Parameter name can be customized via `withQueryParameterName()` 
+method.
+3. Cookie named `_language`. Name can be customized via `withCookieName()` method.
+4. `Accept-Language` header. Not enabled by default. Use `withDetectLocale(true)` to enable it.
+
+Found locale is saved to session by default. You can disable saving completely:
 
 ```php
 use Yiisoft\Yii\Middleware\Locale;
 
-/**
- * Detect locale from `Accept-Language` header.
- *
- * @var Locale $middleware
- */
-$middleware = $middleware->withDetectLocale(true);
-
-/**
-* Save current locale in session and cookies. 
- */
-$middleware = $middleware->withSaveLocale(true);
+/** @var Locale $middleware */
+$middleware = $middleware->withSaveLocale(false);
 ```
 
-### `AllowAllCors`
+or customize saving to session:
+
+```php
+use Yiisoft\Yii\Middleware\Locale;
+
+/** @var Locale $middleware */
+$middleware = $middleware->withSessionName('_custom_name');
+```
+
+or additionally save it to cookies:
+
+```php
+use Yiisoft\Yii\Middleware\Locale;
+
+/** @var Locale $middleware */
+$middleware = $middleware    
+    ->withCookieDuration(new DateInterval('P30D')) // Key parameter for activating saving to cookies.
+    // Additional customization.
+    ->withCookieName('_custom_name')
+    ->withSecureCookie(true)
+```
+
+### `CorsAllowAll`
 
 Adds CORS headers to the response.
 

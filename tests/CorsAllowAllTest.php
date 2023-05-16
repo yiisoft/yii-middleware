@@ -8,13 +8,13 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Yiisoft\Yii\Middleware\AllowAllCors;
+use Yiisoft\Yii\Middleware\CorsAllowAll;
 
-final class AllowAllCorsTest extends TestCase
+final class CorsAllowAllTest extends TestCase
 {
     public function testProcess()
     {
-        $allowAllCors = new AllowAllCors();
+        $corsAllowAll = new CorsAllowAll();
         $request = $this->createMock(ServerRequestInterface::class);
         $response = $this->createMock(ResponseInterface::class);
         $response
@@ -36,7 +36,7 @@ final class AllowAllCorsTest extends TestCase
         $handler = $this->createMock(RequestHandlerInterface::class);
         $handler->method('handle')->willReturn($response);
 
-        $allowAllCors->process($request, $handler);
+        $corsAllowAll->process($request, $handler);
 
         $this->expectNotToPerformAssertions();
     }
