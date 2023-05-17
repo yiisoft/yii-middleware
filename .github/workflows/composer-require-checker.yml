@@ -27,8 +27,8 @@ jobs:
   composer-require-checker:
     uses: yiisoft/actions/.github/workflows/composer-require-checker.yml@master
     with:
-      extensions: uopz
       os: >-
         ['ubuntu-latest']
       php: >-
         ['8.0', '8.1', '8.2']
+      extensions: uopz
