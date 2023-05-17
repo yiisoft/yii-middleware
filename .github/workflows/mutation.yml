@@ -24,10 +24,10 @@ jobs:
     uses: yiisoft/actions/.github/workflows/roave-infection.yml@master
     with:
       min-covered-msi: 100
-      extensions: uopz
       os: >-
         ['ubuntu-latest']
       php: >-
         ['8.2']
+      extensions: uopz
     secrets:
       STRYKER_DASHBOARD_API_KEY: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
