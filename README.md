@@ -287,10 +287,6 @@ Adds CORS headers to the response.
 
 ### Unit testing
 
-Requirements:
-
-- PHP `uopz` extension.
-
 The package is tested with [PHPUnit](https://phpunit.de/). To run tests:
 
 ```shell

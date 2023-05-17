@@ -49,6 +49,7 @@
         "yiisoft/validator": "^1.0"
     },
     "require-dev": {
+        "ext-uopz": "*",
         "httpsoft/http-message": "^1.0",
         "maglnet/composer-require-checker": "^4.2",
         "phpunit/phpunit": "^9.5",
