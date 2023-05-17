@@ -22,4 +22,4 @@ jobs:
       composer-command: >
         composer remove --dev ext-uopz &&
         composer remove --dev slope-it/clock-mock &&
-        composer update --prefer-dist --no-interaction --no-progress --optimize-autoloader --ansi
+        composer install --prefer-dist --no-interaction --no-progress --optimize-autoloader --ansi
