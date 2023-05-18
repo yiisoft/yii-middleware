@@ -53,7 +53,7 @@ final class LocaleTest extends TestCase
 
     public function tearDown(): void
     {
-        if (str_starts_with($this->getName(), 'testSaveLocale')) {
+        if ($this->getName() === 'testSaveLocaleWithCustomArguments') {
             ClockMock::reset();
         }
     }
@@ -62,6 +62,7 @@ final class LocaleTest extends TestCase
     {
         $localeMiddleware = $this->createMiddleware(['uz' => 'uz-UZ']);
 
+        $this->assertNotSame($localeMiddleware->withSession($this->createSession()), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withSecureCookie(true), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withCookieDuration(new DateInterval('P31D')), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withDefaultLocale('uz'), $localeMiddleware);
@@ -241,7 +242,7 @@ final class LocaleTest extends TestCase
     /**
      * @dataProvider dataSaveLocale
      */
-    public function testSaveLocale(?string $sessionName): void
+    public function testSaveLocaleWithDefaultArguments(?string $sessionName): void
     {
         $request = $this->createRequest('/uz');
         $middleware = $this->createMiddleware(['uz' => 'uz-UZ']);
@@ -258,8 +259,7 @@ final class LocaleTest extends TestCase
         $this->assertSame('uz-UZ', $this->translatorLocale);
         $this->assertSame('uz', $this->urlGeneratorLocale);
 
-        $this->assertArrayHasKey($sessionName, $this->session);
-        $this->assertSame('uz', $this->session[$sessionName]);
+        $this->assertArrayNotHasKey($sessionName, $this->session);
 
         $cookies = CookieCollection::fromResponse($response)->toArray();
         $this->assertArrayNotHasKey($cookieName, $cookies);
@@ -268,11 +268,6 @@ final class LocaleTest extends TestCase
             [
                 'level' => 'debug',
                 'message' => "Locale 'uz' found in URL.",
-                'context' => [],
-            ],
-            [
-                'level' => 'debug',
-                'message' => 'Saving found locale to session.',
                 'context' => [],
             ],
         ];
@@ -304,6 +299,8 @@ final class LocaleTest extends TestCase
         $request = $this->createRequest('/uz');
         $middleware = $this
             ->createMiddleware(['uz' => 'uz-UZ'])
+            ->withSaveLocale(true)
+            ->withSession($this->createSession())
             ->withCookieDuration(new DateInterval('P30D'));
 
         if ($sessionName !== null) {
@@ -415,11 +412,6 @@ final class LocaleTest extends TestCase
                 'message' => "Locale 'uz' found in cookies.",
                 'context' => [],
             ],
-            [
-                'level' => 'debug',
-                'message' => 'Saving found locale to session.',
-                'context' => [],
-            ],
         ];
         $this->assertSame($expectedLoggerMessages, $this->logger->getMessages());
     }
@@ -454,11 +446,6 @@ final class LocaleTest extends TestCase
             [
                 'level' => 'debug',
                 'message' => "Locale '$expectedLocale' found in query string.",
-                'context' => [],
-            ],
-            [
-                'level' => 'debug',
-                'message' => 'Saving found locale to session.',
                 'context' => [],
             ],
         ];
@@ -603,21 +590,9 @@ final class LocaleTest extends TestCase
             ->method('getUriPrefix')
             ->willReturnReference($this->uriPrefix);
 
-        $session = $this->createMock(SessionInterface::class);
-        $session
-            ->method('set')
-            ->willReturnCallback(function ($name, $value) {
-                $this->session[$name] = $value;
-            });
-
-        $session
-            ->method('get')
-            ->willReturnCallback(fn ($name) => $this->session[$name]);
-
         return new Locale(
             $eventDispatcher,
             $urlGenerator,
-            $session,
             $this->logger,
             new ResponseFactory(),
             $locales,
@@ -632,5 +607,21 @@ final class LocaleTest extends TestCase
         $cookieParams = []
     ): ServerRequestInterface {
         return new ServerRequest([], [], $cookieParams, $queryParams, null, $method, $uri, $headers);
+    }
+
+    private function createSession(): SessionInterface
+    {
+        $session = $this->createMock(SessionInterface::class);
+        $session
+            ->method('set')
+            ->willReturnCallback(function ($name, $value) {
+                $this->session[$name] = $value;
+            });
+
+        $session
+            ->method('get')
+            ->willReturnCallback(fn ($name) => $this->session[$name]);
+
+        return $session;
     }
 }
