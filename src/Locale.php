@@ -6,6 +6,7 @@ namespace Yiisoft\Yii\Middleware;
 
 use DateInterval;
 use InvalidArgumentException;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -19,7 +20,7 @@ use Yiisoft\Http\Status;
 use Yiisoft\Router\UrlGeneratorInterface;
 use Yiisoft\Session\SessionInterface;
 use Yiisoft\Strings\WildcardPattern;
-use Yiisoft\Translator\TranslatorInterface;
+use Yiisoft\Yii\Middleware\Event\LocaleEvent;
 use Yiisoft\Yii\Middleware\Exception\InvalidLocalesFormatException;
 
 use function array_key_exists;
@@ -46,7 +47,7 @@ final class Locale implements MiddlewareInterface
     private array $supportedLocales;
 
     /**
-     * @param TranslatorInterface $translator Translator instance to set locale for.
+     * @param EventDispatcherInterface $eventDispatcher Event dispatcher instance to dispatch events.
      * @param UrlGeneratorInterface $urlGenerator URL generator instance to set locale for.
      * @param SessionInterface $session Session instance to save locale to.
      * @param LoggerInterface $logger Logger instance to write debug logs to.
@@ -59,7 +60,7 @@ final class Locale implements MiddlewareInterface
      * {@see $saveLocale} is set to `true` and {@see $cookieDuration} is not `null`.
      */
     public function __construct(
-        private TranslatorInterface $translator,
+        private EventDispatcherInterface $eventDispatcher,
         private UrlGeneratorInterface $urlGenerator,
         private SessionInterface $session,
         private LoggerInterface $logger,
@@ -126,7 +127,7 @@ final class Locale implements MiddlewareInterface
         }
 
         /** @var string $locale */
-        $this->translator->setLocale($this->supportedLocales[$locale]);
+        $this->eventDispatcher->dispatch(new LocaleEvent($this->supportedLocales[$locale]));
         $this->urlGenerator->setDefaultArgument($this->queryParameterName, $locale);
 
         if ($this->saveLocale) {
