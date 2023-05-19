@@ -67,8 +67,8 @@ final class LocaleTest extends TestCase
 
         $this->assertNotSame(
             $localeMiddleware->withSupportedLocales(
-            ['ru' => 'ru-RU', 'uz' => 'uz-UZ']
-        ),
+                ['ru' => 'ru-RU', 'uz' => 'uz-UZ']
+            ),
             $localeMiddleware,
         );
         $this->assertNotSame($localeMiddleware->withStorages([]), $localeMiddleware);
