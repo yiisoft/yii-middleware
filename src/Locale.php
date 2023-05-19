@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Yiisoft\Yii\Middleware;
 
-use DateInterval;
 use InvalidArgumentException;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
@@ -17,7 +16,6 @@ use Yiisoft\Http\Header;
 use Yiisoft\Http\Method;
 use Yiisoft\Http\Status;
 use Yiisoft\Router\UrlGeneratorInterface;
-use Yiisoft\Session\SessionInterface;
 use Yiisoft\Strings\WildcardPattern;
 use Yiisoft\Yii\Middleware\Event\LocaleEvent;
 use Yiisoft\Yii\Middleware\Exception\InvalidLocalesFormatException;

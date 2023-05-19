@@ -11,8 +11,7 @@ final class SessionLocaleStorage implements LocaleStorageInterface
     public function __construct(
         private SessionInterface $session,
         private string $itemName,
-    )
-    {
+    ) {
     }
 
     public function getName(): string
