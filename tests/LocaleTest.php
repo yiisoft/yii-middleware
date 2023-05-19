@@ -65,8 +65,10 @@ final class LocaleTest extends TestCase
     {
         $localeMiddleware = $this->createMiddleware(['uz' => 'uz-UZ']);
 
-        $this->assertNotSame($localeMiddleware->withSupportedLocales(
-            ['ru' => 'ru-RU', 'uz' => 'uz-UZ']),
+        $this->assertNotSame(
+            $localeMiddleware->withSupportedLocales(
+            ['ru' => 'ru-RU', 'uz' => 'uz-UZ']
+        ),
             $localeMiddleware,
         );
         $this->assertNotSame($localeMiddleware->withStorages([]), $localeMiddleware);
@@ -262,7 +264,7 @@ final class LocaleTest extends TestCase
                     (new Cookie('_language'))
                         ->withSecure(false)
                         ->withMaxAge(new DateInterval('P30D'))
-                )
+                ),
             ]);
 
         $request = $this->createRequest('/uz');
