@@ -37,7 +37,6 @@ final class Locale implements MiddlewareInterface
     private const DEFAULT_LOCALE_NAME = '_language';
     private const LOCALE_SEPARATORS = ['-', '_'];
 
-    private bool $saveLocale = false;
     private bool $detectLocale = false;
     private string $defaultLocale = self::DEFAULT_LOCALE;
     private string $queryParameterName = self::DEFAULT_LOCALE_NAME;
@@ -55,12 +54,11 @@ final class Locale implements MiddlewareInterface
      * @param ResponseFactoryInterface $responseFactory Response factory used to create redirect responses.
      * @param array $supportedLocales List of supported locales in key-value format such as `['ru' => 'ru_RU', 'uz' => 'uz_UZ']`.
      * @param string[] $ignoredRequestUrlPatterns {@see WildcardPattern Patterns} for ignoring requests with URLs matching.
-     * @param SessionInterface|null $session Session instance to save locale to. Effective only when {@see $saveLocale} is
-     * set to `true`. `null` disables saving locale to session completely.
-     * @param ?DateInterval $cookieDuration Locale cookie lifetime. Effective only when {@see $saveLocale} is set to
-     * `true`. `null` disables saving locale to cookies completely.
+     * @param SessionInterface|null $session Session instance to save locale to. `null` disables saving locale to
+     * session completely.
+     * @param ?DateInterval $cookieDuration Locale cookie lifetime. `null` disables saving locale to cookies completely.
      * @param bool $secureCookie Whether middleware should flag locale cookie as "secure". Effective only when
-     * {@see $saveLocale} is set to `true` and {@see $cookieDuration} is not `null`.
+     * {@see $cookieDuration} is not `null`.
      */
     public function __construct(
         private EventDispatcherInterface $eventDispatcher,
@@ -133,9 +131,7 @@ final class Locale implements MiddlewareInterface
         $this->eventDispatcher->dispatch(new LocaleEvent($this->supportedLocales[$locale]));
         $this->urlGenerator->setDefaultArgument($this->queryParameterName, $locale);
 
-        if ($this->saveLocale) {
-            $response = $this->saveLocale($locale, $response);
-        }
+        $response = $this->saveLocale($locale, $response);
 
         return $response;
     }
@@ -308,8 +304,8 @@ final class Locale implements MiddlewareInterface
     }
 
     /**
-     * Return new instance with the name of session parameter to store found locale. Effective only when
-     * {@see $saveLocale} is set to `true` and {@see $session} is not `null`.
+     * Return new instance with the name of session parameter to store found locale. Effective only when {@see $session}
+     * is not `null`.
      *
      * @param string $sessionName Name of session parameter.
      */
@@ -322,7 +318,7 @@ final class Locale implements MiddlewareInterface
 
     /**
      * Return new instance with the name of cookie parameter to store found locale. Effective only when
-     * {@see $saveLocale} is set to `true` and {@see $cookieDuration} is not `null`.
+     * {@see $cookieDuration} is not `null`.
      *
      * @param string $sessionName Name of cookie parameter.
      */
@@ -330,19 +326,6 @@ final class Locale implements MiddlewareInterface
     {
         $new = clone $this;
         $new->cookieName = $sessionName;
-        return $new;
-    }
-
-    /**
-     * Return new instance with enabled or disabled saving of locale. Locale is saved to session and optionally - to
-     * cookies (when {@see $cookieDuration} is not `null`).
-     *
-     * @param bool $enabled Whether middleware should save locale.
-     */
-    public function withSaveLocale(bool $enabled): self
-    {
-        $new = clone $this;
-        $new->saveLocale = $enabled;
         return $new;
     }
 

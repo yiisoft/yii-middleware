@@ -46,14 +46,14 @@ final class LocaleTest extends TestCase
         $this->lastRequest = null;
         $this->logger = new SimpleLogger();
 
-        if (str_starts_with($this->getName(), 'testSaveLocale')) {
+        if (str_starts_with($this->getName(), 'testSaveLocaleWithCustomArguments')) {
             ClockMock::freeze(new DateTime('2023-05-10 08:24:39'));
         }
     }
 
     public function tearDown(): void
     {
-        if ($this->getName() === 'testSaveLocaleWithCustomArguments') {
+        if (str_starts_with($this->getName(), 'testSaveLocaleWithCustomArguments')) {
             ClockMock::reset();
         }
     }
@@ -67,7 +67,6 @@ final class LocaleTest extends TestCase
         $this->assertNotSame($localeMiddleware->withCookieDuration(new DateInterval('P31D')), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withDefaultLocale('uz'), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withDetectLocale(true), $localeMiddleware);
-        $this->assertNotSame($localeMiddleware->withSaveLocale(false), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withSupportedLocales(['ru' => 'ru-RU', 'uz' => 'uz-UZ']), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withQueryParameterName('lang'), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withSessionName('lang'), $localeMiddleware);
@@ -231,25 +230,10 @@ final class LocaleTest extends TestCase
         $this->assertSame($requestUri, $this->getRequestPath());
     }
 
-    public function dataSaveLocale(): array
-    {
-        return [
-            [null],
-            ['_session_language'],
-        ];
-    }
-
-    /**
-     * @dataProvider dataSaveLocale
-     */
-    public function testSaveLocaleWithDefaultArguments(?string $sessionName): void
+    public function testSaveLocaleWithDefaultArguments(): void
     {
         $request = $this->createRequest('/uz');
         $middleware = $this->createMiddleware(['uz' => 'uz-UZ']);
-
-        if ($sessionName !== null) {
-            $middleware = $middleware->withSessionName($sessionName);
-        }
 
         $sessionName ??= '_language';
         $cookieName = '_language';
@@ -299,7 +283,6 @@ final class LocaleTest extends TestCase
         $request = $this->createRequest('/uz');
         $middleware = $this
             ->createMiddleware(['uz' => 'uz-UZ'])
-            ->withSaveLocale(true)
             ->withSession($this->createSession())
             ->withCookieDuration(new DateInterval('P30D'));
 
@@ -350,31 +333,6 @@ final class LocaleTest extends TestCase
             [
                 'level' => 'debug',
                 'message' => 'Saving found locale to cookies.',
-                'context' => [],
-            ],
-        ];
-        $this->assertSame($expectedLoggerMessages, $this->logger->getMessages());
-    }
-
-    public function testDisabledSaveLocale(): void
-    {
-        $request = $this->createRequest('/uz');
-        $middleware = $this->createMiddleware(['uz' => 'uz-UZ'])->withSaveLocale(false);
-
-        $response = $this->process($middleware, $request);
-
-        $this->assertSame('uz-UZ', $this->translatorLocale);
-        $this->assertSame('uz', $this->urlGeneratorLocale);
-
-        $cookies = CookieCollection::fromResponse($response)->toArray();
-        $this->assertArrayNotHasKey('_language', $cookies);
-
-        $this->assertArrayNotHasKey('_language', $this->session);
-
-        $expectedLoggerMessages = [
-            [
-                'level' => 'debug',
-                'message' => "Locale 'uz' found in URL.",
                 'context' => [],
             ],
         ];

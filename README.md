@@ -270,16 +270,7 @@ method.
 3. Cookie named `_language`. Name can be customized via `withCookieName()` method.
 4. `Accept-Language` header. Not enabled by default. Use `withDetectLocale(true)` to enable it.
 
-Found locale is not saved by default. You can enable saving like this:
-
-```php
-use Yiisoft\Yii\Middleware\Locale;
-
-/** @var Locale $middleware */
-$middleware = $middleware->withSaveLocale(false);
-```
-
-Enabling and customizing saving to session:
+Found locale is not saved by default. It can be saved to session:
 
 ```php
 use Yiisoft\Session\SessionInterface;
@@ -294,7 +285,7 @@ $middleware = $middleware
     ->withSessionName('_custom_name');
 ```
 
-Enabling and customizing saving to cookies:
+and to cookie:
 
 ```php
 use Yiisoft\Yii\Middleware\Locale;
