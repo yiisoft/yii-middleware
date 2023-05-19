@@ -25,7 +25,7 @@ use Yiisoft\Http\Status;
 use Yiisoft\Router\UrlGeneratorInterface;
 use Yiisoft\Session\SessionInterface;
 use Yiisoft\Test\Support\Log\SimpleLogger;
-use Yiisoft\Yii\Middleware\Event\LocaleEvent;
+use Yiisoft\Yii\Middleware\Event\SetLocaleEvent;
 use Yiisoft\Yii\Middleware\Exception\InvalidLocalesFormatException;
 use Yiisoft\Yii\Middleware\Locale;
 use Yiisoft\Yii\Middleware\Storage\CookieLocaleStorage;
@@ -478,7 +478,7 @@ final class LocaleTest extends TestCase
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher
             ->method('dispatch')
-            ->willReturnCallback(function (LocaleEvent $event) use ($eventDispatcher) {
+            ->willReturnCallback(function (SetLocaleEvent $event) use ($eventDispatcher) {
                 $this->translatorLocale = $event->getLocale();
                 return $eventDispatcher;
             });
