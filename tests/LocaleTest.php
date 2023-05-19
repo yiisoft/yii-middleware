@@ -321,7 +321,12 @@ final class LocaleTest extends TestCase
         $expectedLoggerMessages = [
             [
                 'level' => 'debug',
-                'message' => "Locale 'uz' found in cookies.",
+                'message' => "Locale 'uz' found in cookie.",
+                'context' => [],
+            ],
+            [
+                'level' => 'debug',
+                'message' => "Saving found locale to cookie.",
                 'context' => [],
             ],
         ];

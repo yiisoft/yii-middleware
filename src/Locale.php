@@ -80,10 +80,6 @@ final class Locale implements MiddlewareInterface
 
                 throw new InvalidArgumentException("Locale storage must implement \"$interfaceName\".");
             }
-
-            if ($storage instanceof LocaleStorageWithHttpFlowInterface) {
-                $storage->withRequest($request);
-            }
         }
 
         $uri = $request->getUri();
@@ -103,9 +99,13 @@ final class Locale implements MiddlewareInterface
 
             if ($locale === null) {
                 foreach ($this->storages as $storage) {
+                    if ($storage instanceof LocaleStorageWithHttpFlowInterface) {
+                        $storage = $storage->withRequest($request);
+                    }
+
                     $locale = $storage->get();
                     if ($locale !== null) {
-                        $this->logger->debug("Locale '$locale' found in cookies.");
+                        $this->logger->debug("Locale '$locale' found in cookie.");
 
                         break;
                     }
@@ -143,7 +143,7 @@ final class Locale implements MiddlewareInterface
 
         foreach ($this->storages as $storage) {
             if ($storage instanceof LocaleStorageWithHttpFlowInterface) {
-                $storage->withResponse($response);
+                $storage = $storage->withResponse($response);
             }
 
             $storageName = $storage->getName();

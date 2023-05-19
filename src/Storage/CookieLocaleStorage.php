@@ -10,8 +10,8 @@ use Yiisoft\Cookies\Cookie;
 
 final class CookieLocaleStorage implements LocaleStorageWithHttpFlowInterface
 {
-    private ServerRequestInterface $request;
-    private ResponseInterface $response;
+    private ?ServerRequestInterface $request = null;
+    private ?ResponseInterface $response = null;
 
     public function __construct(
         private Cookie $cookie,
@@ -26,19 +26,15 @@ final class CookieLocaleStorage implements LocaleStorageWithHttpFlowInterface
     public function set(string $value): void
     {
         $this->cookie = $this->cookie->withValue($value);
-        $this->response = $this->cookie->addToResponse($this->response);
+
+        if ($this->response !== null) {
+            $this->response = $this->cookie->addToResponse($this->response);
+        }
     }
 
     public function get(): ?string
     {
-        return $this->request->getCookieParams()[$this->cookie->getName()] ?? null;
-    }
-
-    public function withResponse(ResponseInterface $response): self
-    {
-        $new = clone $this;
-        $new->response = $response;
-        return $new;
+        return $this?->request?->getCookieParams()[$this->cookie->getName()] ?? null;
     }
 
     public function withRequest(ServerRequestInterface $request): self
@@ -48,7 +44,14 @@ final class CookieLocaleStorage implements LocaleStorageWithHttpFlowInterface
         return $new;
     }
 
-    public function getResponse(): ResponseInterface
+    public function withResponse(ResponseInterface $response): self
+    {
+        $new = clone $this;
+        $new->response = $response;
+        return $new;
+    }
+
+    public function getResponse(): ?ResponseInterface
     {
         return $this->response;
     }
