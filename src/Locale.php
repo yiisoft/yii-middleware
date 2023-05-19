@@ -20,7 +20,7 @@ use Yiisoft\Strings\WildcardPattern;
 use Yiisoft\Yii\Middleware\Event\LocaleEvent;
 use Yiisoft\Yii\Middleware\Exception\InvalidLocalesFormatException;
 use Yiisoft\Yii\Middleware\Storage\LocaleStorageInterface;
-use Yiisoft\Yii\Middleware\Storage\LocaleStorageWithResponseInterface;
+use Yiisoft\Yii\Middleware\Storage\LocaleStorageWithHttpFlowInterface;
 
 use function array_key_exists;
 
@@ -46,7 +46,7 @@ final class Locale implements MiddlewareInterface
     /**
      * @var LocaleStorageInterface[]
      */
-    private array $storages;
+    private array $storages = [];
 
     /**
      * @param EventDispatcherInterface $eventDispatcher Event dispatcher instance to dispatch events.
@@ -81,7 +81,7 @@ final class Locale implements MiddlewareInterface
                 throw new InvalidArgumentException("Locale storage must implement \"$interfaceName\".");
             }
 
-            if ($storage instanceof LocaleStorageWithResponseInterface) {
+            if ($storage instanceof LocaleStorageWithHttpFlowInterface) {
                 $storage->withRequest($request);
             }
         }
@@ -142,7 +142,7 @@ final class Locale implements MiddlewareInterface
         $this->urlGenerator->setDefaultArgument($this->queryParameterName, $locale);
 
         foreach ($this->storages as $storage) {
-            if ($storage instanceof LocaleStorageWithResponseInterface) {
+            if ($storage instanceof LocaleStorageWithHttpFlowInterface) {
                 $storage->withResponse($response);
             }
 
@@ -150,7 +150,7 @@ final class Locale implements MiddlewareInterface
             $this->logger->debug("Saving found locale to $storageName.");
             $storage->set($locale);
 
-            if ($storage instanceof LocaleStorageWithResponseInterface) {
+            if ($storage instanceof LocaleStorageWithHttpFlowInterface) {
                 $response = $storage->getResponse();
             }
         }

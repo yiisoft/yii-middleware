@@ -7,7 +7,7 @@ namespace Yiisoft\Yii\Middleware\Storage;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-interface LocaleStorageWithResponseInterface extends LocaleStorageInterface
+interface LocaleStorageWithHttpFlowInterface extends LocaleStorageInterface
 {
     public function withResponse(ResponseInterface $response): self;
 

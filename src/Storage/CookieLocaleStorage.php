@@ -8,7 +8,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Yiisoft\Cookies\Cookie;
 
-final class CookieLocaleStorage implements LocaleStorageWithResponseInterface
+final class CookieLocaleStorage implements LocaleStorageWithHttpFlowInterface
 {
     private ServerRequestInterface $request;
     private ResponseInterface $response;
