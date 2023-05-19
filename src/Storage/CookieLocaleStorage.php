@@ -15,8 +15,7 @@ final class CookieLocaleStorage implements LocaleStorageWithResponseInterface
 
     public function __construct(
         private Cookie $cookie,
-    )
-    {
+    ) {
     }
 
     public function getName(): string
