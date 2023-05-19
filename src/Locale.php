@@ -107,6 +107,8 @@ final class Locale implements MiddlewareInterface
                 foreach ($this->storages as $storage) {
                     $locale = $storage->get();
                     if ($locale !== null) {
+                        $this->logger->debug("Locale '$locale' found in cookies.");
+
                         break;
                     }
                 }
@@ -194,20 +196,6 @@ final class Locale implements MiddlewareInterface
         );
 
         return $this->parseLocale($queryParameters[$this->queryParameterName]);
-    }
-
-    /**
-     * @psalm-param array<string, string> $cookieParameters
-     */
-    private function getLocaleFromCookies($cookieParameters): ?string
-    {
-        if (!isset($cookieParameters[$this->cookieName])) {
-            return null;
-        }
-
-        $this->logger->debug(sprintf("Locale '%s' found in cookies.", $cookieParameters[$this->cookieName]));
-
-        return $this->parseLocale($cookieParameters[$this->cookieName]);
     }
 
     private function detectLocale(ServerRequestInterface $request): ?string
