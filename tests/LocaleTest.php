@@ -326,7 +326,7 @@ final class LocaleTest extends TestCase
             ],
             [
                 'level' => 'debug',
-                'message' => "Saving found locale to cookie.",
+                'message' => 'Saving found locale to cookie.',
                 'context' => [],
             ],
         ];
