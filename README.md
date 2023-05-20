@@ -240,7 +240,7 @@ $response = $middleware->process($request, $handler);
 
 ### `Locale`
 
-Supports locale-based routing and configures translator and URL generator.
+Supports locale-based routing and configures URL generator.
 
 > Info: You should place this middleware before `Route` middleware in the middleware list.
 
@@ -288,7 +288,7 @@ use Yiisoft\Yii\Middleware\Locale;
 $middleware = $middleware->withSessionName('_custom_name');
 ```
 
-or additionally save it to cookies:
+or additionally, save it to cookies:
 
 ```php
 use Yiisoft\Yii\Middleware\Locale;
@@ -296,9 +296,32 @@ use Yiisoft\Yii\Middleware\Locale;
 /** @var Locale $middleware */
 $middleware = $middleware    
     ->withCookieDuration(new DateInterval('P30D')) // Key parameter for activating saving to cookies.
-    // Additional customization.
+    // Extra customization.
     ->withCookieName('_custom_name')
     ->withSecureCookie(true)
+```
+
+To configure more services, such as translator, use `LocaleEvent`:
+
+```php
+use Yiisoft\EventDispatcher\Provider\Provider;
+use Yiisoft\Yii\Middleware\Event\LocaleEvent;
+
+final class TranslatorLocaleEventHandler
+{
+    public function __construct(
+        Provider $provider,
+        private Translator $translator
+    )
+    {
+        $provider->attach([$this, 'handle'], LocaleEvent::class);
+    }
+    
+    public function handle(LocaleEvent $event): void
+    {
+        $this->translator->setLocale($event->getLocale());
+    }    
+}
 ```
 
 ### `CorsAllowAll`
