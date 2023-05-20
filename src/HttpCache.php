@@ -173,12 +173,12 @@ final class HttpCache implements MiddlewareInterface
 
     /**
      * Validates if the HTTP cache has valid content.
-     * If both Last-Modified and ETag are `null`, it returns `false`.
+     * If both `Last-Modified` and `ETag` are `null`, it returns `false`.
      *
      * @param ServerRequestInterface $request The server request instance.
      * @param int|null $lastModified The calculated Last-Modified value in terms of a UNIX timestamp.
-     * If `null`, the Last-Modified header won't be validated.
-     * @param string|null $etag The calculated ETag value. If `null`, the ETag header won't be validated.
+     * If `null`, the `Last-Modified` header won't be validated.
+     * @param string|null $etag The calculated `ETag` value. If `null`, the `ETag` header won't be validated.
      *
      * @return bool Whether the HTTP cache is still valid.
      */
@@ -195,7 +195,7 @@ final class HttpCache implements MiddlewareInterface
                 flags: PREG_SPLIT_NO_EMPTY,
             );
 
-            // "HTTP_IF_NONE_MATCH" takes precedence over "HTTP_IF_MODIFIED_SINCE".
+            // `HTTP_IF_NONE_MATCH` takes precedence over `HTTP_IF_MODIFIED_SINCE`.
             // https://tools.ietf.org/html/rfc7232#section-3.3
             return $headerParts !== false && in_array($etag, $headerParts, true);
         }

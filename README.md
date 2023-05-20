@@ -2,7 +2,7 @@
     <a href="https://github.com/yiisoft" target="_blank">
         <img src="https://yiisoft.github.io/docs/images/yii_logo.svg" height="100px">
     </a>
-    <h1 align="center">Yii Middleware</h1>
+    <h1 align="center">Yii middleware</h1>
     <br>
 </p>
 
@@ -264,13 +264,13 @@ $response = $middleware->process($request);
 
 The priority of lookup is the following:
 
-1. URI query path, i.e., `/de/blog`.
-2. URI query parameter name, i.e., `/blog?_language=de`. Parameter name can be customized via `withQueryParameterName()` 
-method.
-3. Cookie named `_language`. Name can be customized via `withCookieName()` method.
+1. URI query path, that's `/de/blog`.
+2. URI query parameter name, that's `/blog?_language=de`.
+   You can customize parameter name via `withQueryParameterName()`.
+3. Cookie named `_language`. You can customize name via `withCookieName()`.
 4. `Accept-Language` header. Not enabled by default. Use `withDetectLocale(true)` to enable it.
 
-Found locale is saved to session by default. You can disable saving completely:
+The middleware saves found locale to session by default. You can disable saving completely:
 
 ```php
 use Yiisoft\Yii\Middleware\Locale;
@@ -357,7 +357,8 @@ The code is statically analyzed with [Psalm](https://psalm.dev/). To run static 
 
 ## License
 
-The Yii Middleware is free software. It is released under the terms of the BSD License.
+The Yii Middleware is free software.
+It's released under the terms of the BSD License. 
 Please see [`LICENSE`](./LICENSE.md) for more information.
 
 Maintained by [Yii Software](https://www.yiiframework.com/).
