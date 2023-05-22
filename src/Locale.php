@@ -131,9 +131,7 @@ final class Locale implements MiddlewareInterface
         $this->eventDispatcher->dispatch(new SetLocaleEvent($this->supportedLocales[$locale]));
         $this->urlGenerator->setDefaultArgument($this->queryParameterName, $locale);
 
-        $response = $this->saveLocale($locale, $response);
-
-        return $response;
+        return $this->saveLocale($locale, $response);
     }
 
     private function getLocaleFromPath(string $path): ?string
