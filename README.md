@@ -2,7 +2,7 @@
     <a href="https://github.com/yiisoft" target="_blank">
         <img src="https://yiisoft.github.io/docs/images/yii_logo.svg" height="100px">
     </a>
-    <h1 align="center">Yii middleware</h1>
+    <h1 align="center">Yii Middleware</h1>
     <br>
 </p>
 
@@ -294,24 +294,28 @@ or additionally, save it to cookies:
 use Yiisoft\Yii\Middleware\Locale;
 
 /** @var Locale $middleware */
-$middleware = $middleware    
+$middleware = $middleware
     ->withCookieDuration(new DateInterval('P30D')) // Key parameter for activating saving to cookies.
     // Extra customization.
     ->withCookieName('_custom_name')
     ->withSecureCookie(true)
 ```
 
-To configure more services, such as translator, use `LocaleEvent`:
+To configure more services, such as translator or session, use `LocaleEvent` 
+([Yii Event Dispatcher](https://github.com/yiisoft/event-dispatcher) is required):
 
 ```php
 use Yiisoft\EventDispatcher\Provider\Provider;
+use Yiisoft\Session\SessionInterface;
+use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\Yii\Middleware\Event\LocaleEvent;
 
 final class TranslatorLocaleEventHandler
 {
     public function __construct(
         Provider $provider,
-        private Translator $translator
+        private TranslatorInterface $translator,
+        private SessionInterface $session,
     )
     {
         $provider->attach([$this, 'handle'], LocaleEvent::class);
@@ -320,9 +324,12 @@ final class TranslatorLocaleEventHandler
     public function handle(LocaleEvent $event): void
     {
         $this->translator->setLocale($event->getLocale());
+        $this->session->set('_language', $event->getLocale());
     }    
 }
 ```
+
+> Note: Using tranlator requires [Yii Message Translator](https://github.com/yiisoft/translator).
 
 ### `CorsAllowAll`
 
