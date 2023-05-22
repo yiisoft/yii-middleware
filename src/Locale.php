@@ -20,7 +20,7 @@ use Yiisoft\Http\Status;
 use Yiisoft\Router\UrlGeneratorInterface;
 use Yiisoft\Session\SessionInterface;
 use Yiisoft\Strings\WildcardPattern;
-use Yiisoft\Yii\Middleware\Event\LocaleEvent;
+use Yiisoft\Yii\Middleware\Event\SetLocaleEvent;
 use Yiisoft\Yii\Middleware\Exception\InvalidLocalesFormatException;
 
 use function array_key_exists;
@@ -128,7 +128,7 @@ final class Locale implements MiddlewareInterface
         }
 
         /** @var string $locale */
-        $this->eventDispatcher->dispatch(new LocaleEvent($this->supportedLocales[$locale]));
+        $this->eventDispatcher->dispatch(new SetLocaleEvent($this->supportedLocales[$locale]));
         $this->urlGenerator->setDefaultArgument($this->queryParameterName, $locale);
 
         $response = $this->saveLocale($locale, $response);

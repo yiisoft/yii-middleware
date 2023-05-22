@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Yiisoft\Yii\Middleware\Event;
 
-final class LocaleEvent
+final class SetLocaleEvent
 {
     public function __construct(private string $locale)
     {
