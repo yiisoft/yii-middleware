@@ -331,7 +331,7 @@ final class Locale implements MiddlewareInterface
     /**
      * Return new instance with enabled or disabled secure cookies.
      *
-     * @param bool $secure Whether middleware should flag locale cookie as "secure."
+     * @param bool $secure Whether middleware should flag locale cookie as secure.
      */
     public function withSecureCookie(bool $secure): self
     {
