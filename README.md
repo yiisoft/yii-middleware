@@ -270,7 +270,7 @@ The priority of lookup is the following:
 3. Cookie named `_language`. You can customize name via `withCookieName()`.
 4. `Accept-Language` header. Not enabled by default. Use `withDetectLocale(true)` to enable it.
 
-The middleware saves found locale to session by default. You can save it to cookies:
+Found locale is not saved by default. It can be saved to cookies:
 
 ```php
 use Yiisoft\Yii\Middleware\Locale;

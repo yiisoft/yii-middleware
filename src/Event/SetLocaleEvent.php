@@ -10,7 +10,7 @@ use Yiisoft\Yii\Middleware\Locale;
  * Raised when {@see Locale} middleware have determined the locale to use.
  * Use this event to configure locale of extra services.
  */
-final class LocaleEvent
+final class SetLocaleEvent
 {
     /**
      * @param string $locale Locale determined by {@see Locale} middleware.
