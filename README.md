@@ -192,7 +192,7 @@ $middleware = $middleware->permanent();
 $middleware = $middleware->withStatus(303);
 ```
 
-### `SubFolder`
+### `Subfolder`
 
 Supports routing when the entry point of the application isn't directly at the webroot.
 By default, it determines webroot based on server parameters.
@@ -202,7 +202,7 @@ By default, it determines webroot based on server parameters.
 If you want the application to run on the specified path, use the prefix instead:
 
 ```php
-use Yiisoft\Yii\Middleware\SubFolder;
+use Yiisoft\Yii\Middleware\Subfolder;
 
 /**
  * @var Psr\Http\Message\ServerRequestInterface $request
@@ -215,7 +215,7 @@ use Yiisoft\Yii\Middleware\SubFolder;
 $prefix = '/blog';
 // The prefix value usually begins with a slash and must not end with a slash.
 
-$middleware = new SubFolder($urlGenerator, $aliases, $prefix);
+$middleware = new Subfolder($urlGenerator, $aliases, $prefix);
 
 $response = $middleware->process($request, $handler);
 ```

@@ -14,9 +14,9 @@ use Yiisoft\Aliases\Aliases;
 use Yiisoft\Http\Method;
 use Yiisoft\Router\UrlGeneratorInterface;
 use Yiisoft\Yii\Middleware\Exception\BadUriPrefixException;
-use Yiisoft\Yii\Middleware\SubFolder;
+use Yiisoft\Yii\Middleware\Subfolder;
 
-final class SubFolderTest extends TestCase
+final class SubfolderTest extends TestCase
 {
     private string $urlGeneratorUriPrefix;
     private Aliases $aliases;
@@ -224,7 +224,7 @@ final class SubFolderTest extends TestCase
         ];
     }
 
-    private function process(SubFolder $middleware, ServerRequestInterface $request): ResponseInterface
+    private function process(Subfolder $middleware, ServerRequestInterface $request): ResponseInterface
     {
         $handler = new class () implements RequestHandlerInterface {
             public ?ServerRequestInterface $request = null;
@@ -247,7 +247,7 @@ final class SubFolderTest extends TestCase
             ->getPath();
     }
 
-    private function createMiddleware(?string $prefix = null, ?string $alias = null): SubFolder
+    private function createMiddleware(?string $prefix = null, ?string $alias = null): Subfolder
     {
         $urlGenerator = $this->createMock(UrlGeneratorInterface::class);
         $urlGenerator
@@ -259,7 +259,7 @@ final class SubFolderTest extends TestCase
         $urlGenerator
             ->method('getUriPrefix')
             ->willReturnReference($this->urlGeneratorUriPrefix);
-        return new SubFolder($urlGenerator, $this->aliases, prefix: $prefix, baseUrlAlias: $alias);
+        return new Subfolder($urlGenerator, $this->aliases, prefix: $prefix, baseUrlAlias: $alias);
     }
 
     private function createRequest(string $uri = '/', string $scriptPath = '/'): ServerRequestInterface
