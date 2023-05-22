@@ -25,8 +25,8 @@ use Yiisoft\Yii\Middleware\Exception\InvalidLocalesFormatException;
 use function array_key_exists;
 
 /**
- * Locale middleware supports locale-based routing and configures URL generator. With event dispatcher it's also
- * possible to configure translator's locale.
+ * Locale middleware supports locale-based routing and configures URL generator. With {@see SetLocaleEvent} it's also
+ * possible to configure locale in other services such as translator or session.
  *
  * You should place it before `Route` middleware in the middleware list.
  */
