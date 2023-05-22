@@ -21,7 +21,7 @@ use function strlen;
  *
  * You should place this middleware before `Route` middleware in the middleware list.
  */
-final class SubFolder implements MiddlewareInterface
+final class Subfolder implements MiddlewareInterface
 {
     /**
      * @param UrlGeneratorInterface $uriGenerator The URI generator instance.
