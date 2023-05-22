@@ -7,7 +7,7 @@ namespace Yiisoft\Yii\Middleware\Event;
 use Yiisoft\Yii\Middleware\Locale;
 
 /**
- * Raised when {@see Locale} middleware determines the locale to use.
+ * Raised when {@see Locale} middleware have determined the locale to use.
  * Use this event to configure locale of extra services.
  */
 final class LocaleEvent
