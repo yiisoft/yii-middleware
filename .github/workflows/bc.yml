@@ -1,6 +1,6 @@
 on:
-  pull_request:
-  push:
+  - pull_request
+  - push
 
 name: backwards compatibility
 
@@ -12,4 +12,4 @@ jobs:
       os: >-
         ['ubuntu-latest']
       php: >-
-        ['8.0']
+        ['8.1']
