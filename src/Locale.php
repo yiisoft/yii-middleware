@@ -18,7 +18,6 @@ use Yiisoft\Http\Header;
 use Yiisoft\Http\Method;
 use Yiisoft\Http\Status;
 use Yiisoft\Router\UrlGeneratorInterface;
-use Yiisoft\Session\SessionInterface;
 use Yiisoft\Strings\WildcardPattern;
 use Yiisoft\Yii\Middleware\Event\SetLocaleEvent;
 use Yiisoft\Yii\Middleware\Exception\InvalidLocalesFormatException;
@@ -40,7 +39,6 @@ final class Locale implements MiddlewareInterface
     private bool $detectLocale = false;
     private string $defaultLocale = self::DEFAULT_LOCALE;
     private string $queryParameterName = self::DEFAULT_LOCALE_NAME;
-    private string $sessionName = self::DEFAULT_LOCALE_NAME;
     private string $cookieName = self::DEFAULT_LOCALE_NAME;
     /**
      * @psalm-var array<string, string>
@@ -54,8 +52,6 @@ final class Locale implements MiddlewareInterface
      * @param ResponseFactoryInterface $responseFactory Response factory used to create redirect responses.
      * @param array $supportedLocales List of supported locales in key-value format such as `['ru' => 'ru_RU', 'uz' => 'uz_UZ']`.
      * @param string[] $ignoredRequestUrlPatterns {@see WildcardPattern Patterns} for ignoring requests with URLs matching.
-     * @param SessionInterface|null $session Session instance to save locale to. `null` disables saving locale to
-     * session completely.
      * @param ?DateInterval $cookieDuration Locale cookie lifetime. `null` disables saving locale to cookies completely.
      * @param bool $secureCookie Whether middleware should flag locale cookie as "secure". Effective only when
      * {@see $cookieDuration} is not `null`.
@@ -67,7 +63,6 @@ final class Locale implements MiddlewareInterface
         private ResponseFactoryInterface $responseFactory,
         array $supportedLocales = [],
         private array $ignoredRequestUrlPatterns = [],
-        private ?SessionInterface $session = null,
         private bool $secureCookie = false,
         private ?DateInterval $cookieDuration = null,
     ) {
@@ -201,20 +196,15 @@ final class Locale implements MiddlewareInterface
 
     private function saveLocale(string $locale, ResponseInterface $response): ResponseInterface
     {
-        if ($this->session !== null) {
-            $this->logger->debug('Saving found locale to session.');
-            $this->session->set($this->sessionName, $locale);
+        if ($this->cookieDuration === null) {
+            return $response;
         }
 
-        if ($this->cookieDuration !== null) {
-            $this->logger->debug('Saving found locale to cookies.');
-            $cookie = new Cookie(name: $this->cookieName, value: $locale, secure: $this->secureCookie);
-            $cookie = $cookie->withMaxAge($this->cookieDuration);
+        $this->logger->debug('Saving found locale to cookies.');
+        $cookie = new Cookie(name: $this->cookieName, value: $locale, secure: $this->secureCookie);
+        $cookie = $cookie->withMaxAge($this->cookieDuration);
 
-            return $cookie->addToResponse($response);
-        }
-
-        return $response;
+        return $cookie->addToResponse($response);
     }
 
     private function parseLocale(string $locale): string
@@ -302,28 +292,15 @@ final class Locale implements MiddlewareInterface
     }
 
     /**
-     * Return new instance with the name of session parameter to store found locale. Effective only when {@see $session}
-     * is not `null`.
-     *
-     * @param string $sessionName Name of session parameter.
-     */
-    public function withSessionName(string $sessionName): self
-    {
-        $new = clone $this;
-        $new->sessionName = $sessionName;
-        return $new;
-    }
-
-    /**
      * Return new instance with the name of cookie parameter to store found locale. Effective only when
      * {@see $cookieDuration} is not `null`.
      *
-     * @param string $sessionName Name of cookie parameter.
+     * @param string $cookieName Name of cookie parameter.
      */
-    public function withCookieName(string $sessionName): self
+    public function withCookieName(string $cookieName): self
     {
         $new = clone $this;
-        $new->cookieName = $sessionName;
+        $new->cookieName = $cookieName;
         return $new;
     }
 
@@ -373,19 +350,6 @@ final class Locale implements MiddlewareInterface
     {
         $new = clone $this;
         $new->cookieDuration = $cookieDuration;
-        return $new;
-    }
-
-    /**
-     * Return new instance with changed session.
-     *
-     * @param SessionInterface|null $session Session instance. When set to `null`, saving locale to session is disabled
-     * completely.
-     */
-    public function withSession(?SessionInterface $session): self
-    {
-        $new = clone $this;
-        $new->session = $session;
         return $new;
     }
 }

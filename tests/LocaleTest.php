@@ -62,14 +62,12 @@ final class LocaleTest extends TestCase
     {
         $localeMiddleware = $this->createMiddleware(['uz' => 'uz-UZ']);
 
-        $this->assertNotSame($localeMiddleware->withSession($this->createSession()), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withSecureCookie(true), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withCookieDuration(new DateInterval('P31D')), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withDefaultLocale('uz'), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withDetectLocale(true), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withSupportedLocales(['ru' => 'ru-RU', 'uz' => 'uz-UZ']), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withQueryParameterName('lang'), $localeMiddleware);
-        $this->assertNotSame($localeMiddleware->withSessionName('lang'), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withCookieName('lang'), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withIgnoredRequestUrlPatterns(['/auth**']), $localeMiddleware);
     }
@@ -234,19 +232,15 @@ final class LocaleTest extends TestCase
     {
         $request = $this->createRequest('/uz');
         $middleware = $this->createMiddleware(['uz' => 'uz-UZ']);
-
-        $sessionName ??= '_language';
-        $cookieName = '_language';
-
         $response = $this->process($middleware, $request);
 
         $this->assertSame('uz-UZ', $this->translatorLocale);
         $this->assertSame('uz', $this->urlGeneratorLocale);
 
-        $this->assertArrayNotHasKey($sessionName, $this->session);
+        $this->assertArrayNotHasKey('_language', $this->session);
 
         $cookies = CookieCollection::fromResponse($response)->toArray();
-        $this->assertArrayNotHasKey($cookieName, $cookies);
+        $this->assertArrayNotHasKey('_language', $cookies);
 
         $expectedLoggerMessages = [
             [
@@ -261,34 +255,22 @@ final class LocaleTest extends TestCase
     public function dataSaveLocaleWithCustomArguments(): array
     {
         return [
-            'sessionName: default, cookie name: default, secureCookie: default' => [null, null, null],
-            'sessionName: default, cookie name: default, secureCookie: false' => [null, null, false],
-            'sessionName: default, cookie name: default, secureCookie: true' => [null, null, true],
-            'sessionName: custom, cookie name: custom, secureCookie: default' => [
-                '_session_language',
-                '_cookie_language',
-                null,
-            ],
+            'cookie name: default, secureCookie: default' => [null, null],
+            'cookie name: default, secureCookie: false' => [null, false],
+            'cookie name: default, secureCookie: true' => [null, true],
+            'cookie name: custom, secureCookie: default' => ['_cookie_language', null],
         ];
     }
 
     /**
      * @dataProvider dataSaveLocaleWithCustomArguments
      */
-    public function testSaveLocaleWithCustomArguments(
-        ?string $sessionName,
-        ?string $cookieName,
-        ?bool $secureCookie,
-    ): void {
+    public function testSaveLocaleWithCustomArguments(?string $cookieName, ?bool $secureCookie): void
+    {
         $request = $this->createRequest('/uz');
         $middleware = $this
-            ->createMiddleware(['uz' => 'uz-UZ'])
-            ->withSession($this->createSession())
+            ->createMiddleware(['uz' => 'uz-UZ'], saveToSession: true)
             ->withCookieDuration(new DateInterval('P30D'));
-
-        if ($sessionName !== null) {
-            $middleware = $middleware->withSessionName($sessionName);
-        }
 
         if ($cookieName !== null) {
             $middleware = $middleware->withCookieName($cookieName);
@@ -298,7 +280,6 @@ final class LocaleTest extends TestCase
             $middleware = $middleware->withSecureCookie($secureCookie);
         }
 
-        $sessionName ??= '_language';
         $cookieName ??= '_language';
         $expectedSecureCookie = $secureCookie ?? false;
 
@@ -307,8 +288,8 @@ final class LocaleTest extends TestCase
         $this->assertSame('uz-UZ', $this->translatorLocale);
         $this->assertSame('uz', $this->urlGeneratorLocale);
 
-        $this->assertArrayHasKey($sessionName, $this->session);
-        $this->assertSame('uz', $this->session[$sessionName]);
+        $this->assertArrayHasKey('_language', $this->session);
+        $this->assertSame('uz-UZ', $this->session['_language']);
 
         $cookies = CookieCollection::fromResponse($response)->toArray();
         $this->assertArrayHasKey($cookieName, $cookies);
@@ -521,13 +502,19 @@ final class LocaleTest extends TestCase
         return $uri->getPath() . ($uri->getQuery() !== '' ? '?' . $uri->getQuery() : '');
     }
 
-    private function createMiddleware(array $locales = []): Locale
+    private function createMiddleware(array $locales = [], bool $saveToSession = false): Locale
     {
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher
             ->method('dispatch')
-            ->willReturnCallback(function (SetLocaleEvent $event) use ($eventDispatcher) {
+            ->willReturnCallback(function (SetLocaleEvent $event) use ($eventDispatcher, $saveToSession) {
                 $this->translatorLocale = $event->getLocale();
+
+                if ($saveToSession) {
+                    $this->logger->debug('Saving found locale to session.');
+                    $this->createSession()->set('_language', $event->getLocale());
+                }
+
                 return $eventDispatcher;
             });
 
@@ -564,7 +551,13 @@ final class LocaleTest extends TestCase
         array $headers = [],
         $cookieParams = []
     ): ServerRequestInterface {
-        return new ServerRequest([], [], $cookieParams, $queryParams, null, $method, $uri, $headers);
+        return new ServerRequest(
+            cookieParams: $cookieParams,
+            queryParams: $queryParams,
+            method: $method,
+            uri: $uri,
+            headers: $headers,
+        );
     }
 
     private function createSession(): SessionInterface
