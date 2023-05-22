@@ -173,12 +173,12 @@ final class HttpCache implements MiddlewareInterface
 
     /**
      * Validates if the HTTP cache has valid content.
-     * If both Last-Modified and ETag are `null`, it returns `false`.
+     * If both `Last-Modified` and `ETag` are `null`, it returns `false`.
      *
      * @param ServerRequestInterface $request The server request instance.
      * @param int|null $lastModified The calculated Last-Modified value in terms of a UNIX timestamp.
-     * If `null`, the Last-Modified header won't be validated.
-     * @param string|null $etag The calculated ETag value. If `null`, the ETag header won't be validated.
+     * If `null`, the `Last-Modified` header won't be validated.
+     * @param string|null $etag The calculated `ETag` value. If `null`, the `ETag` header won't be validated.
      *
      * @return bool Whether the HTTP cache is still valid.
      */

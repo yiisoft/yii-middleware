@@ -240,7 +240,7 @@ $response = $middleware->process($request, $handler);
 
 ### `Locale`
 
-Supports locale-based routing and configures translator and URL generator.
+Supports locale-based routing and configures URL generator.
 
 > Info: You should place this middleware before `Route` middleware in the middleware list.
 
@@ -264,10 +264,10 @@ $response = $middleware->process($request);
 
 The priority of lookup is the following:
 
-1. URI query path, i.e., `/de/blog`.
-2. URI query parameter name, i.e., `/blog?_language=de`. Parameter name can be customized via `withQueryParameterName()` 
-method.
-3. Cookie named `_language`. Name can be customized via `withCookieName()` method.
+1. URI query path, that's `/de/blog`.
+2. URI query parameter name, that's `/blog?_language=de`.
+   You can customize parameter name via `withQueryParameterName()`.
+3. Cookie named `_language`. You can customize name via `withCookieName()`.
 4. `Accept-Language` header. Not enabled by default. Use `withDetectLocale(true)` to enable it.
 
 Found locale is not saved by default. It can be saved to cookies:
@@ -276,12 +276,42 @@ Found locale is not saved by default. It can be saved to cookies:
 use Yiisoft\Yii\Middleware\Locale;
 
 /** @var Locale $middleware */
-$middleware = $middleware    
+$middleware = $middleware
     ->withCookieDuration(new DateInterval('P30D')) // Key parameter for activating saving to cookies.
-    // Additional customization.
+    // Extra customization.
     ->withCookieName('_custom_name')
     ->withSecureCookie(true)
 ```
+
+To configure more services, such as translator or session, use `LocaleEvent` 
+([Yii Event Dispatcher](https://github.com/yiisoft/event-dispatcher) is required):
+
+```php
+use Yiisoft\EventDispatcher\Provider\Provider;
+use Yiisoft\Session\SessionInterface;
+use Yiisoft\Translator\TranslatorInterface;
+use Yiisoft\Yii\Middleware\Event\LocaleEvent;
+
+final class TranslatorLocaleEventHandler
+{
+    public function __construct(
+        Provider $provider,
+        private TranslatorInterface $translator,
+        private SessionInterface $session,
+    )
+    {
+        $provider->attach([$this, 'handle'], LocaleEvent::class);
+    }
+    
+    public function handle(LocaleEvent $event): void
+    {
+        $this->translator->setLocale($event->getLocale());
+        $this->session->set('_language', $event->getLocale());
+    }    
+}
+```
+
+> Note: Using tranlator requires [Yii Message Translator](https://github.com/yiisoft/translator).
 
 ### `CorsAllowAll`
 
@@ -316,7 +346,8 @@ The code is statically analyzed with [Psalm](https://psalm.dev/). To run static 
 
 ## License
 
-The Yii Middleware is free software. It is released under the terms of the BSD License.
+The Yii Middleware is free software.
+It's released under the terms of the BSD License. 
 Please see [`LICENSE`](./LICENSE.md) for more information.
 
 Maintained by [Yii Software](https://www.yiiframework.com/).

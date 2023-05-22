@@ -53,8 +53,8 @@ final class Locale implements MiddlewareInterface
      * @param array $supportedLocales List of supported locales in key-value format such as `['ru' => 'ru_RU', 'uz' => 'uz_UZ']`.
      * @param string[] $ignoredRequestUrlPatterns {@see WildcardPattern Patterns} for ignoring requests with URLs matching.
      * @param ?DateInterval $cookieDuration Locale cookie lifetime. `null` disables saving locale to cookies completely.
-     * @param bool $secureCookie Whether middleware should flag locale cookie as "secure". Effective only when
-     * {@see $cookieDuration} is not `null`.
+     * @param bool $secureCookie Whether middleware should flag locale cookie as secure. Effective only when
+     * {@see $cookieDuration} isn't `null`.
      */
     public function __construct(
         private EventDispatcherInterface $eventDispatcher,
@@ -293,7 +293,7 @@ final class Locale implements MiddlewareInterface
 
     /**
      * Return new instance with the name of cookie parameter to store found locale. Effective only when
-     * {@see $cookieDuration} is not `null`.
+     * {@see $cookieDuration} isn't `null`.
      *
      * @param string $cookieName Name of cookie parameter.
      */
