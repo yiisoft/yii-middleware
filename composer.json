@@ -60,6 +60,10 @@
         "yiisoft/router-fastroute": "^3.0",
         "yiisoft/test-support": "^3.0"
     },
+    "suggest": {
+        "yiisoft/event-dispatcher": "For using events",
+        "yiisoft/translator": "For updating translator's locale"
+    },
     "autoload": {
         "psr-4": {
             "Yiisoft\\Yii\\Middleware\\": "src"
