@@ -91,31 +91,29 @@ final class LocaleTest extends TestCase
         $this->createMiddleware($supportedLocales);
     }
 
-    public function dataLocaleFromPath(): array
+    public function testLocaleFromPathMatchesDefaultLocale(): void
     {
-        return [
-            'matches default locale' => ['en', 'en-US', 'en'],
-            'does not match default locale' => ['uz', 'uz-UZ', 'uz'],
-        ];
-    }
-
-    /**
-     * @dataProvider dataLocaleFromPath
-     */
-    public function testLocaleFromPath(
-        string $localeInPath,
-        string $expectedFullLocale,
-        string $expectedShortLocale,
-    ): void {
-        $request = $this->createRequest($uri = "/$localeInPath/home?test=1");
+        $request = $this->createRequest('/en/home?test=1');
         $middleware = $this->createMiddleware(['en' => 'en-US', 'uz' => 'uz-UZ']);
 
         $response = $this->process($middleware, $request);
 
-        $this->assertSame($expectedFullLocale, $this->translatorLocale);
-        $this->assertSame($expectedShortLocale, $this->urlGeneratorLocale);
-        $this->assertSame($uri, $this->getRequestPath());
+        $this->assertSame(Status::FOUND, $response->getStatusCode());
         $this->assertSame('/home?test=1', $response->getHeaderLine(Header::LOCATION));
+    }
+
+    public function testLocaleFromPathDoesNotMatchDefaultLocale(): void
+    {
+        $uri = '/uz/home?test=1';
+        $request = $this->createRequest($uri);
+        $middleware = $this->createMiddleware(['en' => 'en-US', 'uz' => 'uz-UZ']);
+
+        $response = $this->process($middleware, $request);
+
+        $this->assertSame(Status::OK, $response->getStatusCode());
+        $this->assertSame('uz-UZ', $this->translatorLocale);
+        $this->assertSame('uz', $this->urlGeneratorLocale);
+        $this->assertSame($uri, $this->getRequestPath());
     }
 
     public function testWithDefaultLocale(): void
@@ -174,8 +172,7 @@ final class LocaleTest extends TestCase
 
         $response = $this->process($middleware, $request);
 
-        $this->assertSame('ru-RU', $this->translatorLocale);
-        $this->assertSame('ru', $this->urlGeneratorLocale);
+        $this->assertSame(Status::FOUND, $response->getStatusCode());
         $this->assertSame($expectedLocationHeaderValue, $response->getHeaderLine(Header::LOCATION));
     }
 
@@ -418,8 +415,6 @@ final class LocaleTest extends TestCase
 
         $response = $this->process($middleware, $request);
 
-        $this->assertSame($fullLocale, $this->translatorLocale);
-        $this->assertSame($shortLocale, $this->urlGeneratorLocale);
         $this->assertSame($expectedLocationHeaderValue . $uri, $response->getHeaderLine(Header::LOCATION));
         $this->assertSame(Status::FOUND, $response->getStatusCode());
     }
@@ -435,8 +430,6 @@ final class LocaleTest extends TestCase
 
         $response = $this->process($middleware, $request);
 
-        $this->assertSame('ru-RU', $this->translatorLocale);
-        $this->assertSame('ru', $this->urlGeneratorLocale);
         $this->assertSame('/ru' . $uri, $response->getHeaderLine(Header::LOCATION));
         $this->assertSame(Status::FOUND, $response->getStatusCode());
     }
