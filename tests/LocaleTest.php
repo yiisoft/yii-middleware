@@ -94,12 +94,19 @@ final class LocaleTest extends TestCase
     public function testLocaleFromPathMatchesDefaultLocale(): void
     {
         $request = $this->createRequest('/en/home?test=1');
-        $middleware = $this->createMiddleware(['en' => 'en-US', 'uz' => 'uz-UZ']);
+        $middleware = $this->createMiddleware(
+            locales: ['en' => 'en-US', 'uz' => 'uz-UZ'],
+            cookieDuration: new DateInterval('P5D'),
+        );
 
         $response = $this->process($middleware, $request);
 
+        $cookies = CookieCollection::fromResponse($response)->toArray();
+
         $this->assertSame(Status::FOUND, $response->getStatusCode());
         $this->assertSame('/home?test=1', $response->getHeaderLine(Header::LOCATION));
+        $this->assertArrayHasKey('_language', $cookies);
+        $this->assertSame('en', $cookies['_language']->getValue());
     }
 
     public function testLocaleFromPathDoesNotMatchDefaultLocale(): void
@@ -495,8 +502,11 @@ final class LocaleTest extends TestCase
         return $uri->getPath() . ($uri->getQuery() !== '' ? '?' . $uri->getQuery() : '');
     }
 
-    private function createMiddleware(array $locales = [], bool $saveToSession = false): Locale
-    {
+    private function createMiddleware(
+        array $locales = [],
+        bool $saveToSession = false,
+        ?DateInterval $cookieDuration = null,
+    ): Locale {
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher
             ->method('dispatch')
@@ -534,6 +544,7 @@ final class LocaleTest extends TestCase
             $this->logger,
             new ResponseFactory(),
             $locales,
+            cookieDuration: $cookieDuration,
         );
     }
 

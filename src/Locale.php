@@ -84,7 +84,10 @@ final class Locale implements MiddlewareInterface
 
         if ($locale !== null) {
             if ($locale === $this->defaultLocale && $request->getMethod() === Method::GET) {
-                return $this->createRedirectResponse(substr($path, strlen($locale) + 1) ?: '/', $query);
+                return $this->saveLocale(
+                    $locale,
+                    $this->createRedirectResponse(substr($path, strlen($locale) + 1) ?: '/', $query)
+                );
             }
         } else {
             /** @psalm-var array<string, string> $queryParameters */
