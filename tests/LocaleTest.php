@@ -398,6 +398,27 @@ final class LocaleTest extends TestCase
         $this->assertSame($expectedLoggerMessages, $this->logger->getMessages());
     }
 
+    /**
+     * Locale from query params has a higher priority than from cookies.
+     */
+    public function testLocaleFromQueryParamWithCookie(): void
+    {
+        $middleware = $this->createMiddleware(
+            locales: ['uz' => 'uz-UZ', 'ru' => 'ru-RU'],
+            cookieDuration: new DateInterval('P5D'),
+        );
+
+        $request = $this->createRequest(
+            '/',
+            queryParams: ['_language' => 'uz'],
+            cookieParams: ['_language' => 'ru']
+        );
+        $response = $this->process($middleware, $request);
+
+        $this->assertSame("/uz/", $response->getHeaderLine(Header::LOCATION));
+        $this->assertSame(Status::FOUND, $response->getStatusCode());
+    }
+
     public function dataDetectLocale(): array
     {
         return [
