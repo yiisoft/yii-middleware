@@ -415,7 +415,7 @@ final class LocaleTest extends TestCase
         );
         $response = $this->process($middleware, $request);
 
-        $this->assertSame("/uz/", $response->getHeaderLine(Header::LOCATION));
+        $this->assertSame('/uz/', $response->getHeaderLine(Header::LOCATION));
         $this->assertSame(Status::FOUND, $response->getStatusCode());
     }
 
