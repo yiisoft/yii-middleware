@@ -337,7 +337,10 @@ final class LocaleTest extends TestCase
      */
     public function testLocaleFromCookies(?string $parameterName): void
     {
-        $middleware = $this->createMiddleware(['uz' => 'uz-UZ', 'en' => 'en-US']);
+        $middleware = $this->createMiddleware(
+            locales: ['uz' => 'uz-UZ', 'en' => 'en-US'],
+            cookieDuration: new DateInterval('P5D'),
+        );
         if ($parameterName !== null) {
             $middleware = $middleware->withCookieName($parameterName);
         }

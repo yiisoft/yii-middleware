@@ -94,7 +94,7 @@ final class Locale implements MiddlewareInterface
             $queryParameters = $request->getQueryParams();
             $locale = $this->getLocaleFromQuery($queryParameters);
 
-            if ($locale === null) {
+            if ($locale === null && $this->cookieDuration !== null) {
                 /** @psalm-var array<string, string> $cookieParameters */
                 $cookieParameters = $request->getCookieParams();
                 $locale = $this->getLocaleFromCookies($cookieParameters);
