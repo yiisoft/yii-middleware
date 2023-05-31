@@ -109,6 +109,23 @@ final class LocaleTest extends TestCase
         $this->assertSame('en', $cookies['_language']->getValue());
     }
 
+    public function testDefaultLocaleDoNotSaveToCookie(): void
+    {
+        $request = $this->createRequest('/home?test=1');
+
+        $middleware = $this->createMiddleware(
+            locales: ['en' => 'en-US', 'uz' => 'uz-UZ'],
+            cookieDuration: new DateInterval('P5D'),
+        );
+
+        $response = $this->process($middleware, $request);
+
+        $cookies = CookieCollection::fromResponse($response)->toArray();
+
+        $this->assertSame(Status::OK, $response->getStatusCode());
+        $this->assertEmpty($cookies);
+    }
+
     public function testLocaleFromPathDoesNotMatchDefaultLocale(): void
     {
         $uri = '/uz/home?test=1';
