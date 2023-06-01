@@ -144,6 +144,7 @@ final class Locale implements MiddlewareInterface
         $this->addLocaleCookieToResponseIfNeeded($requestLocale, $response);
         return $response;
     }
+
     private function createRedirectResponse(string $path, string $query): ResponseInterface
     {
         return $this
@@ -154,6 +155,7 @@ final class Locale implements MiddlewareInterface
                 $this->getBaseUrl() . $path . ($query !== '' ? '?' . $query : '')
             );
     }
+
     private function addLocaleCookieToResponseIfNeeded(RequestLocale $requestLocale, ResponseInterface $response): ResponseInterface
     {
         if ($this->cookieDuration === null || $requestLocale->isInCookie()) {

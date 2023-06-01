@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-
 namespace Yiisoft\Yii\Middleware;
 
 use Psr\Http\Message\ServerRequestInterface;
@@ -18,6 +17,7 @@ final class RequestLocale
     private bool $isInPath = false;
     private bool $isInQuery = false;
     private bool $isInCookie = false;
+
     public function __construct(
         private string $defaultLocale,
         private array $supportedLocales,
