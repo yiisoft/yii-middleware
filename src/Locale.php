@@ -7,7 +7,6 @@ namespace Yiisoft\Yii\Middleware;
 use DateInterval;
 use InvalidArgumentException;
 use Psr\EventDispatcher\EventDispatcherInterface;
-use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -102,6 +101,7 @@ final class Locale implements MiddlewareInterface
 
         return $this->redirectToLocaleUrlWithCookie($locale, $isLocaleInCookie, $request);
     }
+
     private function redirectToDefaultUrlWithCookie(string $locale, bool $isLocaleInCookie, ServerRequestInterface $request): ResponseInterface
     {
         $uri = $request->getUri();
@@ -144,7 +144,7 @@ final class Locale implements MiddlewareInterface
                 $locale,
                 true,
                 false,
-                $locale === $this->defaultLocale
+                $locale === $this->defaultLocale,
             ];
         }
 
@@ -156,7 +156,7 @@ final class Locale implements MiddlewareInterface
                 $locale,
                 false,
                 false,
-                $locale === $this->defaultLocale
+                $locale === $this->defaultLocale,
             ];
         }
 
@@ -169,7 +169,7 @@ final class Locale implements MiddlewareInterface
                     $locale,
                     false,
                     true,
-                    $locale === $this->defaultLocale
+                    $locale === $this->defaultLocale,
                 ];
             }
         }
@@ -181,7 +181,7 @@ final class Locale implements MiddlewareInterface
                     $locale,
                     false,
                     false,
-                    $locale === $this->defaultLocale
+                    $locale === $this->defaultLocale,
                 ];
             }
         }
@@ -190,7 +190,7 @@ final class Locale implements MiddlewareInterface
             $this->defaultLocale,
             false,
             false,
-            true
+            true,
         ];
     }
 
