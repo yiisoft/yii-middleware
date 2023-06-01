@@ -511,7 +511,18 @@ final class LocaleTest extends TestCase
         $this->assertSame(Status::OK, $response->getStatusCode());
     }
 
-    public function testIgnoredRequests(): void
+    public function testIgnoredRequest(): void
+    {
+        $request = $this->createRequest($uri = '/auth/login');
+        $middleware = $this->createMiddleware(['uz' => 'uz-UZ'])->withIgnoredRequestUrlPatterns(['/auth/**']);
+
+        $response = $this->process($middleware, $request);
+
+        $this->assertSame($uri, $this->getRequestPath());
+        $this->assertSame(Status::OK, $response->getStatusCode());
+    }
+
+    public function testIgnoredRequestWithLocaleInQueryParams(): void
     {
         $request = $this->createRequest($uri = '/auth/login', queryParams: ['_language' => 'uz']);
         $middleware = $this->createMiddleware(['uz' => 'uz-UZ'])->withIgnoredRequestUrlPatterns(['/auth/**']);
