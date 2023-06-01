@@ -35,7 +35,6 @@ final class Locale implements MiddlewareInterface
 {
     private const DEFAULT_LOCALE = 'en';
     private const DEFAULT_LOCALE_NAME = '_language';
-    private const LOCALE_SEPARATORS = ['-', '_'];
 
     private bool $detectLocale = false;
     private string $defaultLocale = self::DEFAULT_LOCALE;
@@ -77,123 +76,74 @@ final class Locale implements MiddlewareInterface
             return $handler->handle($request);
         }
 
-        [$locale, $isLocaleInPath, $isLocaleInCookie, $isLocaleDefault] = $this->getLocaleInfo($request);
+        $requestLocale = new RequestLocale(
+            $this->defaultLocale,
+            $this->supportedLocales,
+            $this->queryParameterName,
+            $this->cookieDuration !== null,
+            $this->cookieName,
+            $this->detectLocale,
+            $request,
+            $this->logger,
+        );
 
-        if (!$isLocaleDefault) {
-            $this->eventDispatcher->dispatch(new SetLocaleEvent($this->supportedLocales[$locale]));
+        if (!$requestLocale->isDefault()) {
+            $locale = $requestLocale->getSupportedLocale();
+            if ($locale !== null) {
+                $this->eventDispatcher->dispatch(new SetLocaleEvent($locale));
+            }
         }
 
         if ($request->getMethod() !== Method::GET) {
-            return $this->handleInCurrentRequest($locale, $isLocaleInCookie, $request, $handler);
+            return $this->handleInCurrentRequest($requestLocale, $request, $handler);
         }
 
-        if ($isLocaleInPath) {
-            if (!$isLocaleDefault) {
-                return $this->handleInCurrentRequest($locale, $isLocaleInCookie, $request, $handler);
+        if ($requestLocale->isInPath()) {
+            if (!$requestLocale->isDefault()) {
+                return $this->handleInCurrentRequest($requestLocale, $request, $handler);
             }
 
-            return $this->redirectToDefaultUrlWithCookie($locale, $isLocaleInCookie, $request);
+            return $this->redirectToDefaultUrlWithCookie($requestLocale, $request);
         }
 
-        if ($isLocaleDefault) {
-            return $this->handleInCurrentRequest($locale, $isLocaleInCookie, $request, $handler);
+        if ($requestLocale->isDefault()) {
+            return $this->handleInCurrentRequest($requestLocale, $request, $handler);
         }
 
-        return $this->redirectToLocaleUrlWithCookie($locale, $isLocaleInCookie, $request);
+        return $this->redirectToLocaleUrlWithCookie($requestLocale, $request);
     }
 
-    private function redirectToDefaultUrlWithCookie(string $locale, bool $isLocaleInCookie, ServerRequestInterface $request): ResponseInterface
+    private function redirectToDefaultUrlWithCookie(RequestLocale $requestLocale, ServerRequestInterface $request): ResponseInterface
     {
         $uri = $request->getUri();
         $path = $uri->getPath();
         $query = $uri->getQuery();
 
         return $this->addLocaleCookieToResponseIfNeeded(
-            $locale,
-            $isLocaleInCookie,
-            $this->createRedirectResponse(substr($path, strlen($locale) + 1) ?: '/', $query)
+            $requestLocale,
+            $this->createRedirectResponse(substr($path, strlen($requestLocale->getLocale()) + 1) ?: '/', $query)
         );
     }
 
-    private function redirectToLocaleUrlWithCookie(string $locale, bool $isLocaleInCookie, ServerRequestInterface $request): ResponseInterface
+    private function redirectToLocaleUrlWithCookie(RequestLocale $requestLocale, ServerRequestInterface $request): ResponseInterface
     {
         $uri = $request->getUri();
         $path = $uri->getPath();
         $query = $uri->getQuery();
 
         return $this->addLocaleCookieToResponseIfNeeded(
-            $locale,
-            $isLocaleInCookie,
-            $this->createRedirectResponse('/' . $locale . $path, $query)
+            $requestLocale,
+            $this->createRedirectResponse('/' . $requestLocale->getLocale() . $path, $query)
         );
     }
 
-    private function handleInCurrentRequest(string $locale, bool $isLocaleInCookie, ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+    private function handleInCurrentRequest(RequestLocale $requestLocale, ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $this->urlGenerator->setDefaultArgument($this->queryParameterName, $locale);
+        $this->urlGenerator->setDefaultArgument($this->queryParameterName, $requestLocale->getLocale());
         $response = $handler->handle($request);
-        $this->addLocaleCookieToResponseIfNeeded($locale, $isLocaleInCookie, $response);
+        $this->addLocaleCookieToResponseIfNeeded($requestLocale, $response);
         return $response;
     }
-
-    private function getLocaleInfo(ServerRequestInterface $request): array
-    {
-        $locale = $this->getLocaleFromPath($request->getUri()->getPath());
-        if ($locale !== null) {
-            return [
-                $locale,
-                true,
-                false,
-                $locale === $this->defaultLocale,
-            ];
-        }
-
-        /** @psalm-var array<string, string> $queryParameters */
-        $queryParameters = $request->getQueryParams();
-        $locale = $this->getLocaleFromQuery($queryParameters);
-        if ($locale !== null) {
-            return [
-                $locale,
-                false,
-                false,
-                $locale === $this->defaultLocale,
-            ];
-        }
-
-        if ($this->cookieDuration !== null) {
-            /** @psalm-var array<string, string> $cookieParameters */
-            $cookieParameters = $request->getCookieParams();
-            $locale = $this->getLocaleFromCookies($cookieParameters);
-            if ($locale !== null) {
-                return [
-                    $locale,
-                    false,
-                    true,
-                    $locale === $this->defaultLocale,
-                ];
-            }
-        }
-
-        if ($this->detectLocale) {
-            $locale = $this->detectLocale($request);
-            if ($locale !== null) {
-                return [
-                    $locale,
-                    false,
-                    false,
-                    $locale === $this->defaultLocale,
-                ];
-            }
-        }
-
-        return [
-            $this->defaultLocale,
-            false,
-            false,
-            true,
-        ];
-    }
-
     private function createRedirectResponse(string $path, string $query): ResponseInterface
     {
         return $this
@@ -204,95 +154,17 @@ final class Locale implements MiddlewareInterface
                 $this->getBaseUrl() . $path . ($query !== '' ? '?' . $query : '')
             );
     }
-
-    private function getLocaleFromPath(string $path): ?string
+    private function addLocaleCookieToResponseIfNeeded(RequestLocale $requestLocale, ResponseInterface $response): ResponseInterface
     {
-        $parts = [];
-        foreach ($this->supportedLocales as $code => $locale) {
-            $parts[] = $code;
-            $parts[] = $locale;
-        }
-
-        $pattern = implode('|', $parts);
-        if (preg_match("#^/($pattern)\b(/?)#i", $path, $matches)) {
-            $matchedLocale = $matches[1];
-            if (!isset($this->supportedLocales[$matchedLocale])) {
-                $matchedLocale = $this->parseLocale($matchedLocale);
-            }
-            if (isset($this->supportedLocales[$matchedLocale])) {
-                $this->logger->debug(sprintf("Locale '%s' found in URL.", $matchedLocale));
-                return $matchedLocale;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * @psalm-param array<string, string> $queryParameters
-     */
-    private function getLocaleFromQuery($queryParameters): ?string
-    {
-        if (!isset($queryParameters[$this->queryParameterName])) {
-            return null;
-        }
-
-        $this->logger->debug(
-            sprintf("Locale '%s' found in query string.", $queryParameters[$this->queryParameterName]),
-        );
-
-        return $this->parseLocale($queryParameters[$this->queryParameterName]);
-    }
-
-    /**
-     * @psalm-param array<string, string> $cookieParameters
-     */
-    private function getLocaleFromCookies($cookieParameters): ?string
-    {
-        if (!isset($cookieParameters[$this->cookieName])) {
-            return null;
-        }
-
-        $this->logger->debug(sprintf("Locale '%s' found in cookies.", $cookieParameters[$this->cookieName]));
-
-        return $this->parseLocale($cookieParameters[$this->cookieName]);
-    }
-
-    private function detectLocale(ServerRequestInterface $request): ?string
-    {
-        foreach ($request->getHeader(Header::ACCEPT_LANGUAGE) as $language) {
-            if (!isset($this->supportedLocales[$language])) {
-                $language = $this->parseLocale($language);
-            }
-            if (isset($this->supportedLocales[$language])) {
-                return $language;
-            }
-        }
-        return null;
-    }
-
-    private function addLocaleCookieToResponseIfNeeded(string $locale, bool $isLocaleInCookie, ResponseInterface $response): ResponseInterface
-    {
-        if ($this->cookieDuration === null || $isLocaleInCookie) {
+        if ($this->cookieDuration === null || $requestLocale->isInCookie()) {
             return $response;
         }
 
         $this->logger->debug('Saving found locale to cookies.');
-        $cookie = new Cookie(name: $this->cookieName, value: $locale, secure: $this->secureCookie);
+        $cookie = new Cookie(name: $this->cookieName, value: $requestLocale->getLocale(), secure: $this->secureCookie);
         $cookie = $cookie->withMaxAge($this->cookieDuration);
 
         return $cookie->addToResponse($response);
-    }
-
-    private function parseLocale(string $locale): string
-    {
-        foreach (self::LOCALE_SEPARATORS as $separator) {
-            $separatorPosition = strpos($locale, $separator);
-            if ($separatorPosition !== false) {
-                return substr($locale, 0, $separatorPosition);
-            }
-        }
-
-        return $locale;
     }
 
     private function isRequestIgnored(ServerRequestInterface $request): bool
