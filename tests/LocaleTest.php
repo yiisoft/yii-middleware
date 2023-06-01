@@ -46,14 +46,14 @@ final class LocaleTest extends TestCase
         $this->lastRequest = null;
         $this->logger = new SimpleLogger();
 
-        if (str_starts_with($this->getName(), 'testSaveLocaleWithCustomArguments')) {
+        if (extension_loaded('uopz') && str_starts_with($this->getName(), 'testSaveLocaleWithCustomArguments')) {
             ClockMock::freeze(new DateTime('2023-05-10 08:24:39'));
         }
     }
 
     public function tearDown(): void
     {
-        if (str_starts_with($this->getName(), 'testSaveLocaleWithCustomArguments')) {
+        if (extension_loaded('uopz') && str_starts_with($this->getName(), 'testSaveLocaleWithCustomArguments')) {
             ClockMock::reset();
         }
     }
@@ -288,6 +288,10 @@ final class LocaleTest extends TestCase
      */
     public function testSaveLocaleWithCustomArguments(?string $cookieName, ?bool $secureCookie): void
     {
+        if (!extension_loaded('uopz')) {
+            $this->markTestSkipped('No uopz extension available. Skipping.');
+        }
+
         $request = $this->createRequest('/uz');
         $middleware = $this
             ->createMiddleware(['uz' => 'uz-UZ'], saveToSession: true)
