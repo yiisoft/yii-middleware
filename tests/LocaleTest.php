@@ -46,14 +46,14 @@ final class LocaleTest extends TestCase
         $this->lastRequest = null;
         $this->logger = new SimpleLogger();
 
-        if (str_starts_with($this->getName(), 'testSaveLocaleWithCustomArguments')) {
+        if (extension_loaded('uopz') && str_starts_with($this->getName(), 'testSaveLocaleWithCustomArguments')) {
             ClockMock::freeze(new DateTime('2023-05-10 08:24:39'));
         }
     }
 
     public function tearDown(): void
     {
-        if (str_starts_with($this->getName(), 'testSaveLocaleWithCustomArguments')) {
+        if (extension_loaded('uopz') && str_starts_with($this->getName(), 'testSaveLocaleWithCustomArguments')) {
             ClockMock::reset();
         }
     }
@@ -91,31 +91,53 @@ final class LocaleTest extends TestCase
         $this->createMiddleware($supportedLocales);
     }
 
-    public function dataLocaleFromPath(): array
+    public function testLocaleFromPathMatchesDefaultLocale(): void
     {
-        return [
-            'matches default locale' => ['en', 'en-US', 'en'],
-            'does not match default locale' => ['uz', 'uz-UZ', 'uz'],
-        ];
+        $request = $this->createRequest('/en/home?test=1');
+        $middleware = $this->createMiddleware(
+            locales: ['en' => 'en-US', 'uz' => 'uz-UZ'],
+            cookieDuration: new DateInterval('P5D'),
+        );
+
+        $response = $this->process($middleware, $request);
+
+        $cookies = CookieCollection::fromResponse($response)->toArray();
+
+        $this->assertSame(Status::FOUND, $response->getStatusCode());
+        $this->assertSame('/home?test=1', $response->getHeaderLine(Header::LOCATION));
+        $this->assertArrayHasKey('_language', $cookies);
+        $this->assertSame('en', $cookies['_language']->getValue());
     }
 
-    /**
-     * @dataProvider dataLocaleFromPath
-     */
-    public function testLocaleFromPath(
-        string $localeInPath,
-        string $expectedFullLocale,
-        string $expectedShortLocale,
-    ): void {
-        $request = $this->createRequest($uri = "/$localeInPath/home?test=1");
+    public function testDefaultLocaleDoNotSaveToCookie(): void
+    {
+        $request = $this->createRequest('/home?test=1');
+
+        $middleware = $this->createMiddleware(
+            locales: ['en' => 'en-US', 'uz' => 'uz-UZ'],
+            cookieDuration: new DateInterval('P5D'),
+        );
+
+        $response = $this->process($middleware, $request);
+
+        $cookies = CookieCollection::fromResponse($response)->toArray();
+
+        $this->assertSame(Status::OK, $response->getStatusCode());
+        $this->assertEmpty($cookies);
+    }
+
+    public function testLocaleFromPathDoesNotMatchDefaultLocale(): void
+    {
+        $uri = '/uz/home?test=1';
+        $request = $this->createRequest($uri);
         $middleware = $this->createMiddleware(['en' => 'en-US', 'uz' => 'uz-UZ']);
 
         $response = $this->process($middleware, $request);
 
-        $this->assertSame($expectedFullLocale, $this->translatorLocale);
-        $this->assertSame($expectedShortLocale, $this->urlGeneratorLocale);
+        $this->assertSame(Status::OK, $response->getStatusCode());
+        $this->assertSame('uz-UZ', $this->translatorLocale);
+        $this->assertSame('uz', $this->urlGeneratorLocale);
         $this->assertSame($uri, $this->getRequestPath());
-        $this->assertSame('/home?test=1', $response->getHeaderLine(Header::LOCATION));
     }
 
     public function testWithDefaultLocale(): void
@@ -174,8 +196,7 @@ final class LocaleTest extends TestCase
 
         $response = $this->process($middleware, $request);
 
-        $this->assertSame('ru-RU', $this->translatorLocale);
-        $this->assertSame('ru', $this->urlGeneratorLocale);
+        $this->assertSame(Status::FOUND, $response->getStatusCode());
         $this->assertSame($expectedLocationHeaderValue, $response->getHeaderLine(Header::LOCATION));
     }
 
@@ -267,6 +288,10 @@ final class LocaleTest extends TestCase
      */
     public function testSaveLocaleWithCustomArguments(?string $cookieName, ?bool $secureCookie): void
     {
+        if (!extension_loaded('uopz')) {
+            $this->markTestSkipped('No uopz extension available. Skipping.');
+        }
+
         $request = $this->createRequest('/uz');
         $middleware = $this
             ->createMiddleware(['uz' => 'uz-UZ'], saveToSession: true)
@@ -333,7 +358,10 @@ final class LocaleTest extends TestCase
      */
     public function testLocaleFromCookies(?string $parameterName): void
     {
-        $middleware = $this->createMiddleware(['uz' => 'uz-UZ', 'en' => 'en-US']);
+        $middleware = $this->createMiddleware(
+            locales: ['uz' => 'uz-UZ', 'en' => 'en-US'],
+            cookieDuration: new DateInterval('P5D'),
+        );
         if ($parameterName !== null) {
             $middleware = $middleware->withCookieName($parameterName);
         }
@@ -391,6 +419,24 @@ final class LocaleTest extends TestCase
         $this->assertSame($expectedLoggerMessages, $this->logger->getMessages());
     }
 
+    public function testLocaleFromQueryParamPriorityOverCookie(): void
+    {
+        $middleware = $this->createMiddleware(
+            locales: ['uz' => 'uz-UZ', 'ru' => 'ru-RU'],
+            cookieDuration: new DateInterval('P5D'),
+        );
+
+        $request = $this->createRequest(
+            '/',
+            queryParams: ['_language' => 'uz'],
+            cookieParams: ['_language' => 'ru']
+        );
+        $response = $this->process($middleware, $request);
+
+        $this->assertSame('/uz/', $response->getHeaderLine(Header::LOCATION));
+        $this->assertSame(Status::FOUND, $response->getStatusCode());
+    }
+
     public function dataDetectLocale(): array
     {
         return [
@@ -418,8 +464,6 @@ final class LocaleTest extends TestCase
 
         $response = $this->process($middleware, $request);
 
-        $this->assertSame($fullLocale, $this->translatorLocale);
-        $this->assertSame($shortLocale, $this->urlGeneratorLocale);
         $this->assertSame($expectedLocationHeaderValue . $uri, $response->getHeaderLine(Header::LOCATION));
         $this->assertSame(Status::FOUND, $response->getStatusCode());
     }
@@ -435,8 +479,6 @@ final class LocaleTest extends TestCase
 
         $response = $this->process($middleware, $request);
 
-        $this->assertSame('ru-RU', $this->translatorLocale);
-        $this->assertSame('ru', $this->urlGeneratorLocale);
         $this->assertSame('/ru' . $uri, $response->getHeaderLine(Header::LOCATION));
         $this->assertSame(Status::FOUND, $response->getStatusCode());
     }
@@ -502,8 +544,11 @@ final class LocaleTest extends TestCase
         return $uri->getPath() . ($uri->getQuery() !== '' ? '?' . $uri->getQuery() : '');
     }
 
-    private function createMiddleware(array $locales = [], bool $saveToSession = false): Locale
-    {
+    private function createMiddleware(
+        array $locales = [],
+        bool $saveToSession = false,
+        ?DateInterval $cookieDuration = null,
+    ): Locale {
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher
             ->method('dispatch')
@@ -541,6 +586,7 @@ final class LocaleTest extends TestCase
             $this->logger,
             new ResponseFactory(),
             $locales,
+            cookieDuration: $cookieDuration,
         );
     }
 
