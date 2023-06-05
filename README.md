@@ -283,31 +283,30 @@ $middleware = $middleware
     ->withSecureCookie(true)
 ```
 
-To configure more services, such as translator or session, use `LocaleEvent` 
-([Yii Event Dispatcher](https://github.com/yiisoft/event-dispatcher) is required):
+To configure more services, such as translator or session, use `SetLocaleEvent`
+([Yii Event Dispatcher](https://github.com/yiisoft/event-dispatcher) is required).
 
 ```php
-use Yiisoft\EventDispatcher\Provider\Provider;
-use Yiisoft\Session\SessionInterface;
-use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Yii\Middleware\Event\LocaleEvent;
+<?php
 
-final class TranslatorLocaleEventHandler
+declare(strict_types=1);
+
+namespace App\EventHandler;
+
+use Yiisoft\Translator\TranslatorInterface;
+use Yiisoft\Yii\Middleware\Event\SetLocaleEvent;
+
+final class SetLocaleEventHandler
 {
     public function __construct(
-        Provider $provider,
-        private TranslatorInterface $translator,
-        private SessionInterface $session,
-    )
-    {
-        $provider->attach([$this, 'handle'], LocaleEvent::class);
+        private TranslatorInterface $translator
+    ) {
     }
-    
-    public function handle(LocaleEvent $event): void
+
+    public function handle(SetLocaleEvent $event): void
     {
         $this->translator->setLocale($event->getLocale());
-        $this->session->set('_language', $event->getLocale());
-    }    
+    }
 }
 ```
 

@@ -23,6 +23,7 @@ use Yiisoft\Yii\Middleware\Event\SetLocaleEvent;
 use Yiisoft\Yii\Middleware\Exception\InvalidLocalesFormatException;
 
 use function array_key_exists;
+use function strlen;
 
 /**
  * Locale middleware supports locale-based routing and configures URL generator. With {@see SetLocaleEvent} it's also
@@ -79,19 +80,21 @@ final class Locale implements MiddlewareInterface
         $uri = $request->getUri();
         $path = $uri->getPath();
         $query = $uri->getQuery();
-        $newPath = null;
         $locale = $this->getLocaleFromPath($path);
 
         if ($locale !== null) {
-            if ($request->getMethod() === Method::GET) {
-                $newPath = substr($path, strlen($locale) + 1) ?: '/';
+            if ($locale === $this->defaultLocale && $request->getMethod() === Method::GET) {
+                return $this->saveLocale(
+                    $locale,
+                    $this->createRedirectResponse(substr($path, strlen($locale) + 1) ?: '/', $query)
+                );
             }
         } else {
             /** @psalm-var array<string, string> $queryParameters */
             $queryParameters = $request->getQueryParams();
             $locale = $this->getLocaleFromQuery($queryParameters);
 
-            if ($locale === null) {
+            if ($locale === null && $this->cookieDuration !== null) {
                 /** @psalm-var array<string, string> $cookieParameters */
                 $cookieParameters = $request->getCookieParams();
                 $locale = $this->getLocaleFromCookies($cookieParameters);
@@ -109,24 +112,28 @@ final class Locale implements MiddlewareInterface
             }
 
             if ($request->getMethod() === Method::GET) {
-                $newPath = '/' . $locale . $path;
+                return $this->createRedirectResponse('/' . $locale . $path, $query);
             }
         }
 
         $response = $handler->handle($request);
-        if ($newPath !== null) {
-            $location = $this->getBaseUrl() . $newPath . ($query !== '' ? '?' . $query : '');
-            $response = $this
-                ->responseFactory
-                ->createResponse(Status::FOUND)
-                ->withHeader(Header::LOCATION, $location);
-        }
 
         /** @var string $locale */
         $this->eventDispatcher->dispatch(new SetLocaleEvent($this->supportedLocales[$locale]));
         $this->urlGenerator->setDefaultArgument($this->queryParameterName, $locale);
 
         return $this->saveLocale($locale, $response);
+    }
+
+    private function createRedirectResponse(string $path, string $query): ResponseInterface
+    {
+        return $this
+            ->responseFactory
+            ->createResponse(Status::FOUND)
+            ->withHeader(
+                Header::LOCATION,
+                $this->getBaseUrl() . $path . ($query !== '' ? '?' . $query : '')
+            );
     }
 
     private function getLocaleFromPath(string $path): ?string
