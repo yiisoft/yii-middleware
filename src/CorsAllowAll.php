@@ -25,6 +25,7 @@ final class CorsAllowAll implements MiddlewareInterface
             ->withHeader(Header::ACCESS_CONTROL_ALLOW_ORIGIN, '*')
             ->withHeader(Header::ACCESS_CONTROL_ALLOW_METHODS, 'GET,OPTIONS,HEAD,POST,PUT,PATCH,DELETE')
             ->withHeader(Header::ACCESS_CONTROL_ALLOW_HEADERS, '*')
+            ->withHeader(Header::ACCESS_CONTROL_EXPOSE_HEADERS, '*')
             ->withHeader(Header::ACCESS_CONTROL_ALLOW_CREDENTIALS, 'true')
             ->withHeader(Header::ACCESS_CONTROL_MAX_AGE, '86400');
     }

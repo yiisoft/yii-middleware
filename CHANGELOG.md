@@ -2,7 +2,7 @@
 
 ## 1.0.2 under development
 
-- no changes in this release.
+- Enh #103: Add `Access-Control-Expose-Headers: *` to `CorsAllowAll` (@xepozz)
 
 ## 1.0.1 June 04, 2023
 
