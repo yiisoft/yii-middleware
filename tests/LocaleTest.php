@@ -524,7 +524,7 @@ final class LocaleTest extends TestCase
 
     public function testEventBeforeHandleRequest(): void
     {
-        $stack = new class() {
+        $stack = new class () {
             public array $data = [];
 
             public function add(mixed $value): void
