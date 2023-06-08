@@ -116,11 +116,11 @@ final class Locale implements MiddlewareInterface
             }
         }
 
-        $response = $handler->handle($request);
-
         /** @var string $locale */
         $this->eventDispatcher->dispatch(new SetLocaleEvent($this->supportedLocales[$locale]));
         $this->urlGenerator->setDefaultArgument($this->queryParameterName, $locale);
+
+        $response = $handler->handle($request);
 
         return $this->saveLocale($locale, $response);
     }

@@ -3,6 +3,7 @@
 ## 1.0.2 under development
 
 - Enh #103: Add `Access-Control-Expose-Headers: *` to `CorsAllowAll` (@xepozz)
+- Bug #105: Fire `SetLocaleEvent` and prepare URL generator in `Locale` before handle request (@vjik)
 
 ## 1.0.1 June 04, 2023
 

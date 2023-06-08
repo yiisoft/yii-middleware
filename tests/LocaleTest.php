@@ -522,6 +522,69 @@ final class LocaleTest extends TestCase
         $this->assertSame(Status::OK, $response->getStatusCode());
     }
 
+    public function testEventBeforeHandleRequest(): void
+    {
+        $stack = new class() {
+            public array $data = [];
+
+            public function add(mixed $value): void
+            {
+                $this->data[] = $value;
+            }
+        };
+
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher
+            ->method('dispatch')
+            ->willReturnCallback(
+                function (SetLocaleEvent $event) use ($stack) {
+                    $stack->add('event');
+                    $stack->add($event->getLocale());
+                    return $event;
+                }
+            );
+
+        $urlGenerator = $this->createMock(UrlGeneratorInterface::class);
+        $urlGenerator
+            ->method('setDefaultArgument')
+            ->willReturnCallback(
+                function ($name, $value) use ($stack) {
+                    $stack->add('urlGenerator');
+                    $stack->add($value);
+                }
+            );
+
+        $middleware = new Locale(
+            $eventDispatcher,
+            $urlGenerator,
+            $this->logger,
+            new ResponseFactory(),
+            ['ru' => 'ru-RU'],
+        );
+
+        $handler = new class ($stack) implements RequestHandlerInterface {
+            public function __construct(private $stack)
+            {
+            }
+
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                $this->stack->add('handler');
+                return new Response();
+            }
+        };
+
+        $middleware->process(
+            $this->createRequest('/ru/test'),
+            $handler
+        );
+
+        $this->assertSame(
+            ['event', 'ru-RU', 'urlGenerator', 'ru', 'handler'],
+            $stack->data
+        );
+    }
+
     private function process(Locale $middleware, ServerRequestInterface $request): ResponseInterface
     {
         $handler = new class () implements RequestHandlerInterface {
