@@ -52,7 +52,7 @@
         "phpunit/phpunit": "^9.5",
         "rector/rector": "^0.18.0",
         "roave/infection-static-analysis-plugin": "^1.16",
-        "slope-it/clock-mock": "^0.3.6",
+        "slope-it/clock-mock": "^0.4.0",
         "spatie/phpunit-watcher": "^1.23",
         "vimeo/psalm": "^4.30|^5.4",
         "yiisoft/router-fastroute": "^3.0",
