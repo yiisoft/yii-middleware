@@ -4,6 +4,7 @@
 
 - Enh #103: Add `Access-Control-Expose-Headers: *` to `CorsAllowAll` (@xepozz)
 - Bug #105: Fire `SetLocaleEvent` and prepare URL generator in `Locale` before handle request (@vjik)
+- Bug #112: Check ignored requests earlier and do not set default locale (@g-rodigy)
 
 ## 1.0.1 June 04, 2023
 
