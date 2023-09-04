@@ -518,7 +518,7 @@ final class LocaleTest extends TestCase
 
         $response = $this->process($middleware, $request);
 
-        $this->assertSame('/en' . $uri, $this->getRequestPath());
+        $this->assertSame($uri, $this->getRequestPath());
         $this->assertSame(Status::OK, $response->getStatusCode());
     }
 
