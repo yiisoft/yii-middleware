@@ -1,6 +1,6 @@
 # Yii Middleware Change Log
 
-## 1.0.2 under development
+## 1.0.2 October 06, 2023
 
 - Enh #103: Add `Access-Control-Expose-Headers: *` to `CorsAllowAll` (@xepozz)
 - Bug #105: Fire `SetLocaleEvent` and prepare URL generator in `Locale` before handle request (@vjik)
