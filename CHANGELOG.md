@@ -1,5 +1,9 @@
 # Yii Middleware Change Log
 
+## 1.0.3 under development
+
+- no changes in this release.
+
 ## 1.0.2 October 06, 2023
 
 - Enh #103: Add `Access-Control-Expose-Headers: *` to `CorsAllowAll` (@xepozz)
