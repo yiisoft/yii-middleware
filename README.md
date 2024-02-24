@@ -16,9 +16,22 @@
 [![type-coverage](https://shepherd.dev/github/yiisoft/yii-middleware/coverage.svg)](https://shepherd.dev/github/yiisoft/yii-middleware)
 [![psalm-level](https://shepherd.dev/github/yiisoft/yii-middleware/level.svg)](https://shepherd.dev/github/yiisoft/yii-middleware)
 
-The package provides middleware classes that implement [PSR 15](https://github.com/php-fig/http-server-middleware).
-For more information on how to use middleware in the [Yii Framework](https://www.yiiframework.com/),
-see the [Yii middleware guide](https://github.com/yiisoft/docs/blob/master/guide/en/structure/middleware.md).
+The package provides middleware classes that implement [PSR-15](https://www.php-fig.org/psr/psr-15/#12-middleware):
+
+- [`ForceSecureConnection`](#forcesecureconnection).
+- [`HttpCache`](#httpcache).
+- [`IpFilter`](#ipfilter).
+- [`Redirect`](#redirect).
+- [`Subfolder`](#subfolder).
+- [`TagRequest`](#tagrequest).
+- [`Locale`](#locale).
+- [`CorsAllowAll`](#corsallowall).
+
+For proxy related middleware, there is a separate package - 
+[Yii Proxy Middleware](https://github.com/yiisoft/proxy-middleware).
+
+For more information on how to use middleware in the [Yii Framework](https://www.yiiframework.com/), see the 
+[Yii middleware guide](https://github.com/yiisoft/docs/blob/master/guide/en/structure/middleware.md).
 
 ## Requirements
 

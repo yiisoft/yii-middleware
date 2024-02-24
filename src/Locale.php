@@ -73,7 +73,7 @@ final class Locale implements MiddlewareInterface
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        if (empty($this->supportedLocales)) {
+        if (empty($this->supportedLocales) || $this->isRequestIgnored($request)) {
             return $handler->handle($request);
         }
 
@@ -104,7 +104,7 @@ final class Locale implements MiddlewareInterface
                 $locale = $this->detectLocale($request);
             }
 
-            if ($locale === null || $locale === $this->defaultLocale || $this->isRequestIgnored($request)) {
+            if ($locale === null || $locale === $this->defaultLocale) {
                 $this->urlGenerator->setDefaultArgument($this->queryParameterName, null);
                 $request = $request->withUri($uri->withPath('/' . $this->defaultLocale . $path));
 
