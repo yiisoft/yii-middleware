@@ -27,10 +27,10 @@ The package provides middleware classes that implement [PSR-15](https://www.php-
 - [`Locale`](#locale).
 - [`CorsAllowAll`](#corsallowall).
 
-For proxy related middleware, there is a separate package - 
+For proxy related middleware, there is a separate package -
 [Yii Proxy Middleware](https://github.com/yiisoft/proxy-middleware).
 
-For more information on how to use middleware in the [Yii Framework](https://www.yiiframework.com/), see the 
+For more information on how to use middleware in the [Yii Framework](https://www.yiiframework.com/), see the
 [Yii middleware guide](https://github.com/yiisoft/docs/blob/master/guide/en/structure/middleware.md).
 
 ## Requirements
@@ -300,12 +300,6 @@ To configure more services, such as translator or session, use `SetLocaleEvent`
 ([Yii Event Dispatcher](https://github.com/yiisoft/event-dispatcher) is required).
 
 ```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\EventHandler;
-
 use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\Yii\Middleware\Event\SetLocaleEvent;
 
@@ -329,40 +323,14 @@ final class SetLocaleEventHandler
 
 Adds CORS headers to the response.
 
-## Testing
+## Documentation
 
-### Unit testing
+- [Internals](docs/internals.md)
 
-The package is tested with [PHPUnit](https://phpunit.de/). To run tests:
+## Support
 
-```shell
-./vendor/bin/phpunit
-```
-
-### Mutation testing
-
-The package tests are checked with [Infection](https://infection.github.io/) mutation framework with
-[Infection Static Analysis Plugin](https://github.com/Roave/infection-static-analysis-plugin). To run it:
-
-```shell
-./vendor/bin/roave-infection-static-analysis-plugin
-```
-
-### Static analysis
-
-The code is statically analyzed with [Psalm](https://psalm.dev/). To run static analysis:
-
-```shell
-./vendor/bin/psalm
-```
-
-## License
-
-The Yii Middleware is free software.
-It's released under the terms of the BSD License. 
-Please see [`LICENSE`](./LICENSE.md) for more information.
-
-Maintained by [Yii Software](https://www.yiiframework.com/).
+If you need help or have a question, the [Yii Forum](https://forum.yiiframework.com/c/yii-3-0/63) is a good place for that.
+You may also check out other [Yii Community Resources](https://www.yiiframework.com/community).
 
 ## Support the project
 
@@ -375,3 +343,10 @@ Maintained by [Yii Software](https://www.yiiframework.com/).
 [![Telegram](https://img.shields.io/badge/telegram-join-1DA1F2?style=flat&logo=telegram)](https://t.me/yii3en)
 [![Facebook](https://img.shields.io/badge/facebook-join-1DA1F2?style=flat&logo=facebook&logoColor=ffffff)](https://www.facebook.com/groups/yiitalk)
 [![Slack](https://img.shields.io/badge/slack-join-1DA1F2?style=flat&logo=slack)](https://yiiframework.com/go/slack)
+
+## License
+
+The Yii Middleware is free software. It is released under the terms of the BSD License.
+Please see [`LICENSE`](./LICENSE.md) for more information.
+
+Maintained by [Yii Software](https://www.yiiframework.com/).
