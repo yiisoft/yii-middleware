@@ -1,12 +1,8 @@
 # Yii Middleware Change Log
 
-## 1.0.4 under development
-
-- Enh #117: Add support for `psr/http-message` version `^2.0` (@bautrukevich)
-
 ## 1.0.3 under development
 
-- no changes in this release.
+- Enh #117: Add support for `psr/http-message` version `^2.0` (@bautrukevich)
 
 ## 1.0.2 October 06, 2023
 
