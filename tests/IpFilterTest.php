@@ -11,7 +11,6 @@ use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Yiisoft\Http\Status;
-use Yiisoft\Validator\Validator;
 use Yiisoft\Yii\Middleware\IpFilter;
 
 final class IpFilterTest extends TestCase
@@ -63,7 +62,7 @@ final class IpFilterTest extends TestCase
             ->method('handle')
             ->with($requestMock);
 
-        $ipFilter = new IpFilter(new Validator(), $this->responseFactoryMock, ipRanges: ['1.1.1.1']);
+        $ipFilter = new IpFilter($this->responseFactoryMock, ipRanges: ['1.1.1.1']);
         $response = $ipFilter->process($requestMock, $this->requestHandlerMock);
 
         $this->assertSame(Status::FORBIDDEN, $response->getStatusCode());
@@ -97,7 +96,7 @@ final class IpFilterTest extends TestCase
             ->with($requestMock)
             ->willReturn(new Response(Status::OK));
 
-        $ipFilter = new IpFilter(new Validator(), $this->responseFactoryMock, ipRanges: $ipRanges ?? [$ip]);
+        $ipFilter = new IpFilter($this->responseFactoryMock, ipRanges: $ipRanges ?? [$ip]);
         $response = $ipFilter->process($requestMock, $this->requestHandlerMock);
 
         $this->assertSame(Status::OK, $response->getStatusCode());
@@ -122,7 +121,7 @@ final class IpFilterTest extends TestCase
             ->with($requestMock)
             ->willReturn(new Response(Status::OK));
 
-        $ipFilter = new IpFilter(new Validator(), $this->responseFactoryMock, $attributeName, [$ip]);
+        $ipFilter = new IpFilter($this->responseFactoryMock, $attributeName, [$ip]);
         $response = $ipFilter->process($requestMock, $this->requestHandlerMock);
 
         $this->assertSame(Status::OK, $response->getStatusCode());
