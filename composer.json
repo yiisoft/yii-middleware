@@ -43,7 +43,7 @@
         "yiisoft/router": "^3.0",
         "yiisoft/session": "^2.0",
         "yiisoft/strings": "^2.1",
-        "yiisoft/validator": "^1.0"
+        "yiisoft/validator": "^2.0"
     },
     "require-dev": {
         "ext-uopz": "*",
