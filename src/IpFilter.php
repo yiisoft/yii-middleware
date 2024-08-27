@@ -11,6 +11,7 @@ use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Yiisoft\Http\Status;
 use Yiisoft\NetworkUtilities\IpRanges;
+use Yiisoft\Validator\ValidatorInterface;
 
 /**
  * `IpFilter` allows access from specified IP ranges only and responds with 403 for all other IPs.
@@ -18,6 +19,8 @@ use Yiisoft\NetworkUtilities\IpRanges;
 final class IpFilter implements MiddlewareInterface
 {
     /**
+     * @param ValidatorInterface $validator Client IP validator. The properties of the validator
+     * can be modified up to the moment of processing.
      * @param ResponseFactoryInterface $responseFactory The response factory instance.
      * @param string|null $clientIpAttribute Name of the request attribute holding client IP. If there is no such
      * attribute, or it has no value, then the middleware will respond with 403 forbidden.
@@ -27,6 +30,10 @@ final class IpFilter implements MiddlewareInterface
      * @psalm-param array<array-key, string> $ipRanges
      */
     public function __construct(
+        /**
+         * @deprecated Will be removed in version 2.0. {@see IpRanges} from `network-utilities` package is used instead.
+         */
+        private ValidatorInterface $validator,
         private ResponseFactoryInterface $responseFactory,
         private ?string $clientIpAttribute = null,
         private array $ipRanges = [],
