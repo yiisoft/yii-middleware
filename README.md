@@ -6,9 +6,9 @@
     <br>
 </p>
 
-[![Latest Stable Version](https://poser.pugx.org/yiisoft/yii-middleware/v/stable.png)](https://packagist.org/packages/yiisoft/yii-middleware)
-[![Total Downloads](https://poser.pugx.org/yiisoft/yii-middleware/downloads.png)](https://packagist.org/packages/yiisoft/yii-middleware)
-[![Build status](https://github.com/yiisoft/yii-middleware/workflows/build/badge.svg)](https://github.com/yiisoft/yii-middleware/actions?query=workflow%3Abuild)
+[![Latest Stable Version](https://poser.pugx.org/yiisoft/yii-middleware/v)](https://packagist.org/packages/yiisoft/yii-middleware)
+[![Total Downloads](https://poser.pugx.org/yiisoft/yii-middleware/downloads)](https://packagist.org/packages/yiisoft/yii-middleware)
+[![Build status](https://github.com/yiisoft/yii-middleware/actions/workflows/build.yml/badge.svg)](https://github.com/yiisoft/yii-middleware/actions/workflows/build.yml)
 [![Code Coverage](https://codecov.io/gh/yiisoft/yii-middleware/graph/badge.svg?token=fZ4S2L5kIJ)](https://codecov.io/gh/yiisoft/yii-middleware)
 [![Mutation testing badge](https://img.shields.io/endpoint?style=flat&url=https%3A%2F%2Fbadge-api.stryker-mutator.io%2Fgithub.com%2Fyiisoft%2Fyii-middleware%2Fmaster)](https://dashboard.stryker-mutator.io/reports/github.com/yiisoft/yii-middleware/master)
 [![static analysis](https://github.com/yiisoft/yii-middleware/workflows/static%20analysis/badge.svg)](https://github.com/yiisoft/yii-middleware/actions?query=workflow%3A%22static+analysis%22)
