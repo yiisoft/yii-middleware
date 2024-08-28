@@ -55,12 +55,12 @@ final class IpFilter implements MiddlewareInterface
             return $this->createForbiddenResponse();
         }
 
-        if (preg_match(self::getIpParsePattern(), $clientIp, $matches) === 0) {
+        if (!is_string($clientIp) || preg_match(self::getIpParsePattern(), $clientIp, $matches) === 0) {
             return $this->createForbiddenResponse();
         }
 
         $ipCidr = $matches['ipCidr'];
-        if (empty($clientIp) || !(new IpRanges($this->ipRanges))->isAllowed($ipCidr)) {
+        if (!(new IpRanges($this->ipRanges))->isAllowed($ipCidr)) {
             return $this->createForbiddenResponse();
         }
 
