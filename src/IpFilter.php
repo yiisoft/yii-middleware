@@ -83,8 +83,6 @@ final class IpFilter implements MiddlewareInterface
      */
     private static function getIpParsePattern(): string
     {
-        return '/^(?<not>' .
-            '!' .
-            ')?(?<ipCidr>(?<ip>(?:' . IpHelper::IPV4_PATTERN . ')|(?:' . IpHelper::IPV6_PATTERN . '))(?:\/(?<cidr>-?\d+))?)$/';
+        return '/^(?<ipCidr>(?<ip>(?:' . IpHelper::IPV4_PATTERN . ')|(?:' . IpHelper::IPV6_PATTERN . '))(?:\/(?<cidr>-?\d+))?)$/';
     }
 }
