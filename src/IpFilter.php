@@ -10,7 +10,9 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Yiisoft\Http\Status;
+use Yiisoft\NetworkUtilities\IpHelper;
 use Yiisoft\NetworkUtilities\IpRanges;
+use Yiisoft\Validator\Rule\Ip;
 use Yiisoft\Validator\ValidatorInterface;
 
 /**
@@ -53,7 +55,12 @@ final class IpFilter implements MiddlewareInterface
             return $this->createForbiddenResponse();
         }
 
-        if (empty($clientIp) || !(new IpRanges($this->ipRanges))->isAllowed($clientIp)) {
+        if (preg_match(self::getIpParsePattern(), $clientIp, $matches) === 0) {
+            return $this->createForbiddenResponse();
+        }
+
+        $ipCidr = $matches['ipCidr'];
+        if (empty($clientIp) || !(new IpRanges($this->ipRanges))->isAllowed($ipCidr)) {
             return $this->createForbiddenResponse();
         }
 
@@ -66,5 +73,18 @@ final class IpFilter implements MiddlewareInterface
         $response->getBody()->write(Status::TEXTS[Status::FORBIDDEN]);
 
         return $response;
+    }
+
+    /**
+     * Used to get the Regexp pattern for initial IP address parsing.
+     *
+     * @return string Regular expression pattern.
+     * @psalm-return non-empty-string
+     */
+    private static function getIpParsePattern(): string
+    {
+        return '/^(?<not>' .
+            '!' .
+            ')?(?<ipCidr>(?<ip>(?:' . IpHelper::IPV4_PATTERN . ')|(?:' . IpHelper::IPV6_PATTERN . '))(?:\/(?<cidr>-?\d+))?)$/';
     }
 }
