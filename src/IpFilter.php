@@ -34,7 +34,7 @@ final class IpFilter implements MiddlewareInterface
         /**
          * @deprecated Will be removed in version 2.0. {@see IpRanges} from `network-utilities` package is used instead.
          */
-        private ValidatorInterface $validator,
+        ValidatorInterface $validator,
         private ResponseFactoryInterface $responseFactory,
         private ?string $clientIpAttribute = null,
         private array $ipRanges = [],
