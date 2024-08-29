@@ -46,7 +46,7 @@ final class IpFilterTest extends TestCase
      */
     public function testProcessReturnsAccessDeniedResponseWhenIpIsNotAllowed(
         array $serverParams,
-        ?array $ipRanges = null,
+        array $ipRanges = ['1.1.1.1'],
     ): void {
         $requestMock = $this->createMock(ServerRequestInterface::class);
         $requestMock
