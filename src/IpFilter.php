@@ -12,7 +12,6 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Yiisoft\Http\Status;
 use Yiisoft\NetworkUtilities\IpHelper;
 use Yiisoft\NetworkUtilities\IpRanges;
-use Yiisoft\Validator\Rule\Ip;
 use Yiisoft\Validator\ValidatorInterface;
 
 /**
