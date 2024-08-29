@@ -66,7 +66,7 @@ final class IpFilterTest extends TestCase
             ->method('handle')
             ->with($requestMock);
 
-        $ipFilter = new IpFilter(new Validator(), $this->responseFactoryMock, ipRanges: $ipRanges ?? ['1.1.1.1']);
+        $ipFilter = new IpFilter(new Validator(), $this->responseFactoryMock, ipRanges: $ipRanges);
         $response = $ipFilter->process($requestMock, $this->requestHandlerMock);
 
         $this->assertSame(Status::FORBIDDEN, $response->getStatusCode());
