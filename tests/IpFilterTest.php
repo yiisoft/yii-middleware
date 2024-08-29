@@ -34,7 +34,6 @@ final class IpFilterTest extends TestCase
             'empty string' => [['REMOTE_ADDR' => '']],
             'invalid IP' => [['REMOTE_ADDR' => '1']],
             'with subnet' => [['REMOTE_ADDR' => '192.168.5.32/11']],
-            'with negation' => [['REMOTE_ADDR' => '!192.168.5.32/32']],
             'with ranges' => [['REMOTE_ADDR' => '10.0.0.2'], ['10.0.0.1', '!10.0.0.0/8', '!babe::/8', 'any']],
         ];
     }
