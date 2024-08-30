@@ -28,6 +28,7 @@
         }
     ],
     "prefer-stable": true,
+    "minimum-stability": "dev",
     "require": {
         "php": "^8.0",
         "psr/event-dispatcher": "^1.0",
@@ -40,7 +41,7 @@
         "yiisoft/cookies": "^1.2",
         "yiisoft/friendly-exception": "^1.0",
         "yiisoft/http": "^1.2",
-        "yiisoft/network-utilities": "^1.1",
+        "yiisoft/network-utilities": "dev-add-more-constants as 1.1",
         "yiisoft/router": "^3.0",
         "yiisoft/session": "^2.0",
         "yiisoft/strings": "^2.1",

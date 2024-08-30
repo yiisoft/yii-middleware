@@ -54,12 +54,11 @@ final class IpFilter implements MiddlewareInterface
             return $this->createForbiddenResponse();
         }
 
-        if (!is_string($clientIp) || preg_match(self::getIpParsePattern(), $clientIp, $matches) === 0) {
+        if (!is_string($clientIp) || !IpHelper::isIp($clientIp)) {
             return $this->createForbiddenResponse();
         }
 
-        $ipCidr = $matches['ipCidr'];
-        if (!(new IpRanges($this->ipRanges))->isAllowed($ipCidr)) {
+        if (!(new IpRanges($this->ipRanges))->isAllowed($clientIp)) {
             return $this->createForbiddenResponse();
         }
 
@@ -72,16 +71,5 @@ final class IpFilter implements MiddlewareInterface
         $response->getBody()->write(Status::TEXTS[Status::FORBIDDEN]);
 
         return $response;
-    }
-
-    /**
-     * Used to get the Regexp pattern for initial IP address parsing.
-     *
-     * @return string Regular expression pattern.
-     * @psalm-return non-empty-string
-     */
-    private static function getIpParsePattern(): string
-    {
-        return '/^(?<ipCidr>(?<ip>(?:' . IpHelper::IPV4_PATTERN . ')|(?:' . IpHelper::IPV6_PATTERN . '))(?:\/(?<cidr>-?\d+))?)$/';
     }
 }
