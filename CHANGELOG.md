@@ -2,7 +2,8 @@
 
 ## 1.0.4 under development
 
-- no changes in this release.
+- Enh #121: Add `network-utilities` dependency and use it instead of `validator` for `IpFilter` (@arogachev)
+- Enh #121: Add support for `validator` of version 2.0, mark it as deprecated (@arogachev)
 
 ## 1.0.3 June 06, 2024
 

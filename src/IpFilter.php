@@ -10,7 +10,8 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Yiisoft\Http\Status;
-use Yiisoft\Validator\Rule\Ip;
+use Yiisoft\NetworkUtilities\IpHelper;
+use Yiisoft\NetworkUtilities\IpRanges;
 use Yiisoft\Validator\ValidatorInterface;
 
 /**
@@ -18,6 +19,8 @@ use Yiisoft\Validator\ValidatorInterface;
  */
 final class IpFilter implements MiddlewareInterface
 {
+    private IpRanges $ipRanges;
+
     /**
      * @param ValidatorInterface $validator Client IP validator. The properties of the validator
      * can be modified up to the moment of processing.
@@ -30,11 +33,15 @@ final class IpFilter implements MiddlewareInterface
      * @psalm-param array<array-key, string> $ipRanges
      */
     public function __construct(
-        private ValidatorInterface $validator,
+        /**
+         * @deprecated Will be removed in version 2.0. {@see IpRanges} from `network-utilities` package is used instead.
+         */
+        ValidatorInterface $validator,
         private ResponseFactoryInterface $responseFactory,
         private ?string $clientIpAttribute = null,
-        private array $ipRanges = [],
+        array $ipRanges = [],
     ) {
+        $this->ipRanges = new IpRanges($ipRanges);
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
@@ -50,8 +57,11 @@ final class IpFilter implements MiddlewareInterface
             return $this->createForbiddenResponse();
         }
 
-        $result = $this->validator->validate($clientIp, [new Ip(ranges: $this->ipRanges)]);
-        if (!$result->isValid()) {
+        if (!is_string($clientIp) || !IpHelper::isIp($clientIp)) {
+            return $this->createForbiddenResponse();
+        }
+
+        if (!$this->ipRanges->isAllowed($clientIp)) {
             return $this->createForbiddenResponse();
         }
 
