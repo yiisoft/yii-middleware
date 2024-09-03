@@ -19,6 +19,8 @@ use Yiisoft\Validator\ValidatorInterface;
  */
 final class IpFilter implements MiddlewareInterface
 {
+    private IpRanges $ipRanges;
+
     /**
      * @param ValidatorInterface $validator Client IP validator. The properties of the validator
      * can be modified up to the moment of processing.
@@ -37,8 +39,9 @@ final class IpFilter implements MiddlewareInterface
         ValidatorInterface $validator,
         private ResponseFactoryInterface $responseFactory,
         private ?string $clientIpAttribute = null,
-        private array $ipRanges = [],
+        array $ipRanges = [],
     ) {
+        $this->ipRanges = new IpRanges($ipRanges);
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
@@ -58,7 +61,7 @@ final class IpFilter implements MiddlewareInterface
             return $this->createForbiddenResponse();
         }
 
-        if (!(new IpRanges($this->ipRanges))->isAllowed($clientIp)) {
+        if (!$this->ipRanges->isAllowed($clientIp)) {
             return $this->createForbiddenResponse();
         }
 
