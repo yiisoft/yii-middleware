@@ -1,6 +1,6 @@
 # Yii Middleware Change Log
 
-## 1.0.4 under development
+## 1.0.4 September 03, 2024
 
 - Enh #121: Add `network-utilities` dependency and use it instead of `validator` for `IpFilter` (@arogachev)
 - Enh #121: Add support for `validator` of version 2.0, mark it as deprecated (@arogachev)
