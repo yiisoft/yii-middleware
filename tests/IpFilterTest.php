@@ -32,9 +32,9 @@ final class IpFilterTest extends TestCase
             'basic' => [['REMOTE_ADDR' => '8.8.8.8']],
             'does not exist' => [[]],
             'empty string' => [['REMOTE_ADDR' => '']],
+            'invalid IP' => [['REMOTE_ADDR' => '1']],
             'with subnet' => [['REMOTE_ADDR' => '192.168.5.32/11']],
-            'with negation' => [['REMOTE_ADDR' => '!192.168.5.32/32']],
-            'with ranges' => [['REMOTE_ADDR' => '10.0.0.1'], ['10.0.0.1', '!10.0.0.0/8', '!babe::/8', 'any']],
+            'with ranges' => [['REMOTE_ADDR' => '10.0.0.2'], ['10.0.0.1', '!10.0.0.0/8', '!babe::/8', 'any']],
         ];
     }
 
@@ -43,8 +43,10 @@ final class IpFilterTest extends TestCase
      *
      * @group t
      */
-    public function testProcessReturnsAccessDeniedResponseWhenIpIsNotAllowed(array $serverParams): void
-    {
+    public function testProcessReturnsAccessDeniedResponseWhenIpIsNotAllowed(
+        array $serverParams,
+        array $ipRanges = ['1.1.1.1'],
+    ): void {
         $requestMock = $this->createMock(ServerRequestInterface::class);
         $requestMock
             ->expects($this->once())
@@ -63,7 +65,7 @@ final class IpFilterTest extends TestCase
             ->method('handle')
             ->with($requestMock);
 
-        $ipFilter = new IpFilter(new Validator(), $this->responseFactoryMock, ipRanges: ['1.1.1.1']);
+        $ipFilter = new IpFilter(new Validator(), $this->responseFactoryMock, ipRanges: $ipRanges);
         $response = $ipFilter->process($requestMock, $this->requestHandlerMock);
 
         $this->assertSame(Status::FORBIDDEN, $response->getStatusCode());

@@ -1,16 +1,15 @@
 <p align="center">
     <a href="https://github.com/yiisoft" target="_blank">
-        <img src="https://yiisoft.github.io/docs/images/yii_logo.svg" height="100px">
+        <img src="https://yiisoft.github.io/docs/images/yii_logo.svg" height="100px" alt="Yii">
     </a>
     <h1 align="center">Yii Middleware</h1>
     <br>
 </p>
 
-[![Latest Stable Version](https://poser.pugx.org/yiisoft/yii-middleware/v/stable.png)](https://packagist.org/packages/yiisoft/yii-middleware)
-[![Total Downloads](https://poser.pugx.org/yiisoft/yii-middleware/downloads.png)](https://packagist.org/packages/yiisoft/yii-middleware)
-[![Build status](https://github.com/yiisoft/yii-middleware/workflows/build/badge.svg)](https://github.com/yiisoft/yii-middleware/actions?query=workflow%3Abuild)
-[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/yiisoft/yii-middleware/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/yiisoft/yii-middleware/?branch=master)
-[![Code Coverage](https://codecov.io/gh/yiisoft/yii-middleware/branch/master/graph/badge.svg)](https://codecov.io/gh/yiisoft/yii-middleware)
+[![Latest Stable Version](https://poser.pugx.org/yiisoft/yii-middleware/v)](https://packagist.org/packages/yiisoft/yii-middleware)
+[![Total Downloads](https://poser.pugx.org/yiisoft/yii-middleware/downloads)](https://packagist.org/packages/yiisoft/yii-middleware)
+[![Build status](https://github.com/yiisoft/yii-middleware/actions/workflows/build.yml/badge.svg)](https://github.com/yiisoft/yii-middleware/actions/workflows/build.yml)
+[![Code Coverage](https://codecov.io/gh/yiisoft/yii-middleware/graph/badge.svg?token=fZ4S2L5kIJ)](https://codecov.io/gh/yiisoft/yii-middleware)
 [![Mutation testing badge](https://img.shields.io/endpoint?style=flat&url=https%3A%2F%2Fbadge-api.stryker-mutator.io%2Fgithub.com%2Fyiisoft%2Fyii-middleware%2Fmaster)](https://dashboard.stryker-mutator.io/reports/github.com/yiisoft/yii-middleware/master)
 [![static analysis](https://github.com/yiisoft/yii-middleware/workflows/static%20analysis/badge.svg)](https://github.com/yiisoft/yii-middleware/actions?query=workflow%3A%22static+analysis%22)
 [![type-coverage](https://shepherd.dev/github/yiisoft/yii-middleware/coverage.svg)](https://shepherd.dev/github/yiisoft/yii-middleware)
@@ -27,10 +26,10 @@ The package provides middleware classes that implement [PSR-15](https://www.php-
 - [`Locale`](#locale).
 - [`CorsAllowAll`](#corsallowall).
 
-For proxy related middleware, there is a separate package - 
+For proxy related middleware, there is a separate package -
 [Yii Proxy Middleware](https://github.com/yiisoft/proxy-middleware).
 
-For more information on how to use middleware in the [Yii Framework](https://www.yiiframework.com/), see the 
+For more information on how to use middleware in the [Yii Framework](https://www.yiiframework.com/), see the
 [Yii middleware guide](https://github.com/yiisoft/docs/blob/master/guide/en/structure/middleware.md).
 
 ## Requirements
@@ -39,7 +38,7 @@ For more information on how to use middleware in the [Yii Framework](https://www
 
 ## Installation
 
-You could install the package with composer:
+The package could be installed with [Composer](https://getcomposer.org):
 
 ```shell
 composer require yiisoft/yii-middleware
@@ -300,12 +299,6 @@ To configure more services, such as translator or session, use `SetLocaleEvent`
 ([Yii Event Dispatcher](https://github.com/yiisoft/event-dispatcher) is required).
 
 ```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\EventHandler;
-
 use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\Yii\Middleware\Event\SetLocaleEvent;
 
@@ -329,37 +322,16 @@ final class SetLocaleEventHandler
 
 Adds CORS headers to the response.
 
-## Testing
+## Documentation
 
-### Unit testing
+- [Internals](docs/internals.md)
 
-The package is tested with [PHPUnit](https://phpunit.de/). To run tests:
-
-```shell
-./vendor/bin/phpunit
-```
-
-### Mutation testing
-
-The package tests are checked with [Infection](https://infection.github.io/) mutation framework with
-[Infection Static Analysis Plugin](https://github.com/Roave/infection-static-analysis-plugin). To run it:
-
-```shell
-./vendor/bin/roave-infection-static-analysis-plugin
-```
-
-### Static analysis
-
-The code is statically analyzed with [Psalm](https://psalm.dev/). To run static analysis:
-
-```shell
-./vendor/bin/psalm
-```
+If you need help or have a question, the [Yii Forum](https://forum.yiiframework.com/c/yii-3-0/63) is a good place for that.
+You may also check out other [Yii Community Resources](https://www.yiiframework.com/community).
 
 ## License
 
-The Yii Middleware is free software.
-It's released under the terms of the BSD License. 
+The Yii Middleware is free software. It is released under the terms of the BSD License.
 Please see [`LICENSE`](./LICENSE.md) for more information.
 
 Maintained by [Yii Software](https://www.yiiframework.com/).
