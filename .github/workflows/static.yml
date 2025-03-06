@@ -24,15 +24,7 @@ on:
 name: static analysis
 
 jobs:
-  psalm:
-    uses: yiisoft/actions/.github/workflows/psalm.yml@master
-    with:
-      os: >-
-        ['ubuntu-latest']
-      php: >-
-        ['8.3']
-      extensions: uopz
-  psalm80:
+  psalm83:
     uses: yiisoft/actions/.github/workflows/psalm.yml@master
     with:
       psalm-config: psalm-8.3.xml
