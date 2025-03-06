@@ -30,14 +30,14 @@ jobs:
       os: >-
         ['ubuntu-latest']
       php: >-
-        ['8.1', '8.2', '8.3']
+        ['8.3']
       extensions: uopz
   psalm80:
     uses: yiisoft/actions/.github/workflows/psalm.yml@master
     with:
-      psalm-config: psalm-8.0.xml
+      psalm-config: psalm-8.3.xml
       os: >-
         ['ubuntu-latest']
       php: >-
-        ['8.0']
+        ['8.3']
       extensions: uopz
