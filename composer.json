@@ -50,7 +50,7 @@
         "ext-uopz": "*",
         "httpsoft/http-message": "^1.1.6",
         "maglnet/composer-require-checker": "^4.16.1",
-        "phpunit/phpunit": "^12.0.6",
+        "phpunit/phpunit": "^12.0.7",
         "rector/rector": "^2.0.10",
         "roave/infection-static-analysis-plugin": "^1.37",
         "slope-it/clock-mock": "^0.3.8",
