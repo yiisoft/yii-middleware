@@ -11,7 +11,7 @@
 [![Build status](https://github.com/yiisoft/yii-middleware/actions/workflows/build.yml/badge.svg)](https://github.com/yiisoft/yii-middleware/actions/workflows/build.yml)
 [![Code Coverage](https://codecov.io/gh/yiisoft/yii-middleware/graph/badge.svg?token=fZ4S2L5kIJ)](https://codecov.io/gh/yiisoft/yii-middleware)
 [![Mutation testing badge](https://img.shields.io/endpoint?style=flat&url=https%3A%2F%2Fbadge-api.stryker-mutator.io%2Fgithub.com%2Fyiisoft%2Fyii-middleware%2Fmaster)](https://dashboard.stryker-mutator.io/reports/github.com/yiisoft/yii-middleware/master)
-[![static analysis](https://github.com/yiisoft/yii-middleware/workflows/static%20analysis/badge.svg)](https://github.com/yiisoft/yii-middleware/actions?query=workflow%3A%22static+analysis%22)
+[![Static analysis](https://github.com/yiisoft/yii-middleware/actions/workflows/static.yml/badge.svg?branch=master)](https://github.com/yiisoft/yii-middleware/actions/workflows/static.yml?query=branch%3Amaster)
 [![type-coverage](https://shepherd.dev/github/yiisoft/yii-middleware/coverage.svg)](https://shepherd.dev/github/yiisoft/yii-middleware)
 [![psalm-level](https://shepherd.dev/github/yiisoft/yii-middleware/level.svg)](https://shepherd.dev/github/yiisoft/yii-middleware)
 
