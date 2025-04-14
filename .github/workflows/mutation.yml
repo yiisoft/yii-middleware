@@ -1,34 +1,34 @@
 on:
-    pull_request:
-        paths-ignore:
-            - 'docs/**'
-            - 'README.md'
-            - 'CHANGELOG.md'
-            - '.gitignore'
-            - '.gitattributes'
-            - 'psalm.xml'
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - '.gitignore'
+      - '.gitattributes'
+      - 'psalm.xml'
 
-    push:
-        branches: [ 'master' ]
-        paths-ignore:
-            - 'docs/**'
-            - 'README.md'
-            - 'CHANGELOG.md'
-            - '.gitignore'
-            - '.gitattributes'
-            - 'psalm.xml'
+  push:
+    branches: [ 'master' ]
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - '.gitignore'
+      - '.gitattributes'
+      - 'psalm.xml'
 
 name: mutation test
 
 jobs:
-    mutation:
-        uses: yiisoft/actions/.github/workflows/roave-infection.yml@master
-        with:
-            min-covered-msi: 100
-            os: >-
-                ['ubuntu-latest']
-            php: >-
-                ['8.3']
-            extensions: uopz
-        secrets:
-            STRYKER_DASHBOARD_API_KEY: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
+  mutation:
+    uses: yiisoft/actions/.github/workflows/roave-infection.yml@master
+    with:
+      min-covered-msi: 100
+      os: >-
+        ['ubuntu-latest']
+      php: >-
+        ['8.3']
+      extensions: uopz
+    secrets:
+      STRYKER_DASHBOARD_API_KEY: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
