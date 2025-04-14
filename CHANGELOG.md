@@ -2,8 +2,8 @@
 
 ## 1.0.5 under development
 
-- Chg: Change PHP constraint in `composer.json` to `8.1 - 8.4` (@dagpro)
-- Bug: Explicitly mark nullable parameters (@dagpro)
+- Chg #129: Change PHP constraint in `composer.json` to `8.1 - 8.4` (@dagpro)
+- Bug #129: Explicitly mark nullable parameters (@dagpro)
 
 ## 1.0.4 September 03, 2024
 
