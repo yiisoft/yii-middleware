@@ -12,7 +12,7 @@ use Yiisoft\Yii\Middleware\CorsAllowAll;
 
 final class CorsAllowAllTest extends TestCase
 {
-    public function testProcess()
+    public function testProcess(): void
     {
         $corsAllowAll = new CorsAllowAll();
         $request = $this->createMock(ServerRequestInterface::class);
@@ -20,7 +20,7 @@ final class CorsAllowAllTest extends TestCase
         $response
             ->expects($this->any())
             ->method('withHeader')
-            ->withConsecutive(
+            ->willReturnOnConsecutiveCalls(
                 [$this->equalTo('Allow'), $this->equalTo('*')],
                 [$this->equalTo('Vary'), $this->equalTo('Origin')],
                 [$this->equalTo('Access-Control-Allow-Origin'), $this->equalTo('*')],
@@ -31,7 +31,7 @@ final class CorsAllowAllTest extends TestCase
                 [$this->equalTo('Access-Control-Allow-Headers'), $this->equalTo('*')],
                 [$this->equalTo('Access-Control-Expose-Headers'), $this->equalTo('*')],
                 [$this->equalTo('Access-Control-Allow-Credentials'), $this->equalTo('true')],
-                [$this->equalTo('Access-Control-Max-Age'), $this->equalTo('86400')]
+                [$this->equalTo('Access-Control-Max-Age'), $this->equalTo('86400')],
             )
             ->willReturnSelf();
         $handler = $this->createMock(RequestHandlerInterface::class);

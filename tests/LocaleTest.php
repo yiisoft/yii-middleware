@@ -15,8 +15,8 @@ use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use SlopeIt\ClockMock\ClockMock;
 use Psr\Log\LoggerInterface;
+use SlopeIt\ClockMock\ClockMock;
 use Yiisoft\Cookies\CookieCollection;
 use Yiisoft\Http\Header;
 use Yiisoft\Http\Method;
@@ -37,6 +37,83 @@ final class LocaleTest extends TestCase
     private ?ServerRequestInterface $lastRequest;
     private LoggerInterface $logger;
 
+    public static function dataInvalidLocalesFormat(): array
+    {
+        return [
+            [['en', 'ru', 'uz']],
+            [['en' => 'en-US', 'ru' => ['ru-RU'], 'uz' => 'uz-UZ']],
+            [['en' => 'en-US', 'ru-RU', 'uz' => 'uz-UZ']],
+            [['en' => 'en-US', ['ru-RU'], 'uz' => 'uz-UZ']],
+        ];
+    }
+
+    public static function dataWithDefaultLocaleAndNotSupportedLocale(): array
+    {
+        return [
+            'full name is specified instead of short one' => ['uz-UZ'],
+            'irrelevant / non-existing locale' => ['test'],
+        ];
+    }
+
+    public static function dataDefaultLocaleAndMultipleSupportedLocales(): array
+    {
+        return [
+            'basic' => ['', '/home'],
+            'with URI prefix' => ['/api', '/api/home'],
+            'with URI prefix, trailing slash' => ['/api/', '/api/home'],
+        ];
+    }
+
+    public static function dataSaveLocaleWithCustomArguments(): array
+    {
+        return [
+            'cookie name: default, secureCookie: default' => [null, null],
+            'cookie name: default, secureCookie: false' => [null, false],
+            'cookie name: default, secureCookie: true' => [null, true],
+            'cookie name: custom, secureCookie: default' => ['_cookie_language', null],
+        ];
+    }
+
+    public static function dataLocaleFromCookies(): array
+    {
+        return [
+            'default parameter name' => [null],
+            'custom parameter name' => ['_cookies_language'],
+        ];
+    }
+
+    public static function dataLocaleFromQueryParam(): array
+    {
+        return [
+            'basic, default parameter name' => ['uz', 'uz', null],
+            'basic, custom parameter name' => ['uz', 'uz', '_query_language'],
+            'extended, default parameter name' => ['uz-UZ', 'uz', null],
+        ];
+    }
+
+    public static function dataDetectLocale(): array
+    {
+        return [
+            'dash separator' => ['uz', 'uz-UZ', '', '/uz'],
+            'underscore separator' => ['uz', 'uz_UZ', '', '/uz'],
+            'locale with more than separator' => ['zh', 'zh-Hant-TW', '', '/zh'],
+            'locale without separator' => ['uz', 'uz', '', '/uz'],
+            'with URI prefix' => ['uz', 'uz-UZ', '/api', '/api/uz'],
+            'with URI prefix, trailing slash' => ['uz', 'uz-UZ', '/api/', '/api/uz'],
+        ];
+    }
+
+    public static function dataLocale(): array
+    {
+        return [
+            'basic' => ['/uz', ['uz' => 'uz-UZ']],
+            'with dash' => ['/uz-UZ', ['uz' => 'uz-UZ']],
+            'with underscore' => ['/uz_UZ', ['uz' => 'uz_UZ']],
+            'without country' => ['/uz', ['uz' => 'uz']],
+            'with subtags' => ['/en_us', ['en_us' => 'en-US', 'en_gb' => 'en-GB']],
+        ];
+    }
+
     public function setUp(): void
     {
         $this->translatorLocale = null;
@@ -46,14 +123,14 @@ final class LocaleTest extends TestCase
         $this->lastRequest = null;
         $this->logger = new SimpleLogger();
 
-        if (extension_loaded('uopz') && str_starts_with($this->getName(), 'testSaveLocaleWithCustomArguments')) {
+        if (extension_loaded('uopz') && str_starts_with($this->name(), 'testSaveLocaleWithCustomArguments')) {
             ClockMock::freeze(new DateTime('2023-05-10 08:24:39'));
         }
     }
 
     public function tearDown(): void
     {
-        if (extension_loaded('uopz') && str_starts_with($this->getName(), 'testSaveLocaleWithCustomArguments')) {
+        if (extension_loaded('uopz') && str_starts_with($this->name(), 'testSaveLocaleWithCustomArguments')) {
             ClockMock::reset();
         }
     }
@@ -66,20 +143,11 @@ final class LocaleTest extends TestCase
         $this->assertNotSame($localeMiddleware->withCookieDuration(new DateInterval('P31D')), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withDefaultLocale('uz'), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withDetectLocale(true), $localeMiddleware);
-        $this->assertNotSame($localeMiddleware->withSupportedLocales(['ru' => 'ru-RU', 'uz' => 'uz-UZ']), $localeMiddleware);
+        $this->assertNotSame($localeMiddleware->withSupportedLocales(['ru' => 'ru-RU', 'uz' => 'uz-UZ']),
+            $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withQueryParameterName('lang'), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withCookieName('lang'), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withIgnoredRequestUrlPatterns(['/auth**']), $localeMiddleware);
-    }
-
-    public function dataInvalidLocalesFormat(): array
-    {
-        return [
-            [['en', 'ru', 'uz']],
-            [['en' => 'en-US', 'ru' => ['ru-RU'], 'uz' => 'uz-UZ']],
-            [['en' => 'en-US', 'ru-RU', 'uz' => 'uz-UZ']],
-            [['en' => 'en-US', ['ru-RU'], 'uz' => 'uz-UZ']],
-        ];
     }
 
     /**
@@ -154,14 +222,6 @@ final class LocaleTest extends TestCase
         $this->assertSame(Status::OK, $response->getStatusCode());
     }
 
-    public function dataWithDefaultLocaleAndNotSupportedLocale(): array
-    {
-        return [
-            'full name is specified instead of short one' => ['uz-UZ'],
-            'irrelevant / non-existing locale' => ['test'],
-        ];
-    }
-
     /**
      * @dataProvider dataWithDefaultLocaleAndNotSupportedLocale
      */
@@ -172,15 +232,6 @@ final class LocaleTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Default locale allows only keys from supported locales');
         $middleware->withDefaultLocale($defaultLocale);
-    }
-
-    public function dataDefaultLocaleAndMultipleSupportedLocales(): array
-    {
-        return [
-            'basic' => ['', '/home'],
-            'with URI prefix' => ['/api', '/api/home'],
-            'with URI prefix, trailing slash' => ['/api/', '/api/home'],
-        ];
     }
 
     /**
@@ -225,17 +276,6 @@ final class LocaleTest extends TestCase
         $this->assertSame($uri, $this->getRequestPath());
     }
 
-    public function dataLocale(): array
-    {
-        return [
-            'basic' => ['/uz', ['uz' => 'uz-UZ']],
-            'with dash' => ['/uz-UZ', ['uz' => 'uz-UZ']],
-            'with underscore' => ['/uz_UZ', ['uz' => 'uz_UZ']],
-            'without country' => ['/uz', ['uz' => 'uz']],
-            'with subtags' => ['/en_us', ['en_us' => 'en-US', 'en_gb' => 'en-GB']],
-        ];
-    }
-
     /**
      * @dataProvider dataLocale
      */
@@ -271,16 +311,6 @@ final class LocaleTest extends TestCase
             ],
         ];
         $this->assertSame($expectedLoggerMessages, $this->logger->getMessages());
-    }
-
-    public function dataSaveLocaleWithCustomArguments(): array
-    {
-        return [
-            'cookie name: default, secureCookie: default' => [null, null],
-            'cookie name: default, secureCookie: false' => [null, false],
-            'cookie name: default, secureCookie: true' => [null, true],
-            'cookie name: custom, secureCookie: default' => ['_cookie_language', null],
-        ];
     }
 
     /**
@@ -345,14 +375,6 @@ final class LocaleTest extends TestCase
         $this->assertSame($expectedLoggerMessages, $this->logger->getMessages());
     }
 
-    public function dataLocaleFromCookies(): array
-    {
-        return [
-            'default parameter name' => [null],
-            'custom parameter name' => ['_cookies_language'],
-        ];
-    }
-
     /**
      * @dataProvider dataLocaleFromCookies
      */
@@ -381,15 +403,6 @@ final class LocaleTest extends TestCase
             ],
         ];
         $this->assertSame($expectedLoggerMessages, $this->logger->getMessages());
-    }
-
-    public function dataLocaleFromQueryParam(): array
-    {
-        return [
-            'basic, default parameter name' => ['uz', 'uz', null],
-            'basic, custom parameter name' => ['uz', 'uz', '_query_language'],
-            'extended, default parameter name' => ['uz-UZ', 'uz', null],
-        ];
     }
 
     /**
@@ -429,24 +442,12 @@ final class LocaleTest extends TestCase
         $request = $this->createRequest(
             '/',
             queryParams: ['_language' => 'uz'],
-            cookieParams: ['_language' => 'ru']
+            cookieParams: ['_language' => 'ru'],
         );
         $response = $this->process($middleware, $request);
 
         $this->assertSame('/uz/', $response->getHeaderLine(Header::LOCATION));
         $this->assertSame(Status::FOUND, $response->getStatusCode());
-    }
-
-    public function dataDetectLocale(): array
-    {
-        return [
-            'dash separator' => ['uz', 'uz-UZ', '', '/uz'],
-            'underscore separator' => ['uz', 'uz_UZ', '', '/uz'],
-            'locale with more than separator' => ['zh', 'zh-Hant-TW', '', '/zh'],
-            'locale without separator' => ['uz', 'uz', '', '/uz'],
-            'with URI prefix' => ['uz', 'uz-UZ', '/api', '/api/uz'],
-            'with URI prefix, trailing slash' => ['uz', 'uz-UZ', '/api/', '/api/uz'],
-        ];
     }
 
     /**
@@ -541,7 +542,7 @@ final class LocaleTest extends TestCase
                     $stack->add('event');
                     $stack->add($event->getLocale());
                     return $event;
-                }
+                },
             );
 
         $urlGenerator = $this->createMock(UrlGeneratorInterface::class);
@@ -551,7 +552,7 @@ final class LocaleTest extends TestCase
                 function ($name, $value) use ($stack) {
                     $stack->add('urlGenerator');
                     $stack->add($value);
-                }
+                },
             );
 
         $middleware = new Locale(
@@ -576,12 +577,12 @@ final class LocaleTest extends TestCase
 
         $middleware->process(
             $this->createRequest('/ru/test'),
-            $handler
+            $handler,
         );
 
         $this->assertSame(
             ['event', 'ru-RU', 'urlGenerator', 'ru', 'handler'],
-            $stack->data
+            $stack->data,
         );
     }
 
@@ -658,7 +659,7 @@ final class LocaleTest extends TestCase
         string $method = Method::GET,
         array $queryParams = [],
         array $headers = [],
-        $cookieParams = []
+        $cookieParams = [],
     ): ServerRequestInterface {
         return new ServerRequest(
             cookieParams: $cookieParams,
@@ -680,7 +681,7 @@ final class LocaleTest extends TestCase
 
         $session
             ->method('get')
-            ->willReturnCallback(fn ($name) => $this->session[$name]);
+            ->willReturnCallback(fn($name) => $this->session[$name]);
 
         return $session;
     }

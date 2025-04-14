@@ -19,6 +19,60 @@ use function time;
 
 final class HttpCacheTest extends TestCase
 {
+    public static function dataModifiedResultWithEtag(): array
+    {
+        $etagSeed = 'test-etag';
+        $expectedEtag = '"IMPoQ2/Us52fJk3jpOZtEACPlVA"';
+
+        return [
+            [$etagSeed, $etagSeed, $expectedEtag],
+            [$etagSeed, '', $expectedEtag],
+        ];
+    }
+
+    public static function dataNotModifiedResultWithEtag(): array
+    {
+        $etagSeed = 'test-etag';
+        $etagValue = 'IMPoQ2/Us52fJk3jpOZtEACPlVA';
+
+        return [
+            [$etagSeed, "\"$etagValue\""],
+            [$etagSeed, "\"$etagValue-gzip\""],
+        ];
+    }
+
+    public static function dataNotModifiedResultWithLastModified(): array
+    {
+        $time = time();
+        $ifModifiedSince = self::formatTime($time);
+
+        return [
+            [
+                $time - 1,
+                null,
+                $ifModifiedSince,
+                self::formatTime($time - 1),
+            ],
+            [
+                $time - 1,
+                'test-etag',
+                $ifModifiedSince,
+                '',
+            ],
+            [
+                $time,
+                'test-etag',
+                $ifModifiedSince,
+                '',
+            ],
+        ];
+    }
+
+    private static function formatTime(int $time): string
+    {
+        return gmdate('D, d M Y H:i:s', $time) . ' GMT';
+    }
+
     public function testNotCacheableMethods(): void
     {
         $time = time();
@@ -46,17 +100,6 @@ final class HttpCacheTest extends TestCase
         $this->assertSame(Status::OK, $response->getStatusCode());
     }
 
-    public function dataModifiedResultWithEtag(): array
-    {
-        $etagSeed = 'test-etag';
-        $expectedEtag = '"IMPoQ2/Us52fJk3jpOZtEACPlVA"';
-
-        return [
-            [$etagSeed, $etagSeed, $expectedEtag],
-            [$etagSeed, '', $expectedEtag],
-        ];
-    }
-
     /**
      * @dataProvider dataModifiedResultWithEtag
      */
@@ -75,17 +118,6 @@ final class HttpCacheTest extends TestCase
         $this->assertSame($response->getHeaderLine('Etag'), $expectedEtag);
     }
 
-    public function dataNotModifiedResultWithEtag(): array
-    {
-        $etagSeed = 'test-etag';
-        $etagValue = 'IMPoQ2/Us52fJk3jpOZtEACPlVA';
-
-        return [
-            [$etagSeed, "\"$etagValue\""],
-            [$etagSeed, "\"$etagValue-gzip\""],
-        ];
-    }
-
     /**
      * @dataProvider dataNotModifiedResultWithEtag
      */
@@ -101,7 +133,7 @@ final class HttpCacheTest extends TestCase
         );
 
         $this->assertSame(Status::NOT_MODIFIED, $response->getStatusCode());
-        $this->assertEmpty((string) $response->getBody());
+        $this->assertEmpty((string)$response->getBody());
     }
 
     public function testModifiedResultWithWeakEtag(): void
@@ -120,33 +152,6 @@ final class HttpCacheTest extends TestCase
         $this->assertSame($response->getHeaderLine('Etag'), 'W/"IMPoQ2/Us52fJk3jpOZtEACPlVA"');
     }
 
-    public function dataNotModifiedResultWithLastModified(): array
-    {
-        $time = time();
-        $ifModifiedSince = $this->formatTime($time);
-
-        return [
-            [
-                $time - 1,
-                null,
-                $ifModifiedSince,
-                $this->formatTime($time - 1),
-            ],
-            [
-                $time - 1,
-                'test-etag',
-                $ifModifiedSince,
-                '',
-            ],
-            [
-                $time,
-                'test-etag',
-                $ifModifiedSince,
-                '',
-            ],
-        ];
-    }
-
     /**
      * @dataProvider dataNotModifiedResultWithLastModified
      */
@@ -158,7 +163,7 @@ final class HttpCacheTest extends TestCase
     ): void {
         $middleware = $this->createMiddlewareWithLastModified($lastModified);
         if ($etagSeed !== null) {
-            $middleware = $middleware->withEtagSeed(fn () => $etagSeed);
+            $middleware = $middleware->withEtagSeed(fn() => $etagSeed);
         }
 
         $headers = [
@@ -170,7 +175,7 @@ final class HttpCacheTest extends TestCase
         );
 
         $this->assertSame(Status::NOT_MODIFIED, $response->getStatusCode());
-        $this->assertEmpty((string) $response->getBody());
+        $this->assertEmpty((string)$response->getBody());
         $this->assertSame($expectedLastModified, $response->getHeaderLine('Last-Modified'));
     }
 
@@ -188,29 +193,28 @@ final class HttpCacheTest extends TestCase
         );
 
         $this->assertSame(Status::OK, $response->getStatusCode());
-        $this->assertEmpty((string) $response->getBody());
+        $this->assertEmpty((string)$response->getBody());
         $this->assertSame($this->formatTime($time - 1), $response->getHeaderLine('Last-Modified'));
     }
 
     public function testEmptyIfNoneMatchAndIfModifiedSinceHeaders(): void
     {
         $middleware = (new HttpCache())
-            ->withEtagSeed(static fn () => 'test-etag')
-            ->withLastModified(static fn () => time() + 3600)
-        ;
+            ->withEtagSeed(static fn() => 'test-etag')
+            ->withLastModified(static fn() => time() + 3600);
 
         $response = $middleware->process($this->createServerRequest(), $this->createRequestHandler());
 
         $this->assertSame(Status::OK, $response->getStatusCode());
-        $this->assertEmpty((string) $response->getBody());
+        $this->assertEmpty((string)$response->getBody());
     }
 
     public function testImmutability(): void
     {
         $middleware = new HttpCache();
 
-        $this->assertNotSame($middleware, $middleware->withLastModified(static fn () => 3600));
-        $this->assertNotSame($middleware, $middleware->withEtagSeed(static fn () => 'test-etag'));
+        $this->assertNotSame($middleware, $middleware->withLastModified(static fn() => 3600));
+        $this->assertNotSame($middleware, $middleware->withEtagSeed(static fn() => 'test-etag'));
         $this->assertNotSame($middleware, $middleware->withWeakEtag());
         $this->assertNotSame($middleware, $middleware->withParams(['key' => 'value']));
         $this->assertNotSame($middleware, $middleware->withCacheControlHeader('public, max-age=3600'));
@@ -219,13 +223,13 @@ final class HttpCacheTest extends TestCase
     private function createMiddlewareWithLastModified(int $lastModified): HttpCache
     {
         $middleware = new HttpCache();
-        return $middleware->withLastModified(static fn () => $lastModified);
+        return $middleware->withLastModified(static fn() => $lastModified);
     }
 
     private function createMiddlewareWithETag(string $etag): HttpCache
     {
         $middleware = new HttpCache();
-        return $middleware->withEtagSeed(fn () => $etag);
+        return $middleware->withEtagSeed(fn() => $etag);
     }
 
     private function createRequestHandler(): RequestHandlerInterface
@@ -246,10 +250,5 @@ final class HttpCacheTest extends TestCase
         }
 
         return $request;
-    }
-
-    private function formatTime(int $time): string
-    {
-        return gmdate('D, d M Y H:i:s', $time) . ' GMT';
     }
 }

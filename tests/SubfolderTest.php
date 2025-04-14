@@ -22,6 +22,87 @@ final class SubfolderTest extends TestCase
     private Aliases $aliases;
     private ?ServerRequestInterface $lastRequest;
 
+    public static function autoPrefixDataProvider(): array
+    {
+        return [
+            'auto prefix' => [
+                '/public/',
+                '/public/index.php',
+                '/public',
+                '/public',
+                '/',
+            ],
+            'auto prefix logn' => [
+                '/root/php/dev-server/project-42/index_html/public/web/',
+                '/root/php/dev-server/project-42/index_html/public/web/index.php',
+                '/root/php/dev-server/project-42/index_html/public/web',
+                '/root/php/dev-server/project-42/index_html/public/web',
+                '/',
+            ],
+            'auto prefix and uri without trailing slash' => [
+                '/public',
+                '/public/index.php',
+                '/public',
+                '/public',
+                '/',
+            ],
+            'auto prefix full url' => [
+                '/public/index.php?test',
+                '/public/index.php',
+                '/public',
+                '/public',
+                '/index.php',
+            ],
+            'failed auto prefix' => [
+                '/web/index.php',
+                '/public/index.php',
+                '/default/web',
+                '',
+                '/web/index.php',
+            ],
+            'auto prefix doesn\'t match completely' => [
+                '/public/web/',
+                '/pub/index.php',
+                '/default/web',
+                '',
+                '/public/web/',
+            ],
+        ];
+    }
+
+    public static function scriptParamsProvider(): iterable
+    {
+        yield [
+            [
+                'PHP_SELF' => '/public/index.php',
+                'SCRIPT_FILENAME' => '/public/index.php',
+            ],
+        ];
+        yield [
+            [
+                'PHP_SELF' => '/public/index.php/test',
+                'SCRIPT_FILENAME' => '/public/index.php',
+            ],
+        ];
+        yield [
+            [
+                'ORIG_SCRIPT_NAME' => '/public/index.php',
+                'SCRIPT_FILENAME' => '/public/index.php',
+            ],
+        ];
+        yield [
+            [
+                'ORIG_SCRIPT_NAME' => '/public/index.php',
+            ],
+        ];
+        yield [
+            [
+                'DOCUMENT_ROOT' => '/www',
+                'SCRIPT_FILENAME' => '/www/public/index.php',
+            ],
+        ];
+    }
+
     public function setUp(): void
     {
         $this->urlGeneratorUriPrefix = '';
@@ -116,7 +197,7 @@ final class SubfolderTest extends TestCase
         string $script,
         string $expectedBaseUrl,
         string $expectedPrefix,
-        $expectedPath
+        $expectedPath,
     ): void {
         $request = $this->createRequest($uri, $script);
         $mw = $this->createMiddleware(alias: '@baseUrl');
@@ -141,87 +222,6 @@ final class SubfolderTest extends TestCase
         $this->assertSame('/public', $this->aliases->get('@baseUrl'));
         $this->assertSame('/public', $this->urlGeneratorUriPrefix);
         $this->assertSame('/', $this->getRequestPath());
-    }
-
-    public function autoPrefixDataProvider(): array
-    {
-        return [
-            'auto prefix' => [
-                '/public/',
-                '/public/index.php',
-                '/public',
-                '/public',
-                '/',
-            ],
-            'auto prefix logn' => [
-                '/root/php/dev-server/project-42/index_html/public/web/',
-                '/root/php/dev-server/project-42/index_html/public/web/index.php',
-                '/root/php/dev-server/project-42/index_html/public/web',
-                '/root/php/dev-server/project-42/index_html/public/web',
-                '/',
-            ],
-            'auto prefix and uri without trailing slash' => [
-                '/public',
-                '/public/index.php',
-                '/public',
-                '/public',
-                '/',
-            ],
-            'auto prefix full url' => [
-                '/public/index.php?test',
-                '/public/index.php',
-                '/public',
-                '/public',
-                '/index.php',
-            ],
-            'failed auto prefix' => [
-                '/web/index.php',
-                '/public/index.php',
-                '/default/web',
-                '',
-                '/web/index.php',
-            ],
-            'auto prefix doesn\'t match completely' => [
-                '/public/web/',
-                '/pub/index.php',
-                '/default/web',
-                '',
-                '/public/web/',
-            ],
-        ];
-    }
-
-    public function scriptParamsProvider(): iterable
-    {
-        yield [
-            [
-                'PHP_SELF' => '/public/index.php',
-                'SCRIPT_FILENAME' => '/public/index.php',
-            ],
-        ];
-        yield [
-            [
-                'PHP_SELF' => '/public/index.php/test',
-                'SCRIPT_FILENAME' => '/public/index.php',
-            ],
-        ];
-        yield [
-            [
-                'ORIG_SCRIPT_NAME' => '/public/index.php',
-                'SCRIPT_FILENAME' => '/public/index.php',
-            ],
-        ];
-        yield [
-            [
-                'ORIG_SCRIPT_NAME' => '/public/index.php',
-            ],
-        ];
-        yield [
-            [
-                'DOCUMENT_ROOT' => '/www',
-                'SCRIPT_FILENAME' => '/www/public/index.php',
-            ],
-        ];
     }
 
     private function process(Subfolder $middleware, ServerRequestInterface $request): ResponseInterface

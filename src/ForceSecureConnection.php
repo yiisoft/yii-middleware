@@ -52,7 +52,7 @@ final class ForceSecureConnection implements MiddlewareInterface
      * @param int $statusCode The response status code of redirection.
      * @param int|null $port The redirection port.
      */
-    public function withRedirection(int $statusCode = Status::MOVED_PERMANENTLY, int $port = null): self
+    public function withRedirection(int $statusCode = Status::MOVED_PERMANENTLY, ?int $port = null): self
     {
         $new = clone $this;
         $new->redirect = true;

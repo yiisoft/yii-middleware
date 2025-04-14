@@ -19,14 +19,7 @@ final class IpFilterTest extends TestCase
     private MockObject|ResponseFactoryInterface $responseFactoryMock;
     private MockObject|RequestHandlerInterface $requestHandlerMock;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->responseFactoryMock = $this->createMock(ResponseFactoryInterface::class);
-        $this->requestHandlerMock = $this->createMock(RequestHandlerInterface::class);
-    }
-
-    public function ipNotAllowedDataProvider(): array
+    public static function ipNotAllowedDataProvider(): array
     {
         return [
             'basic' => [['REMOTE_ADDR' => '8.8.8.8']],
@@ -35,6 +28,14 @@ final class IpFilterTest extends TestCase
             'invalid IP' => [['REMOTE_ADDR' => '1']],
             'with subnet' => [['REMOTE_ADDR' => '192.168.5.32/11']],
             'with ranges' => [['REMOTE_ADDR' => '10.0.0.2'], ['10.0.0.1', '!10.0.0.0/8', '!babe::/8', 'any']],
+        ];
+    }
+
+    public static function dataProcessCallsRequestHandlerWhenRemoteAddressIsAllowed(): array
+    {
+        return [
+            'basic' => ['1.1.1.1'],
+            'with ranges' => ['10.0.0.1', ['10.0.0.1', '!10.0.0.0/8', '!babe::/8', 'any']],
         ];
     }
 
@@ -69,15 +70,7 @@ final class IpFilterTest extends TestCase
         $response = $ipFilter->process($requestMock, $this->requestHandlerMock);
 
         $this->assertSame(Status::FORBIDDEN, $response->getStatusCode());
-        $this->assertSame(Status::TEXTS[Status::FORBIDDEN], (string) $response->getBody());
-    }
-
-    public function dataProcessCallsRequestHandlerWhenRemoteAddressIsAllowed(): array
-    {
-        return [
-            'basic' => ['1.1.1.1'],
-            'with ranges' => ['10.0.0.1', ['10.0.0.1', '!10.0.0.0/8', '!babe::/8', 'any']],
-        ];
+        $this->assertSame(Status::TEXTS[Status::FORBIDDEN], (string)$response->getBody());
     }
 
     /**
@@ -128,5 +121,12 @@ final class IpFilterTest extends TestCase
         $response = $ipFilter->process($requestMock, $this->requestHandlerMock);
 
         $this->assertSame(Status::OK, $response->getStatusCode());
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->responseFactoryMock = $this->createMock(ResponseFactoryInterface::class);
+        $this->requestHandlerMock = $this->createMock(RequestHandlerInterface::class);
     }
 }

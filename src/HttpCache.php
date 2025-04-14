@@ -14,8 +14,8 @@ use Yiisoft\Http\Status;
 
 use function base64_encode;
 use function in_array;
-use function rtrim;
 use function preg_split;
+use function rtrim;
 use function sha1;
 use function str_replace;
 use function strtotime;

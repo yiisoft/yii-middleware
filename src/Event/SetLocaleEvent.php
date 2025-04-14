@@ -15,7 +15,7 @@ final class SetLocaleEvent
     /**
      * @param string $locale Locale determined by {@see Locale} middleware.
      */
-    public function __construct(private string $locale)
+    public function __construct(private readonly string $locale)
     {
     }
 

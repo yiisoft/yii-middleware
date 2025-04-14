@@ -20,7 +20,7 @@ final class TagRequestTest extends TestCase
             ->method('withAttribute')
             ->with(
                 $this->equalTo('requestTag'),
-                $this->isType('string')
+                $this->isType('string'),
             )
             ->willReturnSelf();
 

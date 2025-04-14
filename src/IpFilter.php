@@ -19,7 +19,7 @@ use Yiisoft\Validator\ValidatorInterface;
  */
 final class IpFilter implements MiddlewareInterface
 {
-    private IpRanges $ipRanges;
+    private readonly IpRanges $ipRanges;
 
     /**
      * @param ValidatorInterface $validator Client IP validator. The properties of the validator
@@ -37,8 +37,8 @@ final class IpFilter implements MiddlewareInterface
          * @deprecated Will be removed in version 2.0. {@see IpRanges} from `network-utilities` package is used instead.
          */
         ValidatorInterface $validator,
-        private ResponseFactoryInterface $responseFactory,
-        private ?string $clientIpAttribute = null,
+        private readonly ResponseFactoryInterface $responseFactory,
+        private readonly ?string $clientIpAttribute = null,
         array $ipRanges = [],
     ) {
         $this->ipRanges = new IpRanges($ipRanges);
