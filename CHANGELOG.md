@@ -4,6 +4,8 @@
 
 - Chg #129: Change PHP constraint in `composer.json` to `8.1 - 8.4` (@dagpro)
 - Bug #129: Explicitly mark nullable parameters (@dagpro)
+- Chg #130: Bump minimal version of `yiisoft/cookie` to `^1.2.3` (@vjik)
+- Enh #130: Allow to use PSR-20 clock interface to get current time into `Locale` middleware (@vjik)
 
 ## 1.0.4 September 03, 2024
 

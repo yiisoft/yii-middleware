@@ -37,7 +37,7 @@
         "psr/http-server-middleware": "^1.0",
         "psr/log": "^3.0",
         "yiisoft/aliases": "^3.0",
-        "yiisoft/cookies": "^1.2",
+        "yiisoft/cookies": "^1.2.3",
         "yiisoft/friendly-exception": "^1.0",
         "yiisoft/http": "^1.2",
         "yiisoft/network-utilities": "^1.2",
@@ -47,13 +47,12 @@
         "yiisoft/validator": "^1.0|^2.0"
     },
     "require-dev": {
-        "ext-uopz": "*",
         "httpsoft/http-message": "^1.0",
         "maglnet/composer-require-checker": "^4.2",
         "phpunit/phpunit": "^10.5.45",
         "rector/rector": "^2.0.10",
         "roave/infection-static-analysis-plugin": "^1.16",
-        "slope-it/clock-mock": "^0.5.0",
+        "psr/clock": "^1.0",
         "spatie/phpunit-watcher": "^1.23",
         "vimeo/psalm": "^5.26.1 || ^6.8.9",
         "yiisoft/router-fastroute": "^4.0",

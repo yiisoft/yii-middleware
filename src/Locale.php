@@ -6,6 +6,7 @@ namespace Yiisoft\Yii\Middleware;
 
 use DateInterval;
 use InvalidArgumentException;
+use Psr\Clock\ClockInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -66,6 +67,7 @@ final class Locale implements MiddlewareInterface
         private array $ignoredRequestUrlPatterns = [],
         private bool $secureCookie = false,
         private ?DateInterval $cookieDuration = null,
+        private ?ClockInterface $clock = null,
     ) {
         $this->assertSupportedLocalesFormat($supportedLocales);
         $this->supportedLocales = $supportedLocales;
@@ -208,7 +210,12 @@ final class Locale implements MiddlewareInterface
         }
 
         $this->logger->debug('Saving found locale to cookies.');
-        $cookie = new Cookie(name: $this->cookieName, value: $locale, secure: $this->secureCookie);
+        $cookie = new Cookie(
+            name: $this->cookieName,
+            value: $locale,
+            secure: $this->secureCookie,
+            clock: $this->clock,
+        );
         $cookie = $cookie->withMaxAge($this->cookieDuration);
 
         return $cookie->addToResponse($response);
