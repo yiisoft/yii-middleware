@@ -2,7 +2,8 @@
 
 ## 1.0.5 under development
 
-- no changes in this release.
+- Chg #130: Bump minimal version of `yiisoft/cookie` to `^1.2.3` (@vjik)
+- Enh #130: Allow to use PSR-20 clock interface to get current time into `Locale` middleware (@vjik)
 
 ## 1.0.4 September 03, 2024
 

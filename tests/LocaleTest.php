@@ -6,17 +6,19 @@ namespace Yiisoft\Yii\Middleware\Tests;
 
 use DateInterval;
 use DateTime;
+use DateTimeImmutable;
 use HttpSoft\Message\Response;
 use HttpSoft\Message\ResponseFactory;
 use HttpSoft\Message\ServerRequest;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
+use Psr\Clock\ClockInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use SlopeIt\ClockMock\ClockMock;
 use Psr\Log\LoggerInterface;
+use Yiisoft\Cookies\Cookie;
 use Yiisoft\Cookies\CookieCollection;
 use Yiisoft\Http\Header;
 use Yiisoft\Http\Method;
@@ -27,6 +29,7 @@ use Yiisoft\Test\Support\Log\SimpleLogger;
 use Yiisoft\Yii\Middleware\Event\SetLocaleEvent;
 use Yiisoft\Yii\Middleware\Exception\InvalidLocalesFormatException;
 use Yiisoft\Yii\Middleware\Locale;
+use Yiisoft\Yii\Middleware\Tests\Support\StaticClock;
 
 final class LocaleTest extends TestCase
 {
@@ -45,17 +48,6 @@ final class LocaleTest extends TestCase
         $this->session = [];
         $this->lastRequest = null;
         $this->logger = new SimpleLogger();
-
-        if (extension_loaded('uopz') && str_starts_with($this->getName(), 'testSaveLocaleWithCustomArguments')) {
-            ClockMock::freeze(new DateTime('2023-05-10 08:24:39'));
-        }
-    }
-
-    public function tearDown(): void
-    {
-        if (extension_loaded('uopz') && str_starts_with($this->getName(), 'testSaveLocaleWithCustomArguments')) {
-            ClockMock::reset();
-        }
     }
 
     public function testImmutability(): void
@@ -288,13 +280,14 @@ final class LocaleTest extends TestCase
      */
     public function testSaveLocaleWithCustomArguments(?string $cookieName, ?bool $secureCookie): void
     {
-        if (!extension_loaded('uopz')) {
-            $this->markTestSkipped('No uopz extension available. Skipping.');
-        }
-
+        $clock = new StaticClock(new DateTimeImmutable('2023-05-10 08:24:39'));
         $request = $this->createRequest('/uz');
         $middleware = $this
-            ->createMiddleware(['uz' => 'uz-UZ'], saveToSession: true)
+            ->createMiddleware(
+                ['uz' => 'uz-UZ'],
+                saveToSession: true,
+                clock: $clock,
+            )
             ->withCookieDuration(new DateInterval('P30D'));
 
         if ($cookieName !== null) {
@@ -316,7 +309,11 @@ final class LocaleTest extends TestCase
         $this->assertArrayHasKey('_language', $this->session);
         $this->assertSame('uz-UZ', $this->session['_language']);
 
-        $cookies = CookieCollection::fromResponse($response)->toArray();
+        $cookies = [];
+        foreach ($response->getHeader(Header::SET_COOKIE) as $cookieString) {
+            $cookie = Cookie::fromCookieString($cookieString, $clock);
+            $cookies[$cookie->getName()] = $cookie;
+        }
         $this->assertArrayHasKey($cookieName, $cookies);
 
         $cookie = $cookies[$cookieName];
@@ -611,6 +608,7 @@ final class LocaleTest extends TestCase
         array $locales = [],
         bool $saveToSession = false,
         ?DateInterval $cookieDuration = null,
+        ?ClockInterface $clock = null,
     ): Locale {
         $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
         $eventDispatcher
@@ -650,6 +648,7 @@ final class LocaleTest extends TestCase
             new ResponseFactory(),
             $locales,
             cookieDuration: $cookieDuration,
+            clock: $clock,
         );
     }
 
