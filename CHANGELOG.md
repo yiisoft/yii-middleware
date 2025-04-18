@@ -2,7 +2,10 @@
 
 ## 1.0.5 under development
 
+- Chg #129: Bump PHP minimal version to 8.1 and refactor code to use new features (@dagpro)
 - Chg #129: Change PHP constraint in `composer.json` to `8.1 - 8.4` (@dagpro)
+- Chg #129: Bump `yiisoft/router` version to `^4.0` (@dagpro)
+- Chg #129: Bump `yiisoft/session` version to `^3.0` (@dagpro)
 - Bug #129: Explicitly mark nullable parameters (@dagpro)
 - Chg #130: Bump minimal version of `yiisoft/cookie` to `^1.2.3` (@vjik)
 - Enh #130: Allow to use PSR-20 clock interface to get current time into `Locale` middleware (@vjik)
