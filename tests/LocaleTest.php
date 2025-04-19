@@ -135,8 +135,10 @@ final class LocaleTest extends TestCase
         $this->assertNotSame($localeMiddleware->withCookieDuration(new DateInterval('P31D')), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withDefaultLocale('uz'), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withDetectLocale(true), $localeMiddleware);
-        $this->assertNotSame($localeMiddleware->withSupportedLocales(['ru' => 'ru-RU', 'uz' => 'uz-UZ']),
-            $localeMiddleware);
+        $this->assertNotSame(
+            $localeMiddleware->withSupportedLocales(['ru' => 'ru-RU', 'uz' => 'uz-UZ']),
+            $localeMiddleware
+        );
         $this->assertNotSame($localeMiddleware->withQueryParameterName('lang'), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withCookieName('lang'), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withIgnoredRequestUrlPatterns(['/auth**']), $localeMiddleware);
