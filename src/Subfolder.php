@@ -31,10 +31,10 @@ final class Subfolder implements MiddlewareInterface
      * @param string|null $baseUrlAlias The base URL alias {@see Aliases::get()}. Defaults to `@baseUrl`.
      */
     public function __construct(
-        private UrlGeneratorInterface $uriGenerator,
-        private Aliases $aliases,
-        private ?string $prefix = null,
-        private ?string $baseUrlAlias = '@baseUrl',
+        private readonly UrlGeneratorInterface $uriGenerator,
+        private readonly Aliases $aliases,
+        private readonly ?string $prefix = null,
+        private readonly ?string $baseUrlAlias = '@baseUrl',
     ) {
     }
 
