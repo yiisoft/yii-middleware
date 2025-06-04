@@ -13,6 +13,8 @@ use function uniqid;
 
 /**
  * Tags request with a random value that could be later used for identifying it.
+ *
+ * @deprecated Use `TagRequestMiddleware` from `yiisoft/http-middleware` package instead.
  */
 final class TagRequest implements MiddlewareInterface
 {

@@ -25,6 +25,8 @@ use function strcasecmp;
  *
  * Note: Prefer forcing HTTPS via web server in case you aren't creating installable product such as CMS and aren't
  * hosting the project on a server where you don't have access to web server configuration.
+ *
+ * @deprecated Use `ForceSecureConnectionMiddleware` from `yiisoft/http-middleware` package instead.
  */
 final class ForceSecureConnection implements MiddlewareInterface
 {

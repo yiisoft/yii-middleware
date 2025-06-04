@@ -12,6 +12,8 @@ use Yiisoft\Http\Header;
 
 /**
  * Adds Cross-Origin Resource Sharing (CORS) headers allowing everything to the response.
+ *
+ * @deprecated Use `CorsAllowAllMiddleware` from `yiisoft/http-middleware` package instead.
  */
 final class CorsAllowAll implements MiddlewareInterface
 {

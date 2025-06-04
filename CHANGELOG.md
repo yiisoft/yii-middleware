@@ -9,6 +9,7 @@
 - Bug #129: Explicitly mark nullable parameters (@dagpro)
 - Chg #130: Bump minimal version of `yiisoft/cookie` to `^1.2.3` (@vjik)
 - Enh #130: Allow to use PSR-20 clock interface to get current time into `Locale` middleware (@vjik)
+- Chg #132: Mark `CorsAllowAll`, `ForceSecureConnection`, `HttpCache` and `TagRequest` middlewares as deprecated (@vjik)
 
 ## 1.0.4 September 03, 2024
 
