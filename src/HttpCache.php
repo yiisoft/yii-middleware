@@ -22,6 +22,8 @@ use function strtotime;
 
 /**
  * HttpCache implements client-side caching by utilizing the `Last-Modified` and `ETag` HTTP headers.
+ *
+ * @deprecated Use `HttpCacheMiddleware` from `yiisoft/http-middleware` package instead.
  */
 final class HttpCache implements MiddlewareInterface
 {
