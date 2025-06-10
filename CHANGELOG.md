@@ -1,5 +1,9 @@
 # Yii Middleware Change Log
 
+## 1.1.1 under development
+
+- no changes in this release.
+
 ## 1.1.0 June 10, 2025
 
 - Chg #129: Bump PHP minimal version to 8.1 and refactor code to use new features (@dagpro)
