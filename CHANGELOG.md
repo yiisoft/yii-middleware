@@ -2,7 +2,7 @@
 
 ## 1.1.1 under development
 
-- no changes in this release.
+- Chg #136: Add PHP 8.5 version support (@rustamwin)
 
 ## 1.1.0 June 10, 2025
 
