@@ -34,7 +34,7 @@ For more information on how to use middleware in the [Yii Framework](https://www
 
 ## Requirements
 
-- PHP 8.1 or higher.
+- PHP 8.1 - 8.5.
 
 ## Installation
 
