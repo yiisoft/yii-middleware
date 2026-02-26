@@ -519,8 +519,7 @@ final class LocaleTest extends TestCase
         string $acceptLanguage,
         array $locales,
         string $expectedLocale,
-    ): void
-    {
+    ): void {
         $request = $this->createRequest(
             $uri = '/',
             headers: [Header::ACCEPT_LANGUAGE => $acceptLanguage],
