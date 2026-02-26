@@ -436,9 +436,7 @@ final class Locale implements MiddlewareInterface
          * @param array{language: string, quality: float} $a
          * @param array{language: string, quality: float $b
          */
-        usort($languages, static function(array $a, array $b) {
-            return $b['quality'] <=> $a['quality'];
-        });
+        usort($languages, static fn(array $a, array $b) => $b['quality'] <=> $a['quality']);
 
         // Extract just the language codes.
         return array_map(static fn($item) => $item['language'], $languages);
