@@ -418,7 +418,7 @@ final class Locale implements MiddlewareInterface
 
             // Extract quality value.
             preg_match('/q\s*=\s*(\d*\.?\d+)/', $qualityPart, $matches);
-            $quality = (float)($matches[1] ?? 1.0);
+            $quality = $matches[1] ?? 1.0;
 
             // Validate quality range (0.0 to 1.0).
             $quality = max(0.0, min(1.0, $quality));
