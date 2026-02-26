@@ -376,7 +376,7 @@ final class Locale implements MiddlewareInterface
      * according to quality value. Highest quality value is first.
      *
      * @param string $headerLine Accept-Language header line.
-     * @return array Array of languages.
+     * @return list<string> Array of languages.
      */
     private function parseAcceptLanguage(string $headerLine): array
     {
@@ -384,30 +384,41 @@ final class Locale implements MiddlewareInterface
             return [];
         }
 
+        /** @var list<array{language: string, quality: float, order: int}> $languages */
         $languages = [];
         $parts = explode(',', $headerLine);
 
         foreach ($parts as $part) {
             $part = trim($part);
 
-            // Split language from quality value.
-            if (str_contains($part, ';')) {
-                [$language, $qualityPart] = explode(';', $part, 2);
-                $language = trim($language);
-
-                // Extract quality value.
-                preg_match('/q\s*=\s*([0-9.]+)/', $qualityPart, $matches);
-                $quality = isset($matches[1]) ? (float)$matches[1] : 1.0;
-            } else {
-                $language = $part;
-                // Default quality is 1.0.
-                $quality = 1.0;
+            if (!str_contains($part, ';')) {
+                if ($part !== '') {
+                    $languages[] = [
+                        'language' => $part,
+                        'quality' => 1.0,
+                        'order' => count($languages),
+                    ];
+                }
+                continue;
             }
+
+            // Split language from quality value.
+            $qualityParts = explode(';', $part, 2);
+            if (count($qualityParts) !== 2) {
+                continue;
+            }
+
+            [$language, $qualityPart] = $qualityParts;
+            $language = trim($language);
+
+            // Extract quality value.
+            preg_match('/q\s*=\s*([0-9.]+)/', $qualityPart, $matches);
+            $quality = isset($matches[1]) ? (float)$matches[1] : 1.0;
 
             // Validate quality range (0.0 to 1.0).
             $quality = max(0.0, min(1.0, $quality));
 
-            if (!empty($language)) {
+            if ($language !== '') {
                 $languages[] = [
                     'language' => $language,
                     'quality' => $quality,
@@ -417,8 +428,13 @@ final class Locale implements MiddlewareInterface
             }
         }
 
-        // Sort by quality (descending), then by original order (ascending).
-        usort($languages, static function($a, $b) {
+        /**
+         * Sort by quality (descending), then by original order (ascending).
+         *
+         * @param array{language: string, quality: float, order: int} $a
+         * @param array{language: string, quality: float, order: int} $b
+         */
+        usort($languages, static function(array $a, array $b) {
             if ($a['quality'] === $b['quality']) {
                 return $a['order'] <=> $b['order'];
             }
