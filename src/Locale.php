@@ -192,7 +192,10 @@ final class Locale implements MiddlewareInterface
 
     private function detectLocale(ServerRequestInterface $request): ?string
     {
-        foreach ($request->getHeader(Header::ACCEPT_LANGUAGE) as $language) {
+        $headerLine = $request->getHeaderLine(Header::ACCEPT_LANGUAGE);
+        $languages = $this->parseAcceptLanguage($headerLine);
+
+        foreach ($languages as $language) {
             if (!isset($this->supportedLocales[$language])) {
                 $language = $this->parseLocale($language);
             }
@@ -200,6 +203,7 @@ final class Locale implements MiddlewareInterface
                 return $language;
             }
         }
+
         return null;
     }
 
@@ -365,5 +369,63 @@ final class Locale implements MiddlewareInterface
         $new = clone $this;
         $new->cookieDuration = $cookieDuration;
         return $new;
+    }
+
+    /**
+     * Parse Accept-Language header line and return array of languages
+     * according to quality value. Highest quality value is first.
+     *
+     * @param string $headerLine Accept-Language header line.
+     * @return array Array of languages.
+     */
+    private function parseAcceptLanguage(string $headerLine): array
+    {
+        if (empty($headerLine)) {
+            return [];
+        }
+
+        $languages = [];
+        $parts = explode(',', $headerLine);
+
+        foreach ($parts as $part) {
+            $part = trim($part);
+
+            // Split language from quality value.
+            if (str_contains($part, ';')) {
+                [$language, $qualityPart] = explode(';', $part, 2);
+                $language = trim($language);
+
+                // Extract quality value.
+                preg_match('/q\s*=\s*([0-9.]+)/', $qualityPart, $matches);
+                $quality = isset($matches[1]) ? (float)$matches[1] : 1.0;
+            } else {
+                $language = $part;
+                // Default quality is 1.0.
+                $quality = 1.0;
+            }
+
+            // Validate quality range (0.0 to 1.0).
+            $quality = max(0.0, min(1.0, $quality));
+
+            if (!empty($language)) {
+                $languages[] = [
+                    'language' => $language,
+                    'quality' => $quality,
+                    // Preserve original order for stability.
+                    'order' => count($languages)
+                ];
+            }
+        }
+
+        // Sort by quality (descending), then by original order (ascending).
+        usort($languages, static function($a, $b) {
+            if ($a['quality'] === $b['quality']) {
+                return $a['order'] <=> $b['order'];
+            }
+            return $b['quality'] <=> $a['quality'];
+        });
+
+        // Extract just the language codes.
+        return array_map(static fn($item) => $item['language'], $languages);
     }
 }

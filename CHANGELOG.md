@@ -3,6 +3,7 @@
 ## 1.1.1 under development
 
 - Chg #136: Add PHP 8.5 version support (@rustamwin)
+- Enh #137: Add support for multiple locales and quality values in `Accept-Language` header to `Locale` middleware (@samdark)
 
 ## 1.1.0 June 10, 2025
 

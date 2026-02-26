@@ -468,6 +468,44 @@ final class LocaleTest extends TestCase
         $this->assertSame(Status::FOUND, $response->getStatusCode());
     }
 
+    public function testDetectLocaleWithMultipleAcceptedLanguages(): void
+    {
+        $request = $this->createRequest(
+            $uri = '/',
+            headers: [Header::ACCEPT_LANGUAGE => 'en-US,en;q=0.9,ru;q=0.8,tr;q=0.7'],
+        );
+        $this->uriPrefix = '';
+
+        $middleware = $this
+            ->createMiddleware(['ru' => 'ru-RU', 'tr' => 'tr-TR'])
+            ->withDetectLocale(true);
+
+        $response = $this->process($middleware, $request);
+
+        $this->assertSame('/ru' . $uri, $response->getHeaderLine(Header::LOCATION));
+        $this->assertSame(Status::FOUND, $response->getStatusCode());
+    }
+
+    public function testDetectLocaleFallsBackToNextSupportedLanguageFromHeader(): void
+    {
+        $request = $this->createRequest(
+            $uri = '/',
+            headers: [Header::ACCEPT_LANGUAGE => 'en-US,en;q=0.9,ru;q=0.8,tr;q=0.7'],
+        );
+        $this->uriPrefix = '';
+
+        $middleware = $this
+            ->createMiddleware(['tr' => 'tr-TR'])
+            ->withDetectLocale(true);
+
+        $response = $this->process($middleware, $request);
+
+        $this->assertSame('/tr' . $uri, $response->getHeaderLine(Header::LOCATION));
+        $this->assertSame(Status::FOUND, $response->getStatusCode());
+    }
+
+
+
     public function testDetectLocaleWithQueryParam(): void
     {
         $request = $this->createRequest(
@@ -660,7 +698,7 @@ final class LocaleTest extends TestCase
         string $method = Method::GET,
         array $queryParams = [],
         array $headers = [],
-        $cookieParams = [],
+        array $cookieParams = [],
     ): ServerRequestInterface {
         return new ServerRequest(
             cookieParams: $cookieParams,
