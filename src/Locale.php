@@ -412,7 +412,7 @@ final class Locale implements MiddlewareInterface
                     'language' => $language,
                     'quality' => $quality,
                     // Preserve original order for stability.
-                    'order' => count($languages)
+                    'order' => count($languages),
                 ];
             }
         }

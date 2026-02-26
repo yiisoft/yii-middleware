@@ -504,8 +504,6 @@ final class LocaleTest extends TestCase
         $this->assertSame(Status::FOUND, $response->getStatusCode());
     }
 
-
-
     public function testDetectLocaleWithQueryParam(): void
     {
         $request = $this->createRequest(
