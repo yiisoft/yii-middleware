@@ -389,7 +389,7 @@ final class Locale implements MiddlewareInterface
             return [];
         }
 
-        /** @var list<array{language: string, quality: float, order: int}> $languages */
+        /** @var list<array{language: string, quality: float}> $languages */
         $languages = [];
         $parts = explode(',', $headerLine);
 
@@ -401,7 +401,6 @@ final class Locale implements MiddlewareInterface
                     $languages[] = [
                         'language' => $part,
                         'quality' => 1.0,
-                        'order' => count($languages),
                     ];
                 }
                 continue;
@@ -427,22 +426,17 @@ final class Locale implements MiddlewareInterface
                 $languages[] = [
                     'language' => $language,
                     'quality' => $quality,
-                    // Preserve original order for stability.
-                    'order' => count($languages),
                 ];
             }
         }
 
         /**
-         * Sort by quality (descending), then by original order (ascending).
+         * Sort by quality (descending).
          *
-         * @param array{language: string, quality: float, order: int} $a
-         * @param array{language: string, quality: float, order: int} $b
+         * @param array{language: string, quality: float} $a
+         * @param array{language: string, quality: float $b
          */
         usort($languages, static function(array $a, array $b) {
-            if ($a['quality'] === $b['quality']) {
-                return $a['order'] <=> $b['order'];
-            }
             return $b['quality'] <=> $a['quality'];
         });
 
