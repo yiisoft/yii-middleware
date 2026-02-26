@@ -468,21 +468,49 @@ final class LocaleTest extends TestCase
         $this->assertSame(Status::FOUND, $response->getStatusCode());
     }
 
-    public function testDetectLocaleWithMultipleAcceptedLanguages(): void
+    public static function detectLocaleWithMultipleAcceptedLanguagesDataProvider(): array
+    {
+        return [
+            'Quality value' => [
+                'acceptLanguage' => 'en-US,en;q=0.9,tr;q=0.7,ru;q=0.8',
+                'locales' => ['tr' => 'tr-TR', 'ru' => 'ru-RU'],
+                'expectedLocale' => 'ru',
+            ],
+            'Empty' => [
+                'acceptLanguage' => '',
+                'locales' => ['ru' => 'ru-RU', 'tr' => 'tr-TR'],
+                'expectedLocale' => 'ru',
+            ],
+            'Star' => [
+                'acceptLanguage' => '*',
+                'locales' => ['ru' => 'ru-RU', 'tr' => 'tr-TR'],
+                'expectedLocale' => 'ru',
+            ]
+        ];
+    }
+
+    /**
+     * @dataProvider detectLocaleWithMultipleAcceptedLanguagesDataProvider
+     */
+    public function testDetectLocaleWithMultipleAcceptedLanguages(
+        string $acceptLanguage,
+        array $locales,
+        string $expectedLocale,
+    ): void
     {
         $request = $this->createRequest(
             $uri = '/',
-            headers: [Header::ACCEPT_LANGUAGE => 'en-US,en;q=0.9,ru;q=0.8,tr;q=0.7'],
+            headers: [Header::ACCEPT_LANGUAGE => $acceptLanguage],
         );
         $this->uriPrefix = '';
 
         $middleware = $this
-            ->createMiddleware(['ru' => 'ru-RU', 'tr' => 'tr-TR'])
+            ->createMiddleware($locales)
             ->withDetectLocale(true);
 
         $response = $this->process($middleware, $request);
 
-        $this->assertSame('/ru' . $uri, $response->getHeaderLine(Header::LOCATION));
+        $this->assertSame('/' . $expectedLocale . $uri, $response->getHeaderLine(Header::LOCATION));
         $this->assertSame(Status::FOUND, $response->getStatusCode());
     }
 
@@ -517,21 +545,6 @@ final class LocaleTest extends TestCase
 
         $this->assertSame('/ru' . $uri, $response->getHeaderLine(Header::LOCATION));
         $this->assertSame(Status::FOUND, $response->getStatusCode());
-    }
-
-    public function testDetectLocaleWithoutHeader(): void
-    {
-        $request = $this->createRequest($uri = '/');
-        $middleware = $this->createMiddleware(['uz' => 'uz-UZ'])->withDetectLocale(true);
-        $this->urlGeneratorLocale = 'uz';
-
-        $response = $this->process($middleware, $request);
-
-        $this->assertSame(null, $this->translatorLocale);
-        $this->assertSame(null, $this->urlGeneratorLocale);
-        $this->assertSame('/en' . $uri, $this->getRequestPath());
-        $this->assertSame('', $response->getHeaderLine(Header::LOCATION));
-        $this->assertSame(Status::OK, $response->getStatusCode());
     }
 
     public function testLocaleWithOtherHttpMethod(): void

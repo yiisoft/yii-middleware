@@ -193,7 +193,12 @@ final class Locale implements MiddlewareInterface
     private function detectLocale(ServerRequestInterface $request): ?string
     {
         $headerLine = $request->getHeaderLine(Header::ACCEPT_LANGUAGE);
+
         $languages = $this->parseAcceptLanguage($headerLine);
+
+        if ($languages === []) {
+            return array_key_first($this->supportedLocales);
+        }
 
         foreach ($languages as $language) {
             if (!isset($this->supportedLocales[$language])) {
@@ -376,11 +381,11 @@ final class Locale implements MiddlewareInterface
      * according to quality value. Highest quality value is first.
      *
      * @param string $headerLine Accept-Language header line.
-     * @return list<string> Array of languages.
+     * @return list<string> Array of languages. Empty means that any language would do.
      */
     private function parseAcceptLanguage(string $headerLine): array
     {
-        if (empty($headerLine)) {
+        if (empty($headerLine) || $headerLine === '*') {
             return [];
         }
 
@@ -403,7 +408,7 @@ final class Locale implements MiddlewareInterface
             }
 
             // Split language from quality value.
-            $qualityParts = explode(';', $part, 2);
+            $qualityParts = explode(';', $part);
             if (count($qualityParts) !== 2) {
                 continue;
             }
@@ -412,8 +417,8 @@ final class Locale implements MiddlewareInterface
             $language = trim($language);
 
             // Extract quality value.
-            preg_match('/q\s*=\s*([0-9]*\.?[0-9]+)/', $qualityPart, $matches);
-            $quality = isset($matches[1]) ? (float)$matches[1] : 1.0;
+            preg_match('/q\s*=\s*(\d*\.?\d+)/', $qualityPart, $matches);
+            $quality = (float)($matches[1] ?? 1.0);
 
             // Validate quality range (0.0 to 1.0).
             $quality = max(0.0, min(1.0, $quality));
