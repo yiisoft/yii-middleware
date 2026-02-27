@@ -144,6 +144,14 @@ final class LocaleTest extends TestCase
         $this->assertNotSame($localeMiddleware->withIgnoredRequestUrlPatterns(['/auth**']), $localeMiddleware);
     }
 
+    public function testWithSupportedLocalesInvalidFormat(): void
+    {
+        $middleware = $this->createMiddleware(['ru' => 'ru-RU']);
+
+        $this->expectException(InvalidLocalesFormatException::class);
+        $middleware->withSupportedLocales(['ru-RU', ['uz-UZ']]);
+    }
+
     /**
      * @dataProvider dataInvalidLocalesFormat
      */
@@ -468,6 +476,84 @@ final class LocaleTest extends TestCase
         $this->assertSame(Status::FOUND, $response->getStatusCode());
     }
 
+    public static function detectLocaleWithMultipleAcceptedLanguagesDataProvider(): array
+    {
+        return [
+            'Quality value' => [
+                'acceptLanguage' => 'en-US,en;q=0.9,tr;q=0.7,ru;q=0.8',
+                'locales' => ['tr' => 'tr-TR', 'ru' => 'ru-RU'],
+                'expectedLocale' => 'ru',
+            ],
+            'Empty' => [
+                'acceptLanguage' => '',
+                'locales' => ['ru' => 'ru-RU', 'tr' => 'tr-TR'],
+                'expectedLocale' => 'ru',
+            ],
+            'Star' => [
+                'acceptLanguage' => '*',
+                'locales' => ['ru' => 'ru-RU', 'tr' => 'tr-TR'],
+                'expectedLocale' => 'ru',
+            ],
+            'Missing quality defaults to one' => [
+                'acceptLanguage' => 'ru;q=,en;q=0.1',
+                'locales' => ['ru' => 'ru-RU', 'en' => 'en-US'],
+                'expectedLocale' => 'ru',
+            ],
+            'Spaces around language codes require trim' => [
+                'acceptLanguage' => ' ru , en;q=0.9',
+                'locales' => ['uz' => 'uz-UZ', 'ru' => 'ru-RU', 'en' => 'en-US'],
+                'expectedLocale' => 'ru',
+            ],
+            'Spaces around language part with semicolon require trim' => [
+                'acceptLanguage' => ' de ;q=0.8, en ;q=0.7',
+                'locales' => ['uz' => 'uz-UZ', 'de' => 'de-DE', 'en' => 'en-US'],
+                'expectedLocale' => 'de',
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider detectLocaleWithMultipleAcceptedLanguagesDataProvider
+     */
+    public function testDetectLocaleWithMultipleAcceptedLanguages(
+        string $acceptLanguage,
+        array $locales,
+        string $expectedLocale,
+    ): void {
+        $request = $this->createRequest(
+            $uri = '/',
+            headers: [Header::ACCEPT_LANGUAGE => $acceptLanguage],
+        );
+        $this->uriPrefix = '';
+
+        $middleware = $this
+            ->createMiddleware($locales)
+            ->withDetectLocale(true);
+
+        $response = $this->process($middleware, $request);
+
+        $this->assertSame('/' . $expectedLocale . $uri, $response->getHeaderLine(Header::LOCATION));
+        $this->assertSame(Status::FOUND, $response->getStatusCode());
+    }
+
+    public function testDetectLocaleFallsBackToNextSupportedLanguageFromHeader(): void
+    {
+        $request = $this->createRequest(
+            $uri = '/',
+            headers: [Header::ACCEPT_LANGUAGE => 'en-US,en;q=0.9,ru;q=0.8,tr;q=0.7'],
+        );
+        $this->uriPrefix = '';
+
+        $middleware = $this
+            ->createMiddleware(['tr' => 'tr-TR'])
+            ->withDetectLocale(true);
+
+        $response = $this->process($middleware, $request);
+
+        $this->assertSame('/tr' . $uri, $response->getHeaderLine(Header::LOCATION));
+        $this->assertSame(Status::FOUND, $response->getStatusCode());
+    }
+
     public function testDetectLocaleWithQueryParam(): void
     {
         $request = $this->createRequest(
@@ -483,18 +569,17 @@ final class LocaleTest extends TestCase
         $this->assertSame(Status::FOUND, $response->getStatusCode());
     }
 
-    public function testDetectLocaleWithoutHeader(): void
+    public function testDefaultLocaleFallbackResetsUrlGeneratorArgument(): void
     {
-        $request = $this->createRequest($uri = '/');
-        $middleware = $this->createMiddleware(['uz' => 'uz-UZ'])->withDetectLocale(true);
-        $this->urlGeneratorLocale = 'uz';
+        $middleware = $this->createMiddleware(['en' => 'en-US', 'ru' => 'ru-RU']);
 
-        $response = $this->process($middleware, $request);
+        $this->process($middleware, $this->createRequest('/ru/home'));
+        $this->assertSame('ru', $this->urlGeneratorLocale);
 
-        $this->assertSame(null, $this->translatorLocale);
-        $this->assertSame(null, $this->urlGeneratorLocale);
-        $this->assertSame('/en' . $uri, $this->getRequestPath());
-        $this->assertSame('', $response->getHeaderLine(Header::LOCATION));
+        $response = $this->process($middleware, $this->createRequest('/home'));
+
+        $this->assertNull($this->urlGeneratorLocale);
+        $this->assertSame('/en/home', $this->getRequestPath());
         $this->assertSame(Status::OK, $response->getStatusCode());
     }
 
@@ -660,7 +745,7 @@ final class LocaleTest extends TestCase
         string $method = Method::GET,
         array $queryParams = [],
         array $headers = [],
-        $cookieParams = [],
+        array $cookieParams = [],
     ): ServerRequestInterface {
         return new ServerRequest(
             cookieParams: $cookieParams,
