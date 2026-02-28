@@ -1,5 +1,9 @@
 # Yii Middleware Change Log
 
+## 1.1.2 under development
+
+- no changes in this release.
+
 ## 1.1.1 February 28, 2026
 
 - Chg #136: Add PHP 8.5 version support (@rustamwin)
