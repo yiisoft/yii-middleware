@@ -1,6 +1,6 @@
 # Yii Middleware Change Log
 
-## 1.1.1 under development
+## 1.1.1 February 28, 2026
 
 - Chg #136: Add PHP 8.5 version support (@rustamwin)
 - Bug #137: Add support for multiple locales and quality values in `Accept-Language` header to `Locale` middleware (@samdark)
