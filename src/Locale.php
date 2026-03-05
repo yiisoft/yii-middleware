@@ -169,11 +169,17 @@ final class Locale implements MiddlewareInterface
             return null;
         }
 
+        $locale = $this->parseLocale($queryParameters[$this->queryParameterName]);
+
+        if (!isset($this->supportedLocales[$locale])) {
+            return null;
+        }
+
         $this->logger->debug(
-            sprintf("Locale '%s' found in query string.", $queryParameters[$this->queryParameterName]),
+            sprintf("Locale '%s' found in query string.", $locale),
         );
 
-        return $this->parseLocale($queryParameters[$this->queryParameterName]);
+        return $locale;
     }
 
     /**
@@ -185,9 +191,15 @@ final class Locale implements MiddlewareInterface
             return null;
         }
 
-        $this->logger->debug(sprintf("Locale '%s' found in cookies.", $cookieParameters[$this->cookieName]));
+        $locale = $this->parseLocale($cookieParameters[$this->cookieName]);
 
-        return $this->parseLocale($cookieParameters[$this->cookieName]);
+        if (!isset($this->supportedLocales[$locale])) {
+            return null;
+        }
+
+        $this->logger->debug(sprintf("Locale '%s' found in cookies.", $locale));
+
+        return $locale;
     }
 
     private function detectLocale(ServerRequestInterface $request): ?string
