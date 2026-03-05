@@ -2,7 +2,7 @@
 
 ## 1.1.2 under development
 
-- Bug #139: Fix infinite redirect loop when unsupported locale is provided via query parameter or cookie in `Locale` middleware (@copilot)
+- Bug #139: Fix infinite redirect loop when unsupported locale is provided via query parameter or cookie in `Locale` middleware (@samdark)
 
 ## 1.1.1 February 28, 2026
 
