@@ -22,12 +22,25 @@ final class IpFilterTest extends TestCase
     public static function ipNotAllowedDataProvider(): array
     {
         return [
-            'basic' => [['REMOTE_ADDR' => '8.8.8.8']],
-            'does not exist' => [[]],
-            'empty string' => [['REMOTE_ADDR' => '']],
-            'invalid IP' => [['REMOTE_ADDR' => '1']],
-            'with subnet' => [['REMOTE_ADDR' => '192.168.5.32/11']],
-            'with ranges' => [['REMOTE_ADDR' => '10.0.0.2'], ['10.0.0.1', '!10.0.0.0/8', '!babe::/8', 'any']],
+            'basic' => [
+                'serverParams' => ['REMOTE_ADDR' => '8.8.8.8'],
+            ],
+            'does not exist' => [
+                'serverParams' => [],
+            ],
+            'empty string' => [
+                'serverParams' => ['REMOTE_ADDR' => ''],
+            ],
+            'invalid IP' => [
+                'serverParams' => ['REMOTE_ADDR' => '1'],
+            ],
+            'with subnet' => [
+                'serverParams' => ['REMOTE_ADDR' => '192.168.5.32/11'],
+            ],
+            'with ranges' => [
+                'serverParams' => ['REMOTE_ADDR' => '10.0.0.2'],
+                'ipRanges' => ['10.0.0.1', '!10.0.0.0/8', '!babe::/8', 'any'],
+            ],
         ];
     }
 
