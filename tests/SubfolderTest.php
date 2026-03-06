@@ -84,7 +84,7 @@ final class SubfolderTest extends TestCase
                 'SCRIPT_FILENAME' => '/public/index.php',
             ],
         ];
-        yield [
+yield [
             [
                 'ORIG_SCRIPT_NAME' => '/public/index.php',
                 'SCRIPT_FILENAME' => '/public/index.php',
@@ -102,6 +102,8 @@ final class SubfolderTest extends TestCase
             ],
         ];
     }
+
+
 
     public function setUp(): void
     {
@@ -222,6 +224,26 @@ final class SubfolderTest extends TestCase
         $this->assertSame('/public', $this->aliases->get('@baseUrl'));
         $this->assertSame('/public', $this->urlGeneratorUriPrefix);
         $this->assertSame('/', $this->getRequestPath());
+    }
+
+    public function testAutoPrefixUsesPhpSelfSubstringWhenScriptFilenameDiffers(): void
+    {
+        $request = new ServerRequest(
+            serverParams: [
+                'SCRIPT_FILENAME' => '/var/www/project/web/index.php',
+                'PHP_SELF' => '/project/web/index.php/app/page',
+            ],
+            uri: '/project/web/app/page',
+            method: Method::GET,
+        );
+
+        $mw = $this->createMiddleware(alias: '@baseUrl');
+
+        $this->process($mw, $request);
+
+        $this->assertSame('/project/web', $this->aliases->get('@baseUrl'));
+        $this->assertSame('/project/web', $this->urlGeneratorUriPrefix);
+        $this->assertSame('/app/page', $this->getRequestPath());
     }
 
     private function process(Subfolder $middleware, ServerRequestInterface $request): ResponseInterface

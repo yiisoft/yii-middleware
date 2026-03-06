@@ -152,6 +152,16 @@ final class HttpCacheTest extends TestCase
         $this->assertSame($response->getHeaderLine('Etag'), 'W/"IMPoQ2/Us52fJk3jpOZtEACPlVA"');
     }
 
+    public function testNotModifiedWithoutEtagWhenEtagRequired(): void
+    {
+        $request = $this->createServerRequest(Method::GET, [Header::IF_NONE_MATCH => '"test-etag"']);
+        $middleware = $this->createMiddlewareWithETag('different-etag');
+
+        $response = $middleware->process($request, $this->createRequestHandler());
+
+        $this->assertSame(Status::OK, $response->getStatusCode());
+    }
+
     /**
      * @dataProvider dataNotModifiedResultWithLastModified
      */
@@ -209,6 +219,47 @@ final class HttpCacheTest extends TestCase
         $this->assertEmpty((string)$response->getBody());
     }
 
+    public function testWithIfNoneMatchButNoEtag(): void
+    {
+        $middleware = (new HttpCache())
+            ->withLastModified(static fn() => time() + 3600);
+
+        $request = $this->createServerRequest(Method::GET, [Header::IF_NONE_MATCH => '"some-etag"']);
+        $response = $middleware->process($request, $this->createRequestHandler());
+
+        $this->assertSame(Status::OK, $response->getStatusCode());
+    }
+
+    public function testDoesNotReadIfNoneMatchHeaderWhenEtagMissing(): void
+    {
+        $request = $this->createMock(ServerRequestInterface::class);
+        $request
+            ->method('getMethod')
+            ->willReturn(Method::GET);
+        $request
+            ->expects($this->once())
+            ->method('hasHeader')
+            ->with(Header::IF_NONE_MATCH)
+            ->willReturn(true);
+        $request
+            ->expects($this->never())
+            ->method('getHeaderLine');
+
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler
+            ->expects($this->once())
+            ->method('handle')
+            ->with($request)
+            ->willReturn(new Response(Status::OK));
+
+        $middleware = (new HttpCache())
+            ->withLastModified(static fn() => time() - 10);
+
+        $response = $middleware->process($request, $handler);
+
+        $this->assertSame(Status::OK, $response->getStatusCode());
+    }
+
     public function testImmutability(): void
     {
         $middleware = new HttpCache();
@@ -218,6 +269,18 @@ final class HttpCacheTest extends TestCase
         $this->assertNotSame($middleware, $middleware->withWeakEtag());
         $this->assertNotSame($middleware, $middleware->withParams(['key' => 'value']));
         $this->assertNotSame($middleware, $middleware->withCacheControlHeader('public, max-age=3600'));
+    }
+
+    public function testWithoutCacheControlHeader(): void
+    {
+        $middleware = (new HttpCache())
+            ->withCacheControlHeader(null)
+            ->withLastModified(static fn() => time() + 3600);
+
+        $response = $middleware->process($this->createServerRequest(), $this->createRequestHandler());
+
+        $this->assertSame(Status::OK, $response->getStatusCode());
+        $this->assertFalse($response->hasHeader('Cache-Control'));
     }
 
     private function createMiddlewareWithLastModified(int $lastModified): HttpCache
