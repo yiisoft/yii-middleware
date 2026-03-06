@@ -53,15 +53,7 @@ final class IpFilter implements MiddlewareInterface
         /** @psalm-var array{REMOTE_ADDR?: mixed} $serverParams */
         $serverParams = $request->getServerParams();
         $clientIp ??= $serverParams['REMOTE_ADDR'] ?? null;
-        if ($clientIp === null) {
-            return $this->createForbiddenResponse();
-        }
-
-        if (!is_string($clientIp) || !IpHelper::isIp($clientIp)) {
-            return $this->createForbiddenResponse();
-        }
-
-        if (!$this->ipRanges->isAllowed($clientIp)) {
+        if (!is_string($clientIp) || !IpHelper::isIp($clientIp) || !$this->ipRanges->isAllowed($clientIp)) {
             return $this->createForbiddenResponse();
         }
 
