@@ -84,7 +84,7 @@ final class SubfolderTest extends TestCase
                 'SCRIPT_FILENAME' => '/public/index.php',
             ],
         ];
-yield [
+        yield [
             [
                 'ORIG_SCRIPT_NAME' => '/public/index.php',
                 'SCRIPT_FILENAME' => '/public/index.php',
@@ -102,8 +102,6 @@ yield [
             ],
         ];
     }
-
-
 
     public function setUp(): void
     {
