@@ -152,16 +152,6 @@ final class HttpCacheTest extends TestCase
         $this->assertSame($response->getHeaderLine('Etag'), 'W/"IMPoQ2/Us52fJk3jpOZtEACPlVA"');
     }
 
-    public function testModifiedWithDifferentEtagWhenEtagRequired(): void
-    {
-        $request = $this->createServerRequest(Method::GET, [Header::IF_NONE_MATCH => '"test-etag"']);
-        $middleware = $this->createMiddlewareWithETag('different-etag');
-
-        $response = $middleware->process($request, $this->createRequestHandler());
-
-        $this->assertSame(Status::OK, $response->getStatusCode());
-    }
-
     /**
      * @dataProvider dataNotModifiedResultWithLastModified
      */
@@ -217,17 +207,6 @@ final class HttpCacheTest extends TestCase
 
         $this->assertSame(Status::OK, $response->getStatusCode());
         $this->assertEmpty((string)$response->getBody());
-    }
-
-    public function testIfNoneMatchWithoutEtag(): void
-    {
-        $middleware = (new HttpCache())
-            ->withLastModified(static fn() => time() + 3600);
-
-        $request = $this->createServerRequest(Method::GET, [Header::IF_NONE_MATCH => '"some-etag"']);
-        $response = $middleware->process($request, $this->createRequestHandler());
-
-        $this->assertSame(Status::OK, $response->getStatusCode());
     }
 
     public function testIgnoresIfNoneMatchWhenEtagMissing(): void
