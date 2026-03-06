@@ -5,16 +5,12 @@ declare(strict_types=1);
 namespace Yiisoft\Yii\Middleware\Tests;
 
 use HttpSoft\Message\Response;
-use HttpSoft\Message\ResponseFactory;
-use HttpSoft\Message\ServerRequest;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseFactoryInterface;
-use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Yiisoft\Http\Status;
-use Yiisoft\Http\Method;
 use Yiisoft\Validator\Validator;
 use Yiisoft\Yii\Middleware\IpFilter;
 
@@ -27,23 +23,23 @@ final class IpFilterTest extends TestCase
     {
         return [
             'basic' => [
-                'serverParams' => ['REMOTE_ADDR' => '8.8.8.8']
+                'serverParams' => ['REMOTE_ADDR' => '8.8.8.8'],
             ],
             'does not exist' => [
-                'serverParams' => []
+                'serverParams' => [],
             ],
             'empty string' => [
-                'serverParams' => ['REMOTE_ADDR' => '']
+                'serverParams' => ['REMOTE_ADDR' => ''],
             ],
             'invalid IP' => [
-                'serverParams' => ['REMOTE_ADDR' => '1']
+                'serverParams' => ['REMOTE_ADDR' => '1'],
             ],
             'with subnet' => [
-                'serverParams' => ['REMOTE_ADDR' => '192.168.5.32/11']
+                'serverParams' => ['REMOTE_ADDR' => '192.168.5.32/11'],
             ],
             'with ranges' => [
                 'serverParams' => ['REMOTE_ADDR' => '10.0.0.2'],
-                'ipRanges' => ['10.0.0.1', '!10.0.0.0/8', '!babe::/8', 'any']
+                'ipRanges' => ['10.0.0.1', '!10.0.0.0/8', '!babe::/8', 'any'],
             ],
         ];
     }
