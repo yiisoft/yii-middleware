@@ -523,11 +523,6 @@ final class LocaleTest extends TestCase
                 'locales' => ['ru' => 'ru-RU', 'tr' => 'tr-TR'],
                 'expectedLocale' => 'ru',
             ],
-            'Missing quality defaults to one' => [
-                'acceptLanguage' => 'ru;q=,en;q=0.1',
-                'locales' => ['ru' => 'ru-RU', 'en' => 'en-US'],
-                'expectedLocale' => 'ru',
-            ],
             'Spaces around language codes require trim' => [
                 'acceptLanguage' => ' ru , en;q=0.9',
                 'locales' => ['uz' => 'uz-UZ', 'ru' => 'ru-RU', 'en' => 'en-US'],

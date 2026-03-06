@@ -16,6 +16,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Log\LoggerInterface;
 use Yiisoft\Cookies\Cookie;
 use Yiisoft\Http\Header;
+use Yiisoft\Http\HeaderValueHelper;
 use Yiisoft\Http\Method;
 use Yiisoft\Http\Status;
 use Yiisoft\Router\UrlGeneratorInterface;
@@ -206,18 +207,19 @@ final class Locale implements MiddlewareInterface
     {
         $headerLine = $request->getHeaderLine(Header::ACCEPT_LANGUAGE);
 
-        $languages = $this->parseAcceptLanguage($headerLine);
+        $languages = array_map(
+            static fn(array $item): string => trim($item[0]),
+            HeaderValueHelper::getSortedValueAndParameters($headerLine)
+        );
 
-        if ($languages === []) {
+        if ($languages === [] || $languages[0] === '*') {
             return array_key_first($this->supportedLocales);
         }
 
         foreach ($languages as $language) {
-            if (!isset($this->supportedLocales[$language])) {
-                $language = $this->parseLocale($language);
-            }
-            if (isset($this->supportedLocales[$language])) {
-                return $language;
+            $locale = $this->parseLocale($language);
+            if (array_key_exists($locale, $this->supportedLocales)) {
+                return $locale;
             }
         }
 
@@ -386,71 +388,5 @@ final class Locale implements MiddlewareInterface
         $new = clone $this;
         $new->cookieDuration = $cookieDuration;
         return $new;
-    }
-
-    /**
-     * Parse Accept-Language header line and return array of languages
-     * according to quality value. Highest quality value is first.
-     *
-     * @param string $headerLine Accept-Language header line.
-     * @return list<string> Array of languages. Empty means that any language would do.
-     */
-    private function parseAcceptLanguage(string $headerLine): array
-    {
-        if (empty($headerLine) || $headerLine === '*') {
-            return [];
-        }
-
-        /** @var list<array{language: string, quality: float}> $languages */
-        $languages = [];
-        $parts = explode(',', $headerLine);
-
-        foreach ($parts as $part) {
-            $part = trim($part);
-
-            if (!str_contains($part, ';')) {
-                if ($part !== '') {
-                    $languages[] = [
-                        'language' => $part,
-                        'quality' => 1.0,
-                    ];
-                }
-                continue;
-            }
-
-            // Split language from quality value.
-            $qualityParts = explode(';', $part);
-            if (count($qualityParts) !== 2) {
-                continue;
-            }
-
-            [$language, $qualityPart] = $qualityParts;
-            $language = trim($language);
-
-            // Extract quality value.
-            preg_match('/q\s*=\s*(\d*\.?\d+)/', $qualityPart, $matches);
-            $quality = $matches[1] ?? 1.0;
-
-            // Validate quality range (0.0 to 1.0).
-            $quality = max(0.0, min(1.0, $quality));
-
-            if ($language !== '') {
-                $languages[] = [
-                    'language' => $language,
-                    'quality' => $quality,
-                ];
-            }
-        }
-
-        /**
-         * Sort by quality (descending).
-         *
-         * @param array{language: string, quality: float} $a
-         * @param array{language: string, quality: float $b
-         */
-        usort($languages, static fn(array $a, array $b) => $b['quality'] <=> $a['quality']);
-
-        // Extract just the language codes.
-        return array_map(static fn($item) => $item['language'], $languages);
     }
 }
