@@ -2,7 +2,7 @@
 
 ## 1.1.2 under development
 
-- no changes in this release.
+- Chg #141: Reuse `yiisoft/http` for quality values parsing (@samdark)
 
 ## 1.1.1 February 28, 2026
 
