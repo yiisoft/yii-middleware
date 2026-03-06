@@ -89,7 +89,7 @@ final class HttpCacheTest extends TestCase
         $middleware = $this->createMiddlewareWithLastModified($time + 1);
 
         $headers = [
-            Header::IF_MODIFIED_SINCE => $this->formatTime($time - 1),
+            Header::IF_MODIFIED_SINCE => self::formatTime($time - 1),
         ];
 
         $response = $middleware->process(
@@ -152,7 +152,7 @@ final class HttpCacheTest extends TestCase
         $this->assertSame($response->getHeaderLine('Etag'), 'W/"IMPoQ2/Us52fJk3jpOZtEACPlVA"');
     }
 
-    public function testNotModifiedWithoutEtagWhenEtagRequired(): void
+    public function testModifiedWithDifferentEtagWhenEtagRequired(): void
     {
         $request = $this->createServerRequest(Method::GET, [Header::IF_NONE_MATCH => '"test-etag"']);
         $middleware = $this->createMiddlewareWithETag('different-etag');
@@ -204,7 +204,7 @@ final class HttpCacheTest extends TestCase
 
         $this->assertSame(Status::OK, $response->getStatusCode());
         $this->assertEmpty((string)$response->getBody());
-        $this->assertSame($this->formatTime($time - 1), $response->getHeaderLine('Last-Modified'));
+        $this->assertSame(self::formatTime($time - 1), $response->getHeaderLine('Last-Modified'));
     }
 
     public function testEmptyIfNoneMatchAndIfModifiedSinceHeaders(): void
@@ -219,7 +219,7 @@ final class HttpCacheTest extends TestCase
         $this->assertEmpty((string)$response->getBody());
     }
 
-    public function testWithIfNoneMatchButNoEtag(): void
+    public function testIfNoneMatchWithoutEtag(): void
     {
         $middleware = (new HttpCache())
             ->withLastModified(static fn() => time() + 3600);
@@ -230,7 +230,7 @@ final class HttpCacheTest extends TestCase
         $this->assertSame(Status::OK, $response->getStatusCode());
     }
 
-    public function testDoesNotReadIfNoneMatchHeaderWhenEtagMissing(): void
+    public function testIgnoresIfNoneMatchWhenEtagMissing(): void
     {
         $request = $this->createMock(ServerRequestInterface::class);
         $request
@@ -245,17 +245,10 @@ final class HttpCacheTest extends TestCase
             ->expects($this->never())
             ->method('getHeaderLine');
 
-        $handler = $this->createMock(RequestHandlerInterface::class);
-        $handler
-            ->expects($this->once())
-            ->method('handle')
-            ->with($request)
-            ->willReturn(new Response(Status::OK));
-
         $middleware = (new HttpCache())
             ->withLastModified(static fn() => time() - 10);
 
-        $response = $middleware->process($request, $handler);
+        $response = $middleware->process($request, $this->createRequestHandler());
 
         $this->assertSame(Status::OK, $response->getStatusCode());
     }
