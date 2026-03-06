@@ -224,6 +224,26 @@ final class SubfolderTest extends TestCase
         $this->assertSame('/', $this->getRequestPath());
     }
 
+    public function testAutoPrefixUsesPhpSelfSubstringWhenScriptFilenameDiffers(): void
+    {
+        $request = new ServerRequest(
+            serverParams: [
+                'SCRIPT_FILENAME' => '/var/www/project/web/index.php',
+                'PHP_SELF' => '/project/web/index.php/app/page',
+            ],
+            method: Method::GET,
+            uri: '/project/web/app/page',
+        );
+
+        $middleware = $this->createMiddleware(alias: '@baseUrl');
+
+        $this->process($middleware, $request);
+
+        $this->assertSame('/project/web', $this->aliases->get('@baseUrl'));
+        $this->assertSame('/project/web', $this->urlGeneratorUriPrefix);
+        $this->assertSame('/app/page', $this->getRequestPath());
+    }
+
     private function process(Subfolder $middleware, ServerRequestInterface $request): ResponseInterface
     {
         $handler = new class () implements RequestHandlerInterface {
