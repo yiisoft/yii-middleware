@@ -1,5 +1,9 @@
 # Yii Middleware Change Log
 
+## 1.1.3 under development
+
+- no changes in this release.
+
 ## 1.1.2 March 09, 2026
 
 - Chg #141: Reuse `yiisoft/http` for quality values parsing (@samdark)
