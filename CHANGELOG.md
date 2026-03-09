@@ -1,9 +1,9 @@
 # Yii Middleware Change Log
 
-## 1.1.2 under development
+## 1.1.2 March 09, 2026
 
-- Bug #139: Fix infinite redirect loop when unsupported locale is provided via query parameter or cookie in `Locale` middleware (@samdark)
 - Chg #141: Reuse `yiisoft/http` for quality values parsing (@samdark)
+- Bug #139: Fix infinite redirect loop when unsupported locale is provided via query parameter or cookie in `Locale` middleware (@samdark)
 
 ## 1.1.1 February 28, 2026
 
