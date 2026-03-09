@@ -457,6 +457,35 @@ final class LocaleTest extends TestCase
         $this->assertSame(Status::FOUND, $response->getStatusCode());
     }
 
+    public function testUnsupportedLocaleFromQueryParamFallsBackToDefault(): void
+    {
+        $request = $this->createRequest('/home', queryParams: ['_language' => 'uz']);
+        $middleware = $this->createMiddleware(['en' => 'en-US', 'ru' => 'ru-RU']);
+
+        $response = $this->process($middleware, $request);
+
+        $this->assertSame(Status::OK, $response->getStatusCode());
+        $this->assertSame('', $response->getHeaderLine(Header::LOCATION));
+        $this->assertSame('/en/home', $this->getRequestPath());
+        $this->assertSame([], $this->logger->getMessages());
+    }
+
+    public function testUnsupportedLocaleFromCookieFallsBackToDefault(): void
+    {
+        $middleware = $this->createMiddleware(
+            locales: ['en' => 'en-US', 'ru' => 'ru-RU'],
+            cookieDuration: new DateInterval('P5D'),
+        );
+
+        $request = $this->createRequest('/home', cookieParams: ['_language' => 'uz']);
+        $response = $this->process($middleware, $request);
+
+        $this->assertSame(Status::OK, $response->getStatusCode());
+        $this->assertSame('', $response->getHeaderLine(Header::LOCATION));
+        $this->assertSame('/en/home', $this->getRequestPath());
+        $this->assertSame([], $this->logger->getMessages());
+    }
+
     /**
      * @dataProvider dataDetectLocale
      */
