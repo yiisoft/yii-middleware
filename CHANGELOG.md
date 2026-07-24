@@ -2,7 +2,7 @@
 
 ## 1.1.3 under development
 
-- no changes in this release.
+- Enh #148: Remove `yiisoft/session` dependency (@vjik)
 
 ## 1.1.2 March 09, 2026
 

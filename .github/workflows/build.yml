@@ -28,6 +28,8 @@ permissions:
 jobs:
   phpunit:
     uses: yiisoft/actions/.github/workflows/phpunit.yml@master
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     with:
       os: >-
         ['ubuntu-latest', 'windows-latest']

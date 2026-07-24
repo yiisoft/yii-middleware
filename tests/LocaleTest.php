@@ -24,7 +24,6 @@ use Yiisoft\Http\Header;
 use Yiisoft\Http\Method;
 use Yiisoft\Http\Status;
 use Yiisoft\Router\UrlGeneratorInterface;
-use Yiisoft\Session\SessionInterface;
 use Yiisoft\Test\Support\Log\SimpleLogger;
 use Yiisoft\Yii\Middleware\Event\SetLocaleEvent;
 use Yiisoft\Yii\Middleware\Exception\InvalidLocalesFormatException;
@@ -730,7 +729,7 @@ final class LocaleTest extends TestCase
 
                 if ($saveToSession) {
                     $this->logger->debug('Saving found locale to session.');
-                    $this->createSession()->set('_language', $event->getLocale());
+                    $this->session['_language'] = $event->getLocale();
                 }
 
                 return $eventDispatcher;
@@ -778,21 +777,5 @@ final class LocaleTest extends TestCase
             uri: $uri,
             headers: $headers,
         );
-    }
-
-    private function createSession(): SessionInterface
-    {
-        $session = $this->createMock(SessionInterface::class);
-        $session
-            ->method('set')
-            ->willReturnCallback(function ($name, $value) {
-                $this->session[$name] = $value;
-            });
-
-        $session
-            ->method('get')
-            ->willReturnCallback(fn($name) => $this->session[$name]);
-
-        return $session;
     }
 }
