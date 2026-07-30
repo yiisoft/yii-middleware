@@ -22,6 +22,13 @@ final class SubfolderTest extends TestCase
     private Aliases $aliases;
     private ?ServerRequestInterface $lastRequest;
 
+    public function setUp(): void
+    {
+        $this->urlGeneratorUriPrefix = '';
+        $this->lastRequest = null;
+        $this->aliases = new Aliases(['@baseUrl' => '/default/web']);
+    }
+
     public static function autoPrefixDataProvider(): array
     {
         return [
@@ -101,13 +108,6 @@ final class SubfolderTest extends TestCase
                 'SCRIPT_FILENAME' => '/www/public/index.php',
             ],
         ];
-    }
-
-    public function setUp(): void
-    {
-        $this->urlGeneratorUriPrefix = '';
-        $this->lastRequest = null;
-        $this->aliases = new Aliases(['@baseUrl' => '/default/web']);
     }
 
     public function testDefault(): void
@@ -246,7 +246,7 @@ final class SubfolderTest extends TestCase
 
     private function process(Subfolder $middleware, ServerRequestInterface $request): ResponseInterface
     {
-        $handler = new class () implements RequestHandlerInterface {
+        $handler = new class implements RequestHandlerInterface {
             public ?ServerRequestInterface $request = null;
 
             public function handle(ServerRequestInterface $request): ResponseInterface

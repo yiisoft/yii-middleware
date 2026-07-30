@@ -35,8 +35,7 @@ final class Subfolder implements MiddlewareInterface
         private readonly Aliases $aliases,
         private readonly ?string $prefix = null,
         private readonly ?string $baseUrlAlias = '@baseUrl',
-    ) {
-    }
+    ) {}
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
@@ -97,18 +96,18 @@ final class Subfolder implements MiddlewareInterface
         if (isset($serverParams['PHP_SELF']) && basename($serverParams['PHP_SELF']) === $scriptName) {
             $scriptUrl = $serverParams['PHP_SELF'];
         } elseif (
-            isset($serverParams['ORIG_SCRIPT_NAME']) &&
-            basename($serverParams['ORIG_SCRIPT_NAME']) === $scriptName
+            isset($serverParams['ORIG_SCRIPT_NAME'])
+            && basename($serverParams['ORIG_SCRIPT_NAME']) === $scriptName
         ) {
             $scriptUrl = $serverParams['ORIG_SCRIPT_NAME'];
         } elseif (
-            isset($serverParams['PHP_SELF']) &&
-            ($pos = strpos($serverParams['PHP_SELF'], $scriptName)) !== false
+            isset($serverParams['PHP_SELF'])
+            && ($pos = strpos($serverParams['PHP_SELF'], $scriptName)) !== false
         ) {
             $scriptUrl = substr($serverParams['PHP_SELF'], 0, $pos + strlen($scriptName));
         } elseif (
-            !empty($serverParams['DOCUMENT_ROOT']) &&
-            str_starts_with($scriptUrl, $serverParams['DOCUMENT_ROOT'])
+            !empty($serverParams['DOCUMENT_ROOT'])
+            && str_starts_with($scriptUrl, $serverParams['DOCUMENT_ROOT'])
         ) {
             $scriptUrl = str_replace([$serverParams['DOCUMENT_ROOT'], '\\'], ['', '/'], $scriptUrl);
         }

@@ -19,6 +19,13 @@ final class IpFilterTest extends TestCase
     private MockObject|ResponseFactoryInterface $responseFactoryMock;
     private MockObject|RequestHandlerInterface $requestHandlerMock;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->responseFactoryMock = $this->createMock(ResponseFactoryInterface::class);
+        $this->requestHandlerMock = $this->createMock(RequestHandlerInterface::class);
+    }
+
     public static function ipNotAllowedDataProvider(): array
     {
         return [
@@ -83,7 +90,7 @@ final class IpFilterTest extends TestCase
         $response = $ipFilter->process($requestMock, $this->requestHandlerMock);
 
         $this->assertSame(Status::FORBIDDEN, $response->getStatusCode());
-        $this->assertSame(Status::TEXTS[Status::FORBIDDEN], (string)$response->getBody());
+        $this->assertSame(Status::TEXTS[Status::FORBIDDEN], (string) $response->getBody());
     }
 
     /**
@@ -134,12 +141,5 @@ final class IpFilterTest extends TestCase
         $response = $ipFilter->process($requestMock, $this->requestHandlerMock);
 
         $this->assertSame(Status::OK, $response->getStatusCode());
-    }
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->responseFactoryMock = $this->createMock(ResponseFactoryInterface::class);
-        $this->requestHandlerMock = $this->createMock(RequestHandlerInterface::class);
     }
 }

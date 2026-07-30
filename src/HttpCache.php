@@ -20,6 +20,8 @@ use function sha1;
 use function str_replace;
 use function strtotime;
 
+use const PREG_SPLIT_NO_EMPTY;
+
 /**
  * HttpCache implements client-side caching by utilizing the `Last-Modified` and `ETag` HTTP headers.
  *
@@ -129,8 +131,8 @@ final class HttpCache implements MiddlewareInterface
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         if (
-            ($this->lastModified === null && $this->etagSeed === null) ||
-            !in_array($request->getMethod(), [Method::GET, Method::HEAD], true)
+            ($this->lastModified === null && $this->etagSeed === null)
+            || !in_array($request->getMethod(), [Method::GET, Method::HEAD], true)
         ) {
             return $handler->handle($request);
         }
