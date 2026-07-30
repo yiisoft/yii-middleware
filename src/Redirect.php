@@ -12,6 +12,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 use RuntimeException;
 use Yiisoft\Http\Status;
 use Yiisoft\Router\UrlGeneratorInterface;
+use Stringable;
 
 /**
  * This middleware generates and adds a `Location` header to the response.
@@ -21,7 +22,7 @@ final class Redirect implements MiddlewareInterface
     private ?string $uri = null;
     private ?string $route = null;
     /**
-     * @var array<string, scalar|\Stringable|null> $parameters
+     * @var array<string, scalar|Stringable|null> $parameters
      */
     private array $parameters = [];
     private int $statusCode = Status::MOVED_PERMANENTLY;
@@ -29,8 +30,7 @@ final class Redirect implements MiddlewareInterface
     public function __construct(
         private ResponseFactoryInterface $responseFactory,
         private UrlGeneratorInterface $urlGenerator,
-    ) {
-    }
+    ) {}
 
     /**
      * Returns a new instance with the specified URL for redirection.
@@ -51,7 +51,7 @@ final class Redirect implements MiddlewareInterface
      * is a priority.
      *
      * @param string $name The route name for redirection.
-     * @param array<string, scalar|\Stringable|null> $parameters $parameters The route parameters for redirection.
+     * @param array<string, scalar|Stringable|null> $parameters $parameters The route parameters for redirection.
      */
     public function toRoute(string $name, array $parameters = []): self
     {

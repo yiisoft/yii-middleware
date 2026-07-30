@@ -14,6 +14,8 @@ use Yiisoft\NetworkUtilities\IpHelper;
 use Yiisoft\NetworkUtilities\IpRanges;
 use Yiisoft\Validator\ValidatorInterface;
 
+use function is_string;
+
 /**
  * `IpFilter` allows access from specified IP ranges only and responds with 403 for all other IPs.
  */
