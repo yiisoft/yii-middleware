@@ -11,8 +11,7 @@ final class StaticClock implements ClockInterface
 {
     public function __construct(
         private readonly DateTimeImmutable $now,
-    ) {
-    }
+    ) {}
 
     public function now(): DateTimeImmutable
     {

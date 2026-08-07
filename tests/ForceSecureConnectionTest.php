@@ -187,7 +187,7 @@ final class ForceSecureConnectionTest extends TestCase
 
     private function createHandler(): RequestHandlerInterface
     {
-        return new class () implements RequestHandlerInterface {
+        return new class implements RequestHandlerInterface {
             public bool $isCalled = false;
 
             public function handle(ServerRequestInterface $request): ResponseInterface

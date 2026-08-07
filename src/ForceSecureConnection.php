@@ -44,9 +44,7 @@ final class ForceSecureConnection implements MiddlewareInterface
     private int $hstsMaxAge = self::DEFAULT_HSTS_MAX_AGE;
     private bool $hstsSubDomains = false;
 
-    public function __construct(private ResponseFactoryInterface $responseFactory)
-    {
-    }
+    public function __construct(private ResponseFactoryInterface $responseFactory) {}
 
     /**
      * Returns a new instance and enables redirection from HTTP to HTTPS.
@@ -142,7 +140,7 @@ final class ForceSecureConnection implements MiddlewareInterface
             return $this->addHSTS(
                 $this->responseFactory
                     ->createResponse($this->statusCode)
-                    ->withHeader(Header::LOCATION, $url)
+                    ->withHeader(Header::LOCATION, $url),
             );
         }
 

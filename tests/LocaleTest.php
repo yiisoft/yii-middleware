@@ -39,6 +39,16 @@ final class LocaleTest extends TestCase
     private ?ServerRequestInterface $lastRequest;
     private LoggerInterface $logger;
 
+    public function setUp(): void
+    {
+        $this->translatorLocale = null;
+        $this->urlGeneratorLocale = null;
+        $this->uriPrefix = '';
+        $this->session = [];
+        $this->lastRequest = null;
+        $this->logger = new SimpleLogger();
+    }
+
     public static function dataInvalidLocalesFormat(): array
     {
         return [
@@ -116,16 +126,6 @@ final class LocaleTest extends TestCase
         ];
     }
 
-    public function setUp(): void
-    {
-        $this->translatorLocale = null;
-        $this->urlGeneratorLocale = null;
-        $this->uriPrefix = '';
-        $this->session = [];
-        $this->lastRequest = null;
-        $this->logger = new SimpleLogger();
-    }
-
     public function testImmutability(): void
     {
         $localeMiddleware = $this->createMiddleware(['uz' => 'uz-UZ']);
@@ -136,7 +136,7 @@ final class LocaleTest extends TestCase
         $this->assertNotSame($localeMiddleware->withDetectLocale(true), $localeMiddleware);
         $this->assertNotSame(
             $localeMiddleware->withSupportedLocales(['ru' => 'ru-RU', 'uz' => 'uz-UZ']),
-            $localeMiddleware
+            $localeMiddleware,
         );
         $this->assertNotSame($localeMiddleware->withQueryParameterName('lang'), $localeMiddleware);
         $this->assertNotSame($localeMiddleware->withCookieName('lang'), $localeMiddleware);
@@ -632,7 +632,7 @@ final class LocaleTest extends TestCase
 
     public function testEventBeforeHandleRequest(): void
     {
-        $stack = new class () {
+        $stack = new class {
             public array $data = [];
 
             public function add(mixed $value): void
@@ -671,9 +671,7 @@ final class LocaleTest extends TestCase
         );
 
         $handler = new class ($stack) implements RequestHandlerInterface {
-            public function __construct(private $stack)
-            {
-            }
+            public function __construct(private $stack) {}
 
             public function handle(ServerRequestInterface $request): ResponseInterface
             {
@@ -695,7 +693,7 @@ final class LocaleTest extends TestCase
 
     private function process(Locale $middleware, ServerRequestInterface $request): ResponseInterface
     {
-        $handler = new class () implements RequestHandlerInterface {
+        $handler = new class implements RequestHandlerInterface {
             public ?ServerRequestInterface $request = null;
 
             public function handle(ServerRequestInterface $request): ResponseInterface

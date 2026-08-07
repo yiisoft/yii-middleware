@@ -68,11 +68,6 @@ final class HttpCacheTest extends TestCase
         ];
     }
 
-    private static function formatTime(int $time): string
-    {
-        return gmdate('D, d M Y H:i:s', $time) . ' GMT';
-    }
-
     public function testNotCacheableMethods(): void
     {
         $time = time();
@@ -133,7 +128,7 @@ final class HttpCacheTest extends TestCase
         );
 
         $this->assertSame(Status::NOT_MODIFIED, $response->getStatusCode());
-        $this->assertEmpty((string)$response->getBody());
+        $this->assertEmpty((string) $response->getBody());
     }
 
     public function testModifiedResultWithWeakEtag(): void
@@ -175,7 +170,7 @@ final class HttpCacheTest extends TestCase
         );
 
         $this->assertSame(Status::NOT_MODIFIED, $response->getStatusCode());
-        $this->assertEmpty((string)$response->getBody());
+        $this->assertEmpty((string) $response->getBody());
         $this->assertSame($expectedLastModified, $response->getHeaderLine('Last-Modified'));
     }
 
@@ -193,7 +188,7 @@ final class HttpCacheTest extends TestCase
         );
 
         $this->assertSame(Status::OK, $response->getStatusCode());
-        $this->assertEmpty((string)$response->getBody());
+        $this->assertEmpty((string) $response->getBody());
         $this->assertSame(self::formatTime($time - 1), $response->getHeaderLine('Last-Modified'));
     }
 
@@ -206,7 +201,7 @@ final class HttpCacheTest extends TestCase
         $response = $middleware->process($this->createServerRequest(), $this->createRequestHandler());
 
         $this->assertSame(Status::OK, $response->getStatusCode());
-        $this->assertEmpty((string)$response->getBody());
+        $this->assertEmpty((string) $response->getBody());
     }
 
     public function testIgnoresIfNoneMatchWhenEtagMissing(): void
@@ -253,6 +248,11 @@ final class HttpCacheTest extends TestCase
 
         $this->assertSame(Status::OK, $response->getStatusCode());
         $this->assertFalse($response->hasHeader('Cache-Control'));
+    }
+
+    private static function formatTime(int $time): string
+    {
+        return gmdate('D, d M Y H:i:s', $time) . ' GMT';
     }
 
     private function createMiddlewareWithLastModified(int $lastModified): HttpCache
