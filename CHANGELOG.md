@@ -2,6 +2,7 @@
 
 ## 1.1.3 under development
 
+- Enh #148: Remove `yiisoft/session` dependency (@vjik)
 - Enh #149: Explicitly import classes, functions, and constants (`is_string()`, `sprintf()`, `PREG_SPLIT_NO_EMPTY`, `Stringable`) in "use" section (@vjik)
 
 ## 1.1.2 March 09, 2026
