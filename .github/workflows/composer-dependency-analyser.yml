@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   composer-dependency-analyser:
-    uses: yiisoft/actions/.github/workflows/composer-dependency-analyser.yml@composer-dependency-analyzer
+    uses: yiisoft/actions/.github/workflows/composer-dependency-analyser.yml@master
     with:
       os: >-
         ['ubuntu-latest']
