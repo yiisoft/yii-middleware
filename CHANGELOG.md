@@ -4,6 +4,7 @@
 
 - Enh #148: Remove `yiisoft/session` dependency (@vjik)
 - Enh #149: Explicitly import classes, functions, and constants (`is_string()`, `sprintf()`, `PREG_SPLIT_NO_EMPTY`, `Stringable`) in "use" section (@vjik)
+- Bug: Fix open redirect in `Locale` when stripping default locale leaves a protocol-relative path (`//…`) (@Sakanweb)
 
 ## 1.1.2 March 09, 2026
 

@@ -178,6 +178,18 @@ final class LocaleTest extends TestCase
         $this->assertSame('en', $cookies['_language']->getValue());
     }
 
+    public function testDefaultLocaleStripDoesNotAllowProtocolRelativeRedirect(): void
+    {
+        $request = $this->createRequest('/en//evil.example/phish');
+        $middleware = $this->createMiddleware(['en' => 'en-US', 'uz' => 'uz-UZ']);
+
+        $response = $this->process($middleware, $request);
+
+        $this->assertSame(Status::FOUND, $response->getStatusCode());
+        $this->assertSame('/evil.example/phish', $response->getHeaderLine(Header::LOCATION));
+        $this->assertFalse(str_starts_with($response->getHeaderLine(Header::LOCATION), '//'));
+    }
+
     public function testDefaultLocaleDoNotSaveToCookie(): void
     {
         $request = $this->createRequest('/home?test=1');
