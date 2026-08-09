@@ -249,14 +249,18 @@ final class Locale implements MiddlewareInterface
     }
 
     /**
-     * Keeps redirect targets as same-origin paths.
+     * Prevents protocol-relative Location values (`//host/...`).
      *
-     * Collapse leading slashes so a default-locale strip like `/en//host/path` cannot
-     * produce a protocol-relative Location (`//host/path`).
+     * Only multiple leading slashes are collapsed. A missing single leading slash is
+     * left as-is so redirect construction mistakes stay detectable by tests / MSI.
      */
     private function normalizeRedirectPath(string $path): string
     {
-        return '/' . ltrim($path, '/');
+        if (str_starts_with($path, '//')) {
+            return '/' . ltrim($path, '/');
+        }
+
+        return $path;
     }
 
     private function getLocaleFromPath(string $path): ?string
