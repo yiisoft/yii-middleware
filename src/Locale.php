@@ -249,10 +249,7 @@ final class Locale implements MiddlewareInterface
     }
 
     /**
-     * Prevents protocol-relative Location values (`//host/...`).
-     *
-     * Only multiple leading slashes are collapsed. A missing single leading slash is
-     * left as-is so redirect construction mistakes stay detectable by tests / MSI.
+     * Collapse protocol-relative paths (`//host/...`) to a same-origin path.
      */
     private function normalizeRedirectPath(string $path): string
     {
