@@ -237,6 +237,8 @@ final class Locale implements MiddlewareInterface
 
     private function createRedirectResponse(string $path, string $query): ResponseInterface
     {
+        $path = $this->normalizeRedirectPath($path);
+
         return $this
             ->responseFactory
             ->createResponse(Status::FOUND)
@@ -244,6 +246,18 @@ final class Locale implements MiddlewareInterface
                 Header::LOCATION,
                 $this->getBaseUrl() . $path . ($query !== '' ? '?' . $query : ''),
             );
+    }
+
+    /**
+     * Collapse protocol-relative paths (`//host/...`) to a same-origin path.
+     */
+    private function normalizeRedirectPath(string $path): string
+    {
+        if (str_starts_with($path, '//')) {
+            return '/' . ltrim($path, '/');
+        }
+
+        return $path;
     }
 
     private function getLocaleFromPath(string $path): ?string
