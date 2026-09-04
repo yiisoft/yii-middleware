@@ -30,7 +30,7 @@ For proxy related middleware, there is a separate package -
 [Yii Proxy Middleware](https://github.com/yiisoft/proxy-middleware).
 
 For more information on how to use middleware in the [Yii Framework](https://www.yiiframework.com/), see the
-[Yii middleware guide](https://github.com/yiisoft/docs/blob/master/guide/en/structure/middleware.md).
+[Yii middleware guide](https://yiisoft.github.io/docs/guide/structure/middleware).
 
 ## Requirements
 
